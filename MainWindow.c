@@ -52,10 +52,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         HMENU hMenubar = CreateMenu();
         HMENU hFile = CreateMenu();
-        HMENU hEdit = CreateMenu();
+        HMENU hFind = CreateMenu();
+        HMENU hAdd = CreateMenu();
+        HMENU hAns = CreateMenu();
+        HMENU hUsr = CreateMenu();
         HMENU hHelp = CreateMenu();
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFile, L"文件");
-        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hEdit, L"编辑");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFind, L"查询");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAdd, L"新增");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAns, L"统计");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hUsr, L"用户管理");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hHelp, L"帮助");
 
 
