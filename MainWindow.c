@@ -64,7 +64,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"¹ØÓÚ");
         SetMenu(hwnd, hMenubar);
 
-        HWND hwndButton = CreateWindow(
+        HWND hwndButton = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
             L"BUTTON",  // Predefined class; Unicode assumed 
             L"OK",      // Button text 
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
