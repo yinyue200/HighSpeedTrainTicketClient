@@ -63,6 +63,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         AppendMenu(hHelp, MF_STRING, ID_MENU_VWS, L"GitHub");
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"关于");
         SetMenu(hwnd, hMenubar);
+
+        HWND hwndButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"OK",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10,         // x position 
+            10,         // y position 
+            100,        // Button width
+            100,        // Button height
+            hwnd,     // Parent window
+            NULL,       // No menu.
+            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
     }
     return 0;
     case WM_COMMAND:
@@ -73,7 +86,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         else if (LOWORD(wParam) == ID_MENU_ABOUT)
         {
-            MessageBox(NULL, L"版本 0.0.1\r\nA GUI program", L"关于", 0);
+            MessageBox(NULL, L"版本 0.0.1\r\nA GUI program\r\nold fashion design", L"关于", 0);
         }
 
     }

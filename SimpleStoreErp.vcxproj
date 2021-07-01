@@ -149,7 +149,6 @@
   <ItemGroup>
     <ClInclude Include="common.h" />
     <ClInclude Include="MainWindow.h" />
-    <ClInclude Include="WndProc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
