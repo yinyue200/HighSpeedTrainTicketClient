@@ -154,6 +154,7 @@
     <ClCompile Include="ProductRecord.c" />
     <ClCompile Include="SimpleStoreErp.c" />
     <ClCompile Include="stdatomic.c" />
+    <ClCompile Include="UserSetting.c" />
     <ClCompile Include="vector.c" />
   </ItemGroup>
   <ItemGroup>
