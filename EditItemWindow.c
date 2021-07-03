@@ -181,8 +181,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             free(windowdata);
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
-        if (CheckIfNoWindow())
-            PostQuitMessage(0);
+        CheckIfNoWindowAndQuit();
         return 0;
     }
 

@@ -22,5 +22,5 @@ typedef struct ProductRecord
 	int64_t ResentPrice;//11
 	wchar_t* Signer;//12
 } PRODUCTRECORD;
-typedef  PRODUCTRECORD* PRODUCTRECORE_PTR;
-PRODUCTRECORE_PTR CreateProductRecord();
+typedef  PRODUCTRECORD* PRODUCTRECORD_PTR;
+PRODUCTRECORD_PTR CreateProductRecord();

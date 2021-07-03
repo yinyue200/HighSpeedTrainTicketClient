@@ -11,8 +11,13 @@ PWCHAR CreateWstrForWindowText(HWND hwnd)
 	GetWindowText(hwnd, p, size);
 	return p;
 }
-void UnrecoveryableFailed()
+__declspec(noreturn) void UnrecoveryableFailed()
 {
 	MessageBox(NULL, L"不可恢复的错误", NULL, 0);
-	exit(1234);
+	exit(1234);//检测到不可恢复的错误后直接退出程序
+}
+void CheckIfNoWindowAndQuit()
+{
+	if (CheckIfNoWindow())
+		PostQuitMessage(0);
 }

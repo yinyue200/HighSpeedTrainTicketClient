@@ -1,8 +1,8 @@
 #include "ProductRecord.h"
 
-PRODUCTRECORE_PTR CreateProductRecord()
+PRODUCTRECORD_PTR CreateProductRecord()
 {
-	PRODUCTRECORE_PTR PT = malloc(sizeof(PRODUCTRECORD));
+	PRODUCTRECORD_PTR PT = malloc(sizeof(PRODUCTRECORD));
 	if (PT == NULL)
 		return PT;
 	memset(PT, 0, sizeof(PRODUCTRECORD));
@@ -11,8 +11,8 @@ PRODUCTRECORE_PTR CreateProductRecord()
 vector* LoadToVector(LPSTR path)
 {
 	//FILE SHOULD BE UTF-8 ENCODED
-	vector* p = malloc(sizeof(vector));
-	vector_init(p);
+	vector* vec = malloc(sizeof(vector));
+	vector_init(vec);
 
 	HANDLE hFile = CreateFile(path,               // file to open
 		GENERIC_READ,          // open for reading
@@ -23,7 +23,7 @@ vector* LoadToVector(LPSTR path)
 		NULL);                 // no attr. template
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		return p;
+		return vec;//找不到文件，返回空 vector
 	}
 
 	LARGE_INTEGER FILESIZEINFO;
@@ -40,15 +40,15 @@ vector* LoadToVector(LPSTR path)
 		{
 			int laststart = 0;
 			int tindex = 0;
-			PRODUCTRECORD *p = malloc(sizeof(PRODUCTRECORD));
+			PRODUCTRECORD_PTR p = CreateProductRecord();
 			if (p)
 			{
 				for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
 				{
 					char one = data[i];
+					size_t size = i - laststart;
 					if (one == '\t')
 					{
-						size_t size = i - laststart + 1;
 						PWCHAR info = malloc(size * 2);
 						MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, &data[laststart], size, info, size);
 						switch (tindex)
@@ -61,6 +61,21 @@ vector* LoadToVector(LPSTR path)
 							break;
 						}
 						tindex++;
+						laststart = i;
+					}
+					else if (one == '\r' || one == '\n')
+					{
+						laststart = i;
+						if (size > 0)
+						{
+							tindex = 0;
+							VECTOR_ADD(vec, p);
+							p = CreateProductRecord();
+							if (p != NULL)
+							{
+								UnrecoveryableFailed();
+							}
+						}
 					}
 				}
 			}
