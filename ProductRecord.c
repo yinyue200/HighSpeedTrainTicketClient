@@ -80,98 +80,110 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 {
 	//FILE SHOULD BE UTF-8 ENCODED
 	vector* vec = malloc(sizeof(vector));
-	vector_init(vec);
-
-	HANDLE hFile = CreateFile(path,               // file to open
-		GENERIC_READ,          // open for reading
-		FILE_SHARE_READ,       // share for reading
-		NULL,                  // default security
-		OPEN_EXISTING,         // existing file only
-		FILE_ATTRIBUTE_NORMAL, // normal file
-		NULL);                 // no attr. template
-	if (hFile == INVALID_HANDLE_VALUE)
+	if (vec)
 	{
-		CloseHandle(hFile);
-		return vec;//找不到文件，返回空 vector
-	}
+		vector_init(vec);
 
-	LARGE_INTEGER FILESIZEINFO;
-	GetFileSizeEx(hFile, &FILESIZEINFO);
-	if (FILESIZEINFO.QuadPart == 0)
-	{
-		CloseHandle(hFile);
-		return vec;
-	}
-	char* data = malloc(FILESIZEINFO.QuadPart);
-	if (data)
-	{
-		DWORD readsize;
-
-		BOOL readfilesucc = ReadFile(hFile, data, FILESIZEINFO.QuadPart, &readsize, NULL);
-
-		if (readfilesucc)
+		HANDLE hFile = CreateFile(path,               // file to open
+			GENERIC_READ,          // open for reading
+			FILE_SHARE_READ,       // share for reading
+			NULL,                  // default security
+			OPEN_EXISTING,         // existing file only
+			FILE_ATTRIBUTE_NORMAL, // normal file
+			NULL);                 // no attr. template
+		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			int laststart = 0;
-			int tindex = 0;
-			PRODUCTRECORD_PTR p = CreateProductRecord();
-			if (p)
+			CloseHandle(hFile);
+			return vec;//找不到文件，返回空 vector
+		}
+
+		LARGE_INTEGER FILESIZEINFO;
+		GetFileSizeEx(hFile, &FILESIZEINFO);
+		if (FILESIZEINFO.QuadPart == 0)
+		{
+			CloseHandle(hFile);
+			return vec;
+		}
+		char* data = malloc(FILESIZEINFO.QuadPart);
+		if (data)
+		{
+			DWORD readsize;
+
+			BOOL readfilesucc = ReadFile(hFile, data, FILESIZEINFO.QuadPart, &readsize, NULL);
+
+			if (readfilesucc)
 			{
-				for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
+				int laststart = 0;
+				int tindex = 0;
+				PRODUCTRECORD_PTR p = CreateProductRecord();
+				if (p)
 				{
-					char one = data[i];
-					size_t size = i - laststart;
-					if (one == '\t'|| one == '\r' || one == '\n')
+					for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
 					{
-						if (size > 0)
+						char one = data[i];
+						size_t size = i - laststart;
+						if (one == '\t' || one == '\r' || one == '\n')
 						{
-							PWCHAR info = malloc(size * 2);
-							memset(info, 0, size * 2);
-							MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
-							switch (tindex)
+							if (size > 0)
 							{
-							case 0:
-								p->Name = info;
-							case 1:
-								//p->ID = info;
-							default:
-								break;
+								PWCHAR info = malloc(size * 2);
+								if (info == NULL)
+								{
+									UnrecoveryableFailed();
+									return NULL;
+								}
+								memset(info, 0, size * 2);
+								MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+								switch (tindex)
+								{
+								case 0:
+									p->Name = info;
+								case 1:
+									//p->ID = info;
+								default:
+									break;
+								}
 							}
+							tindex++;
+							laststart = i;
 						}
-						tindex++;
-						laststart = i;
-					}
-					if (one == '\r' || one == '\n')
-					{
-						laststart = i;
-						if (size > 0)
+						if (one == '\r' || one == '\n')
 						{
-							tindex = 0;
-							VECTOR_ADD(*vec, p);
-							p = CreateProductRecord();
-							if (p == NULL)
+							laststart = i;
+							if (size > 0)
 							{
-								UnrecoveryableFailed();
+								tindex = 0;
+								VECTOR_ADD(*vec, p);
+								p = CreateProductRecord();
+								if (p == NULL)
+								{
+									UnrecoveryableFailed();
+								}
 							}
 						}
 					}
 				}
+				else
+				{
+					UnrecoveryableFailed();
+				}
+				free(p);
 			}
 			else
 			{
 				UnrecoveryableFailed();
 			}
-			free(p);
+			free(data);
 		}
 		else
 		{
 			UnrecoveryableFailed();
 		}
-		free(data);
+		CloseHandle(hFile);
 	}
 	else
 	{
 		UnrecoveryableFailed();
 	}
-	CloseHandle(hFile);
 	return vec;
 }
