@@ -5,7 +5,9 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "common.h"
 #include "stdatomic.h"
+#include "vector.h"
 
+vector yinyue200_ProductList;
 HINSTANCE yinyue200_hInstance;
 int yinyue200_nCmdShow;
 atomic_int yinyue200_windowCount = 0;
@@ -28,6 +30,7 @@ bool CheckIfNoWindow()
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
+    vector_init(&yinyue200_ProductList);
     yinyue200_hInstance = hInstance;
     yinyue200_nCmdShow = nCmdShow;
     CreateMainWindow();

@@ -1,4 +1,8 @@
 #include "common.h"
+#include "ProductRecord.h"
+#define ID_EDIT_NAME 1
+#define ID_BUTTON_SAVE 2
+#define ID_BUTTON_CANCEL 3
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CreateEditItemWindow()
 {
@@ -42,6 +46,17 @@ void CreateEditItemWindow()
 
     return 0;
 }
+typedef struct EditItemWindowData
+{
+    HWND NameLabelHwnd;
+    HWND hwndEdit_Name;
+    HWND NameLabelId;
+    HWND hwndEdit_ID;
+    HWND NameLabelType;
+    HWND hwndEdit_Type;
+    HWND hwndButton_Save;
+    HWND hwndButton_Cancel;
+} EDITITEMWINDOWDATA;
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -49,31 +64,128 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_CREATE:
     {
         AddWindowCount();
-        HWND hwndButton = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
-            L"BUTTON",  // Predefined class; Unicode assumed 
-            L"OK",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-            10,         // x position 
-            10,         // y position 
-            100,        // Button width
-            100,        // Button height
-            hwnd,     // Parent window
-            NULL,       // No menu.
+        int lasty = 10;
+        HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
+            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        lasty += 25;
+        HWND hwndEdit_Name = CreateWindow(
+            L"EDIT",   // predefined class 
+            NULL,         // no window title 
+            WS_BORDER | WS_CHILD | WS_VISIBLE |
+            ES_LEFT ,
+            10, lasty, 500, 25,   //MAYBE set size in WM_SIZE message 
+            hwnd,         // parent window 
+            (HMENU)ID_EDIT_NAME,   // edit control ID 
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);      // Pointer not needed.
+            NULL);        // pointer not needed 
+        lasty += 25;
+        HWND NameLabelId = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
+            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        lasty += 25;
+        HWND hwndEdit_ID = CreateWindow(
+            L"EDIT",   // predefined class 
+            NULL,         // no window title 
+            WS_BORDER | WS_CHILD | WS_VISIBLE |
+            ES_LEFT,
+            10, lasty, 500, 25,
+            hwnd,         // parent window 
+            (HMENU)ID_EDIT_NAME,   // edit control ID 
+            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
+            NULL);        // pointer not needed
+        lasty += 25;
+        HWND NameLabelType = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
+            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        lasty += 25;
+        HWND hwndEdit_Type = CreateWindow(
+            L"EDIT",
+            NULL,
+            WS_BORDER | WS_CHILD | WS_VISIBLE |
+            ES_LEFT,
+            10, lasty, 500, 25,
+            hwnd,
+            (HMENU)ID_EDIT_NAME,
+            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
+            NULL);
+        lasty += 25;
+        HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
+            L"BUTTON",
+            L"保存",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10, lasty,100,50,
+            hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),NULL);
+        HWND hwndButton_Cancel = CreateWindow(
+            L"BUTTON",
+            L"取消",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10+100+10, lasty, 100, 50,
+            hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        lasty += 50;
+        SendMessage(hwndEdit_Name, WM_SETTEXT, 0, L"");
+        SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"名称");
+        SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
+        SendMessage(hwndEdit_ID, WM_SETTEXT, 0, L"");
+        SendMessage(NameLabelType, WM_SETTEXT, 0, L"类型");
+        EDITITEMWINDOWDATA* windowdata = malloc(sizeof(EDITITEMWINDOWDATA));
+        if (windowdata != NULL)
+        {
+            windowdata->hwndButton_Cancel = hwndButton_Cancel;
+            windowdata->NameLabelHwnd = NameLabelHwnd;
+            windowdata->hwndEdit_Name = hwndEdit_Name;
+            windowdata->NameLabelId = NameLabelId;
+            windowdata->hwndEdit_ID = hwndEdit_ID;
+            windowdata->hwndButton_Save = hwndButton_Save;
+            windowdata->NameLabelType = NameLabelType;
+            windowdata->hwndEdit_Type = hwndEdit_Type;
+            SetProp(hwnd, YINYUE200_WINDOW_DATA, windowdata);
+        }
+        else
+        {
+            UnrecoveryableFailed();
+        }
+
     }
     return 0;
     case WM_COMMAND:
     {
+        switch (HIWORD(wParam))
+        {
+        case BN_CLICKED:
+        {
+            if (LOWORD(wParam) == ID_BUTTON_SAVE)
+            {
+                EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                PWCHAR name = CreateWstrForWindowText(windowdata->hwndEdit_Name);
+                PWCHAR id = CreateWstrForWindowText(windowdata->hwndEdit_ID);
+                
+                PRODUCTRECORE_PTR productrecord = CreateProductRecord();
 
+                productrecord->Name = name;
+                productrecord->ID = id;
 
+                VECTOR_ADD(yinyue200_ProductList, productrecord);
+                
+            }
+            else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
+            {
+                SendMessage(hwnd, WM_CLOSE, NULL, NULL);
+            }
+        }
+            break;
+        }
     }
     return 0;
     case WM_DESTROY:
+    {
+        HANDLE windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if(windowdata!=NULL)
+            free(windowdata);
+        RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
-        if(CheckIfNoWindow())
+        if (CheckIfNoWindow())
             PostQuitMessage(0);
         return 0;
+    }
+
 
     case WM_PAINT:
     {
