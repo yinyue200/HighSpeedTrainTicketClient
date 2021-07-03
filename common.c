@@ -21,7 +21,7 @@ PWCHAR CreateWSTR(size_t length)
 }
 PWCHAR CreateWstrForWindowText(HWND hwnd)
 {
-	size_t size = GetWindowTextLength(hwnd + 1);
+	size_t size = GetWindowTextLength(hwnd) + 1;
 	PWCHAR p = CreateWSTR(size);
 	GetWindowText(hwnd, p, size);
 	return p;
@@ -35,4 +35,15 @@ void CheckIfNoWindowAndQuit()
 {
 	if (CheckIfNoWindow())
 		PostQuitMessage(0);
+}
+void FailedIfFalse(bool state)
+{
+	if (state)
+	{
+		;
+	}
+	else
+	{
+		UnrecoveryableFailed();
+	}
 }

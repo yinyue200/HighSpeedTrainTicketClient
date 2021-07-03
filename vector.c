@@ -1,11 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "vector.h"
 
 void vector_init(vector* v)
 {
-    v->capacity = VECTOR_INIT_CAPACITY;
+    vector_initwithcap(v, VECTOR_INIT_CAPACITY);
+}
+
+void vector_initwithcap(vector* v,size_t capacity)
+{
+    v->capacity = capacity;
     v->total = 0;
     v->items = malloc(sizeof(void*) * v->capacity);
 }
@@ -74,4 +79,20 @@ void vector_free(vector* v)
 void vector_clear(vector* v)
 {
     v->total = 0;
+}
+
+void vector_move(vector* left, vector* right)
+{
+    memcpy(left, right, sizeof(vector));
+}
+
+vector vector_clone(vector* right)
+{
+    vector vec;
+
+    vector_initwithcap(&vec, max(right->capacity, VECTOR_INIT_CAPACITY));
+    vec.total = right->total;
+    if(right->capacity>0)
+        memcpy(vec.items, right->items, sizeof(void*) * right->capacity);
+    return vec;
 }

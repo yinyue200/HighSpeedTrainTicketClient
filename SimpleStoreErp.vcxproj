@@ -164,6 +164,7 @@
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="ProductRecord.h" />
     <ClInclude Include="stdatomic.h" />
+    <ClInclude Include="UserSetting.h" />
     <ClInclude Include="vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

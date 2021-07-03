@@ -65,5 +65,8 @@
     <ClInclude Include="cJSON.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UserSetting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

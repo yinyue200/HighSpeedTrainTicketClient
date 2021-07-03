@@ -4,14 +4,15 @@
 
 #define VECTOR_INIT_CAPACITY 4
 
-#define VECTOR_INIT(vec) vector vec; vector_init(&vec)
-#define VECTOR_ADD(vec, item) vector_add(&vec, (void *) item)
-#define VECTOR_SET(vec, id, item) vector_set(&vec, id, (void *) item)
-#define VECTOR_GET(vec, type, id) (type) vector_get(&vec, id)
-#define VECTOR_DELETE(vec, id) vector_delete(&vec, id)
-#define VECTOR_TOTAL(vec) vector_total(&vec)
-#define VECTOR_FREE(vec) vector_free(&vec)
-#define VECTOR_CLEAR(vec) vector_clear(&vec)
+#define VECTOR_INIT(vec) vector vec; vector_init(&(vec))
+#define VECTOR_ADD(vec, item) vector_add(&vec, (void *) (item))
+#define VECTOR_SET(vec, id, item) vector_set(&(vec), (id), (void *) (item))
+#define VECTOR_GET(vec, type, id) (type) vector_get(&(vec), (id))
+#define VECTOR_DELETE(vec, id) vector_delete(&(vec), (id))
+#define VECTOR_TOTAL(vec) vector_total(&(vec))
+#define VECTOR_FREE(vec) vector_free(&(vec))
+#define VECTOR_CLEAR(vec) vector_clear(&(vec))
+#define VECTOR_MOVE(left,right) vector_move(&(left),&(right))
 
 typedef struct vector {
     void** items;
@@ -28,4 +29,7 @@ void* vector_get(vector*, int);
 void vector_delete(vector*, int);
 void vector_free(vector*);
 void vector_clear(vector*);
+void vector_move(vector* left, vector* right);
+void vector_initwithcap(vector* v, size_t capacity);
+vector vector_clone(vector* right);
 #endif

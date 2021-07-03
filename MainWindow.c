@@ -15,6 +15,8 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
 #include "EditItemWindow.h"
+#include "ProductRecord.h"
+#include "UserSetting.h"
 #include <CommCtrl.h>
 #define ID_MENU_ABOUT 1
 #define ID_MENU_VWS 2
@@ -24,6 +26,10 @@
 #define ID_BUTTON_NEXTPAGE 6
 #define ID_EDIT_PAGE 7
 #define ID_CHECKBOX_PAGE 8
+#define ID_MENU_SAVE 9
+#define ID_MENU_LOADALL 10
+#define ID_MENU_FLITER 11
+#define ID_MENU_FLITERLOADALL 12
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CreateMainWindow()
 {
@@ -67,11 +73,20 @@ void CreateMainWindow()
 
     return 0;
 }
+typedef struct Yinyue200_MainWindowData
+{
+    vector NowList;
+    vector PagedNowList;
+} YINYUE200_MAINWINDOWDATA;
 LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
 {
     LPNMHDR  lpnmh = (LPNMHDR)lParam;
     HWND     hwndListView = GetDlgItem(hWnd, ID_LISTVIEW_MAIN);
-
+    YINYUE200_MAINWINDOWDATA* windata = GetProp(hWnd, YINYUE200_WINDOW_DATA);
+    if (windata==NULL)
+    {
+        return 0;
+    }
     switch (lpnmh->code)
     {
     case LVN_GETDISPINFO:
@@ -84,7 +99,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
             if (lpdi->item.mask & LVIF_TEXT)
             {
                 swprintf_s(szString, _countof(szString),
-                    TEXT("Item %d - Column %d"),
+                    TEXT("项目 %d - Column %d"),
                     lpdi->item.iItem + 1, lpdi->item.iSubItem);
                 wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
                     szString, _TRUNCATE);
@@ -92,12 +107,11 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         }
         else
         {
+            //load id
             if (lpdi->item.mask & LVIF_TEXT)
             {
-                swprintf_s(szString, _countof(szString),
-                    TEXT("Item %d"), lpdi->item.iItem + 1);
                 wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
-                    szString, _TRUNCATE);
+                    (VECTOR_GET(windata->PagedNowList, PRODUCTRECORD*, lpdi->item.iItem))->Name, _TRUNCATE);
             }
 
             if (lpdi->item.mask & LVIF_IMAGE)
@@ -167,13 +181,13 @@ HWND Yinyue200_Main_CreateListView(HWND hwndParent)
 
     return hwndListView;
 }
-BOOL InsertListViewItems(HWND hwndListView)
+BOOL InsertListViewItems(HWND hwndListView,size_t count)
 {
     //empty the list
     ListView_DeleteAllItems(hwndListView);
 
     //set the number of items in the list
-    ListView_SetItemCount(hwndListView, 100);
+    ListView_SetItemCount(hwndListView, count);
 
     return TRUE;
 }
@@ -196,9 +210,32 @@ BOOL Yinyue200_Main_InitListView(HWND hwndListView)
         ListView_InsertColumn(hwndListView, i, &lvColumn);
     }
 
-    InsertListViewItems(hwndListView);
+    InsertListViewItems(hwndListView, 0);
 
     return TRUE;
+}
+void Yinyue200_Main_UpdateListViewData(HWND hwnd)
+{
+    HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
+    HWND nextpagebtn = GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE);
+    HWND editpagebtn = GetDlgItem(hwnd, ID_EDIT_PAGE);
+    HWND listview = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
+    YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+    if (windata)
+    {
+        if (IsDlgButtonChecked(hwnd, ID_CHECKBOX_PAGE))
+        {
+
+        }
+        else
+        {
+            vector nn = vector_clone(&windata->NowList);
+            VECTOR_FREE(windata->PagedNowList);
+            VECTOR_MOVE(windata->PagedNowList, windata->NowList);
+        }
+        InsertListViewItems(listview, VECTOR_TOTAL(windata->PagedNowList));
+    }
+
 }
 void UpdateCheckBoxInfo(HWND hwnd)
 {
@@ -218,6 +255,7 @@ void UpdateCheckBoxInfo(HWND hwnd)
         ShowWindow(nextpagebtn, SW_HIDE);
         ShowWindow(editpagebtn, SW_HIDE);
     }
+    Yinyue200_Main_UpdateListViewData(hwnd);
 }
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -236,6 +274,10 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HMENU hAns = CreateMenu();
         HMENU hUsr = CreateMenu();
         HMENU hHelp = CreateMenu();
+        //HMENU hSave = CreateMenu();
+        //HMENU hLoadAll = CreateMenu();
+        //HMENU hfliter = CreateMenu();
+        //HMENU hfliterLoadAll = CreateMenu();
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFile, L"文件");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFind, L"查询");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAdd, L"新增");
@@ -246,6 +288,10 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hHelp, MF_STRING, ID_MENU_VWS, L"GitHub");
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"关于");
         AppendMenu(hAdd, MF_STRING, ID_MENU_ADDRECORD, L"添加单个条目");
+        AppendMenu(hFile, MF_STRING, ID_MENU_SAVE, L"保存");
+        AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有");
+        AppendMenu(hFind, MF_STRING, ID_MENU_FLITER, L"筛选现有数据");
+        AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询");
 
         SetMenu(hwnd, hMenubar);
 
@@ -306,6 +352,17 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);      // Pointer not needed.
         UpdateCheckBoxInfo(hwnd);
+
+        YINYUE200_MAINWINDOWDATA* windata = malloc(sizeof(YINYUE200_MAINWINDOWDATA));
+        if (windata)
+        {
+            memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
+            SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
+        }
+        else
+        {
+            UnrecoveryableFailed();
+        }
     }
     return 0;
     case WM_NOTIFY:
@@ -330,6 +387,24 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         {
             CreateEditItemWindow();
         }
+        else if (LOWORD(wParam) == ID_MENU_SAVE)
+        {
+            yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(),&yinyue200_ProductList);
+            MessageBox(hwnd, L"保存成功", L"消息", 0);
+        }
+        else if (LOWORD(wParam) == ID_MENU_LOADALL)
+        {
+            {
+                YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                if (windata)
+                {
+                    
+                    vector t = vector_clone(&yinyue200_ProductList);;
+                    VECTOR_MOVE(windata->NowList, t);
+                    Yinyue200_Main_UpdateListViewData(hwnd);
+                }
+            }
+        }
         else
         {
             switch (HIWORD(wParam))
@@ -348,10 +423,17 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
     return 0;
     case WM_DESTROY:
+    {
+        YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (windata)
+        {
+            free(windata);
+        }
+        RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
         PostQuitMessage(0);
         return 0;
-
+    }
     case WM_PAINT:
     {
         PAINTSTRUCT ps;

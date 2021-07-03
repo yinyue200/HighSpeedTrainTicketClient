@@ -24,7 +24,59 @@ PRODUCTRECORD_PTR CreateProductRecord()
 	memset(PT, 0, sizeof(PRODUCTRECORD));
 	return PT;
 }
-vector* LoadToVector(LPSTR path)
+bool WritePWSTR(PWSTR str, HANDLE hFile)
+{
+	size_t len = wcslen(str);
+	size_t utf8len = len * sizeof(wchar_t) * 2;
+	char* utf8bytes = malloc(utf8len);
+	if (utf8bytes)
+	{
+		utf8len = WideCharToMultiByte(CP_UTF8, 0, str, len, utf8bytes, utf8len, NULL, NULL);
+
+		DWORD written;
+		if (WriteFile(hFile, utf8bytes, utf8len, &written, NULL))
+		{
+			free(utf8bytes);
+			return true;
+		}
+		int reason = GetLastError();
+		free(utf8bytes);
+		return false;
+	}
+	else
+	{
+		return false;
+	}
+
+}
+bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
+{
+	HANDLE hFile = CreateFile(path,               // file to open
+		GENERIC_READ|GENERIC_WRITE,          // open for reading
+		0,       // share for reading
+		NULL,                  // default security
+		CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL, // normal file
+		NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		int errcod = GetLastError();
+		MessageBox(NULL, L"Save Failed!", NULL, 0);
+		return false;
+	}
+	size_t length = VECTOR_TOTAL(*vec);
+	for (size_t i = 0; i < length; i++)
+	{
+		PRODUCTRECORD_PTR record = VECTOR_GET(*vec, PRODUCTRECORD_PTR, i);
+		FailedIfFalse(WritePWSTR(record->Name, hFile));
+		FailedIfFalse(WritePWSTR(L"\t",hFile));
+		//FailedIfFalse(WritePWSTR(record->ID, hFile));
+		//FailedIfFalse(WritePWSTR(L"\t", hFile));
+		FailedIfFalse(WritePWSTR(L"\n", hFile));
+	}
+	CloseHandle(hFile);
+}
+vector* ProductRecordLoadToVector(LPWSTR path)
 {
 	//FILE SHOULD BE UTF-8 ENCODED
 	vector* vec = malloc(sizeof(vector));
@@ -35,16 +87,21 @@ vector* LoadToVector(LPSTR path)
 		FILE_SHARE_READ,       // share for reading
 		NULL,                  // default security
 		OPEN_EXISTING,         // existing file only
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, // normal file
+		FILE_ATTRIBUTE_NORMAL, // normal file
 		NULL);                 // no attr. template
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
+		CloseHandle(hFile);
 		return vec;//找不到文件，返回空 vector
 	}
 
 	LARGE_INTEGER FILESIZEINFO;
 	GetFileSizeEx(hFile, &FILESIZEINFO);
-
+	if (FILESIZEINFO.QuadPart == 0)
+	{
+		CloseHandle(hFile);
+		return vec;
+	}
 	char* data = malloc(FILESIZEINFO.QuadPart);
 	if (data)
 	{
@@ -63,31 +120,35 @@ vector* LoadToVector(LPSTR path)
 				{
 					char one = data[i];
 					size_t size = i - laststart;
-					if (one == '\t')
+					if (one == '\t'|| one == '\r' || one == '\n')
 					{
-						PWCHAR info = malloc(size * 2);
-						MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, &data[laststart], size, info, size);
-						switch (tindex)
+						if (size > 0)
 						{
-						case 0:
-							p->Name = info;
-						case 1:
-							p->ID = info;
-						default:
-							break;
+							PWCHAR info = malloc(size * 2);
+							memset(info, 0, size * 2);
+							MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+							switch (tindex)
+							{
+							case 0:
+								p->Name = info;
+							case 1:
+								//p->ID = info;
+							default:
+								break;
+							}
 						}
 						tindex++;
 						laststart = i;
 					}
-					else if (one == '\r' || one == '\n')
+					if (one == '\r' || one == '\n')
 					{
 						laststart = i;
 						if (size > 0)
 						{
 							tindex = 0;
-							VECTOR_ADD(vec, p);
+							VECTOR_ADD(*vec, p);
 							p = CreateProductRecord();
-							if (p != NULL)
+							if (p == NULL)
 							{
 								UnrecoveryableFailed();
 							}
@@ -98,16 +159,19 @@ vector* LoadToVector(LPSTR path)
 			else
 			{
 				UnrecoveryableFailed();
-			}		
+			}
+			free(p);
 		}
 		else
 		{
 			UnrecoveryableFailed();
 		}
+		free(data);
 	}
 	else
 	{
 		UnrecoveryableFailed();
 	}
-
+	CloseHandle(hFile);
+	return vec;
 }

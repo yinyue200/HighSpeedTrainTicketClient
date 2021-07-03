@@ -33,3 +33,4 @@ wchar_t* CreateWSTR(size_t length);
 wchar_t* CreateWstrForWindowText(HWND hwnd);
 void UnrecoveryableFailed();
 void CheckIfNoWindowAndQuit();
+void FailedIfFalse(bool state);

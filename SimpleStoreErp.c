@@ -21,6 +21,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "common.h"
 #include "stdatomic.h"
 #include "vector.h"
+#include "ProductRecord.h"
+#include "UserSetting.h"
 
 vector yinyue200_ProductList;
 HINSTANCE yinyue200_hInstance;
@@ -45,7 +47,11 @@ bool CheckIfNoWindow()
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-    vector_init(&yinyue200_ProductList);
+    {
+        vector* p = ProductRecordLoadToVector(yinyue200_GetConfigFilePath());
+        VECTOR_MOVE(yinyue200_ProductList, *p);
+    }
+
     yinyue200_hInstance = hInstance;
     yinyue200_nCmdShow = nCmdShow;
     CreateMainWindow();

@@ -1,3 +1,8 @@
-#include "common.h"
+#include "UserSetting.h"
 
-PWCHAR yinyue200_configFilePath = L"data.tsv";
+static PWCHAR yinyue200_configFilePath = L"data.tsv";
+
+PWCHAR yinyue200_GetConfigFilePath()
+{
+	return yinyue200_configFilePath;
+}

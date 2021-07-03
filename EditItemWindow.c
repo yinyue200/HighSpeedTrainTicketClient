@@ -125,13 +125,13 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
             L"BUTTON",
             L"±£´æ",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
             10, lasty,100,50,
             hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),NULL);
         HWND hwndButton_Cancel = CreateWindow(
             L"BUTTON",
             L"È¡Ïû",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
             10+100+10, lasty, 100, 50,
             hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         lasty += 50;
@@ -175,10 +175,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 PRODUCTRECORD_PTR productrecord = CreateProductRecord();
 
                 productrecord->Name = name;
-                productrecord->ID = id;
+                //productrecord->ID = id;
 
                 VECTOR_ADD(yinyue200_ProductList, productrecord);
-                
+                SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
             else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
             {
