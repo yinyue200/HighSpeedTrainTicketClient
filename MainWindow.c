@@ -14,9 +14,11 @@
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
+#include "MainWindow.h"
 #include "EditItemWindow.h"
 #include "ProductRecord.h"
 #include "UserSetting.h"
+#include "LoadDataFilterWindow.h"
 #include <CommCtrl.h>
 #define ID_MENU_ABOUT 1
 #define ID_MENU_VWS 2
@@ -73,11 +75,7 @@ void CreateMainWindow()
 
     return 0;
 }
-typedef struct Yinyue200_MainWindowData
-{
-    vector NowList;
-    vector PagedNowList;
-} YINYUE200_MAINWINDOWDATA;
+
 LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
 {
     LPNMHDR  lpnmh = (LPNMHDR)lParam;
@@ -93,32 +91,51 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
     {
         LV_DISPINFO* lpdi = (LV_DISPINFO*)lParam;
         TCHAR szString[MAX_PATH];
-
-        if (lpdi->item.iSubItem)
+        PRODUCTRECORD* record = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD*, lpdi->item.iItem);
+        if (record)
         {
-            if (lpdi->item.mask & LVIF_TEXT)
+            if (lpdi->item.iSubItem)
             {
-                swprintf_s(szString, _countof(szString),
-                    TEXT("项目 %d - Column %d"),
-                    lpdi->item.iItem + 1, lpdi->item.iSubItem);
-                wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
-                    szString, _TRUNCATE);
-            }
-        }
-        else
-        {
-            //load id
-            if (lpdi->item.mask & LVIF_TEXT)
-            {
-                wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
-                    (VECTOR_GET(windata->PagedNowList, PRODUCTRECORD*, lpdi->item.iItem))->Name, _TRUNCATE);
-            }
+                if (lpdi->item.mask & LVIF_TEXT)
+                {
+                    switch (lpdi->item.iSubItem)
+                    {
+                    case 1:
+                    {
+                        swprintf_s(szString, _countof(szString),
+                            TEXT("%lld"),
+                            record->ID);
+                        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
+                            szString, _TRUNCATE);
+                        break;
+                    }
+                    default:
+                    {
+                        swprintf_s(szString, _countof(szString),
+                            TEXT("项目 %d - Column %d"),
+                            lpdi->item.iItem + 1, lpdi->item.iSubItem);
+                        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
+                            szString, _TRUNCATE);
+                    }
+                    }
 
-            if (lpdi->item.mask & LVIF_IMAGE)
-            {
-                lpdi->item.iImage = 0;
+                }
             }
-        }
+            else
+            {
+                //load name
+                if (lpdi->item.mask & LVIF_TEXT)
+                {
+                    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
+                        record->Name, _TRUNCATE);
+                }
+
+                if (lpdi->item.mask & LVIF_IMAGE)
+                {
+                    lpdi->item.iImage = 0;
+                }
+            }
+        }   
     }
     return 0;
 
@@ -231,7 +248,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
         {
             vector nn = vector_clone(&windata->NowList);
             VECTOR_FREE(windata->PagedNowList);
-            VECTOR_MOVE(windata->PagedNowList, windata->NowList);
+            VECTOR_MOVE(windata->PagedNowList, nn);
         }
         InsertListViewItems(listview, VECTOR_TOTAL(windata->PagedNowList));
     }
@@ -357,6 +374,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         if (windata)
         {
             memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
+            windata->WindowHwnd = hwnd;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
         }
         else
@@ -405,13 +423,20 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 }
             }
         }
+        else if (LOWORD(wParam) == ID_MENU_FLITERLOADALL)
+        {
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            if (windata)
+            {
+                CreateLoadDataFilterWindow(windata);
+            }
+        }
         else
         {
             switch (HIWORD(wParam))
             {
             case BN_CLICKED:
             {
-
                 if (LOWORD(wParam) == ID_CHECKBOX_PAGE)
                 {
                     UpdateCheckBoxInfo(hwnd);

@@ -24,7 +24,7 @@ enum ProductState
 typedef struct ProductRecord
 {
 	wchar_t* Name;//0
-	int ID;//1
+	int64_t ID;//1
 	wchar_t* Type;//3
 	enum ProductState State;//4
 	int64_t Date;//5

@@ -13,6 +13,7 @@
 //
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
+#pragma once
 #include <windows.h>
 #include <windowsx.h>
 #include <stdbool.h>
@@ -34,3 +35,4 @@ wchar_t* CreateWstrForWindowText(HWND hwnd);
 void UnrecoveryableFailed();
 void CheckIfNoWindowAndQuit();
 void FailedIfFalse(bool state);
+void* yinyue200_safemalloc(size_t size);

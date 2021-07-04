@@ -42,6 +42,9 @@
     <ClCompile Include="UserSetting.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LoadDataFilterWindow.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UserSetting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadDataFilterWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -70,8 +70,13 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 		PRODUCTRECORD_PTR record = VECTOR_GET(*vec, PRODUCTRECORD_PTR, i);
 		FailedIfFalse(WritePWSTR(record->Name, hFile));
 		FailedIfFalse(WritePWSTR(L"\t",hFile));
-		//FailedIfFalse(WritePWSTR(record->ID, hFile));
-		//FailedIfFalse(WritePWSTR(L"\t", hFile));
+		wchar_t idbuffer[30];
+		swprintf_s(idbuffer, 30, L"%lld", record->ID);
+		FailedIfFalse(WritePWSTR(idbuffer, hFile));
+		FailedIfFalse(WritePWSTR(L"\t", hFile));
+
+
+
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
 	}
 	CloseHandle(hFile);
@@ -139,6 +144,13 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 								case 0:
 									p->Name = info;
 								case 1:
+								{
+									int64_t id;
+									if (swscanf(info, L"%lld", &id) == 1)
+									{
+										p->ID = id;
+									}
+								}
 									//p->ID = info;
 								default:
 									break;

@@ -18,6 +18,9 @@
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
+#define ID_EDIT_ID 4
+#define ID_EDIT_TYPE 5
+
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CreateEditItemWindow()
 {
@@ -104,7 +107,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             ES_LEFT,
             10, lasty, 500, 25,
             hwnd,         // parent window 
-            (HMENU)ID_EDIT_NAME,   // edit control ID 
+            (HMENU)ID_EDIT_ID,   // edit control ID 
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);        // pointer not needed
         lasty += 25;
@@ -118,7 +121,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             ES_LEFT,
             10, lasty, 500, 25,
             hwnd,
-            (HMENU)ID_EDIT_NAME,
+            (HMENU)ID_EDIT_TYPE,
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);
         lasty += 25;
@@ -170,12 +173,23 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             {
                 EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                 PWCHAR name = CreateWstrForWindowText(windowdata->hwndEdit_Name);
-                PWCHAR id = CreateWstrForWindowText(windowdata->hwndEdit_ID);
+                PWCHAR idstr = CreateWstrForWindowText(windowdata->hwndEdit_ID);
                 
                 PRODUCTRECORD_PTR productrecord = CreateProductRecord();
 
                 productrecord->Name = name;
-                //productrecord->ID = id;
+                //wchar_t* IDBuffer = yinyue200_safemalloc(30 * sizeof(wchar_t));
+                //swprintf(IDBuffer, 30, L"%d", productrecord->ID);
+                int64_t id;
+                if (swscanf(idstr, L"%lld", &id) == 1)
+                {
+                    productrecord->ID = id;
+                }
+                else
+                {
+                    MessageBox(hwnd, L"ID ∏Ò Ω¥ÌŒÛ", NULL, 0);
+                }
+                free(idstr);
 
                 VECTOR_ADD(yinyue200_ProductList, productrecord);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);

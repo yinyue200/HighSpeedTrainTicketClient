@@ -14,4 +14,11 @@
 //
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
+typedef struct Yinyue200_MainWindowData
+{
+    HWND WindowHwnd;
+    vector NowList;
+    vector PagedNowList;
+} YINYUE200_MAINWINDOWDATA;
 void CreateMainWindow();
+void Yinyue200_Main_UpdateListViewData(HWND hwnd);

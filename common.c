@@ -47,3 +47,16 @@ void FailedIfFalse(bool state)
 		UnrecoveryableFailed();
 	}
 }
+void* yinyue200_safemalloc(size_t size)
+{
+	void* p = malloc(size);
+	if (p)
+	{
+		return p;
+	}
+	else
+	{
+		UnrecoveryableFailed();
+		return NULL;
+	}
+}
