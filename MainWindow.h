@@ -19,6 +19,7 @@ typedef struct Yinyue200_MainWindowData
     HWND WindowHwnd;
     vector NowList;
     vector PagedNowList;
+    int pagestart;
 } YINYUE200_MAINWINDOWDATA;
 void CreateMainWindow();
 void Yinyue200_Main_UpdateListViewData(HWND hwnd);

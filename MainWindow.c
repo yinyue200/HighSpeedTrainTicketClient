@@ -20,6 +20,8 @@
 #include "UserSetting.h"
 #include "LoadDataFilterWindow.h"
 #include <CommCtrl.h>
+#define MAIN_DISPLAYPAGESIZE 10
+#define MAIN_STATUSBAR_COM 4
 #define ID_MENU_ABOUT 1
 #define ID_MENU_VWS 2
 #define ID_MENU_ADDRECORD 3
@@ -32,7 +34,101 @@
 #define ID_MENU_LOADALL 10
 #define ID_MENU_FLITER 11
 #define ID_MENU_FLITERLOADALL 12
+#define ID_STATUSBAR_MAIN 13
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void configstatusbar(HWND hwndParent,HWND  hwndStatus)
+{
+    int cParts = MAIN_STATUSBAR_COM;
+    RECT rcClient;
+
+    // Get the coordinates of the parent window's client area.
+    GetClientRect(hwndParent, &rcClient);
+
+    // Allocate an array for holding the right edge coordinates.
+    HLOCAL hloc = LocalAlloc(LHND, sizeof(int) * cParts);
+    if (hloc)
+    {
+        PINT paParts = (PINT)LocalLock(hloc);
+        if (paParts)
+        {
+            // Calculate the right edge coordinate for each part, and
+// copy the coordinates to the array.
+            int nWidth = rcClient.right / cParts;
+            int rightEdge = nWidth;
+            for (int i = 0; i < cParts; i++) {
+                paParts[i] = rightEdge;
+                rightEdge += nWidth;
+            }
+
+            // Tell the status bar to create the window parts.
+            SendMessage(hwndStatus, SB_SETPARTS, (WPARAM)cParts, (LPARAM)
+                paParts);
+
+            // Free the array, and return.
+            LocalUnlock(hloc);
+        }
+        else
+        {
+            UnrecoveryableFailed();
+        }
+
+        LocalFree(hloc);
+    }
+    else 
+    {
+        UnrecoveryableFailed();
+    }
+}
+//
+//   FUNCTION: OnStatusbarSize(HWND, UINT, int, int)
+//
+//   PURPOSE: Process the WM_SIZE message
+//
+void OnStatusbarSize(HWND hWnd, UINT state, int cx, int cy)
+{
+    HWND hStatusbar = GetDlgItem(hWnd, ID_STATUSBAR_MAIN);
+
+    configstatusbar(hWnd, hStatusbar);
+
+    // Resize statusbar so it's always same width as parent's client area
+    SendMessage(hStatusbar, WM_SIZE, 0, 0);
+}
+// Description: 
+//   Creates a status bar and divides it into the specified number of parts.
+// Parameters:
+//   hwndParent - parent window for the status bar.
+//   idStatus - child window identifier of the status bar.
+//   hinst - handle to the application instance.
+//   cParts - number of parts into which to divide the status bar.
+// Returns:
+//   The handle to the status bar.
+//
+HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE
+    hinst, int cParts)
+{
+    //see https://docs.microsoft.com/en-us/windows/win32/controls/create-status-bars
+
+    HWND hwndStatus;
+
+    // Ensure that the common control DLL is loaded.
+    //InitCommonControls();
+
+    // Create the status bar.
+    hwndStatus = CreateWindowEx(
+        0,                       // no extended styles
+        STATUSCLASSNAME,         // name of status bar class
+        (PCTSTR)NULL,           // no text when first created
+        SBARS_SIZEGRIP |         // includes a sizing grip
+        WS_CHILD | WS_VISIBLE,   // creates a visible child window
+        0, 0, 0, 0,              // ignores size and position
+        hwndParent,              // handle to parent window
+        (HMENU)idStatus,       // child window identifier
+        hinst,                   // handle to application instance
+        NULL);                   // no window creation data
+
+    
+    configstatusbar(hwndParent, hwndStatus);
+}
 void CreateMainWindow()
 {
     // Register the window class.
@@ -69,7 +165,7 @@ void CreateMainWindow()
         int a = GetLastError();
         return 0;
     }
-
+    DoCreateStatusBar(hwnd, ID_STATUSBAR_MAIN, yinyue200_hInstance, 4);
     ShowWindow(hwnd, yinyue200_nCmdShow);
 
 
@@ -242,7 +338,20 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
     {
         if (IsDlgButtonChecked(hwnd, ID_CHECKBOX_PAGE))
         {
-
+        RESETPAGE:;
+            VECTOR_CLEAR(windata->PagedNowList);
+            for (size_t i = windata->pagestart; i < VECTOR_TOTAL(windata->NowList); i++)
+            {
+                VECTOR_ADD(windata->PagedNowList, vector_get(&windata->NowList, i));
+            }
+            if (VECTOR_TOTAL(windata->PagedNowList) == 0)
+            {
+                windata->pagestart = 0;
+                if (VECTOR_TOTAL(windata->NowList) > 0)
+                {
+                    goto RESETPAGE;
+                }
+            }
         }
         else
         {
@@ -251,10 +360,13 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
             VECTOR_MOVE(windata->PagedNowList, nn);
         }
         InsertListViewItems(listview, VECTOR_TOTAL(windata->PagedNowList));
-    }
 
+        wchar_t message[30];
+        swprintf(message, 30, L"已加载 %d 项", (int)(VECTOR_TOTAL(windata->NowList)));
+        SendMessage(GetDlgItem(hwnd,ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(0, 0), message);
+    }
 }
-void UpdateCheckBoxInfo(HWND hwnd)
+void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
 {
     HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
     HWND nextpagebtn = GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE);
@@ -265,6 +377,15 @@ void UpdateCheckBoxInfo(HWND hwnd)
         ShowWindow(lastpagebtn, SW_SHOW);
         ShowWindow(nextpagebtn, SW_SHOW);
         ShowWindow(editpagebtn, SW_SHOW);
+        if (windowdata->pagestart + VECTOR_TOTAL(windowdata->PagedNowList) >= VECTOR_TOTAL(windowdata->NowList))
+        {
+            EnableWindow(nextpagebtn, FALSE);
+        }
+        else
+        {
+            EnableWindow(nextpagebtn, TRUE);
+        }
+        EnableWindow(lastpagebtn, windowdata->pagestart > 0);
     }
     else
     {
@@ -368,7 +489,6 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ID_BUTTON_NEXTPAGE,       // No menu.
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);      // Pointer not needed.
-        UpdateCheckBoxInfo(hwnd);
 
         YINYUE200_MAINWINDOWDATA* windata = malloc(sizeof(YINYUE200_MAINWINDOWDATA));
         if (windata)
@@ -376,6 +496,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
             windata->WindowHwnd = hwnd;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
+            UpdateCheckBoxInfo(hwnd, windata);
         }
         else
         {
@@ -433,17 +554,64 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
         else
         {
-            switch (HIWORD(wParam))
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            if (windata)
             {
-            case BN_CLICKED:
-            {
-                if (LOWORD(wParam) == ID_CHECKBOX_PAGE)
+                switch (HIWORD(wParam))
                 {
-                    UpdateCheckBoxInfo(hwnd);
+                case BN_CLICKED:
+                {
+                    if (LOWORD(wParam) == ID_CHECKBOX_PAGE)
+                    {
+                        UpdateCheckBoxInfo(hwnd,windata);
+                    }
+                    else if (LOWORD(wParam) == ID_BUTTON_NEXTPAGE)
+                    {
+                        windata->pagestart += MAIN_DISPLAYPAGESIZE;
+                        Yinyue200_Main_UpdateListViewData(hwnd);
+                    }
+                    else if (LOWORD(wParam) == ID_BUTTON_PREVPAGE)
+                    {
+                        windata->pagestart -= MAIN_DISPLAYPAGESIZE;
+                        if (windata->pagestart < 0)
+                            windata->pagestart = 0;
+                        Yinyue200_Main_UpdateListViewData(hwnd);
+                    }
+                }
+                break;
+                case EN_CHANGE:
+                {
+                    switch (LOWORD(wParam))
+                    {
+                    case ID_EDIT_PAGE:
+                    {
+                        HWND editpagectrl = GetDlgItem(hwnd,ID_EDIT_PAGE);
+                        LPWSTR pagestr = CreateWstrForWindowText(editpagectrl);
+                        int pagenum;
+                        int startpos;
+                        if (swscanf(pagestr, L"%d", &pagenum) == 1&& 
+                            ((startpos=(pagenum-1)*MAIN_DISPLAYPAGESIZE)<VECTOR_TOTAL(windata->NowList)||startpos==0)
+                            &&startpos>=0
+                            )
+                        {
+                            windata->pagestart = startpos;
+                            Yinyue200_Main_UpdateListViewData(hwnd);
+                            PostMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(1, 0), L"");
+                        }
+                        else
+                        {
+                            PostMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(1, 0), L"无效的页码");
+                        }
+                    }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                break;
                 }
             }
-            break;
-            }
+
         }
     }
     return 0;
@@ -458,6 +626,13 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         DecreaseWindowCount();
         PostQuitMessage(0);
         return 0;
+    }
+    case WM_SIZE:
+    {
+        int x = LOWORD(lParam);
+        int y = HIWORD(lParam);
+        OnStatusbarSize(hwnd, wParam, x, y);
+        break;
     }
     case WM_PAINT:
     {
