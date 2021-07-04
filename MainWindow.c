@@ -395,6 +395,12 @@ void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
     }
     Yinyue200_Main_UpdateListViewData(hwnd);
 }
+void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
+{
+    vector t = vector_clone(&yinyue200_ProductList);;
+    VECTOR_MOVE(windata->NowList, t);
+    Yinyue200_Main_UpdateListViewData(hwnd);
+}
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -545,6 +551,15 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
         }
         else if (LOWORD(wParam) == ID_MENU_FLITERLOADALL)
+        {
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            if (windata)
+            {
+                yinyue200_main_loadnowlist(hwnd, windata);
+                CreateLoadDataFilterWindow(windata);
+            }
+        }
+        else if (LOWORD(wParam) == ID_MENU_FLITER)
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
