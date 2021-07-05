@@ -32,4 +32,5 @@ void vector_clear(vector*);
 void vector_move(vector* left, vector* right);
 void vector_initwithcap(vector* v, size_t capacity);
 vector vector_clone(vector* right);
+void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func, void* context);
 #endif

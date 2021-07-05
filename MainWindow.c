@@ -258,6 +258,27 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         */
     }
     return 0;
+    case LVN_COLUMNCLICK:
+    {
+        LPNMLISTVIEW info = lParam;
+        YINYUE200_MAINWINDOWDATA* windata = GetProp(hWnd, YINYUE200_WINDOW_DATA);
+        if (windata->sortcomindex == info->iSubItem)
+        {
+            windata->sortmethod++;
+            if (windata->sortmethod > 2)
+            {
+                windata->sortmethod = 0;
+                windata->sortcomindex = -1;
+            }
+        }
+        else
+        {
+            windata->sortcomindex = info->iSubItem;
+            windata->sortmethod = 1;
+        }
+        windata->sortstate = 0;
+        Yinyue200_Main_UpdateListViewData(hWnd);
+    }
     }
 
     return 0;
@@ -304,28 +325,85 @@ BOOL InsertListViewItems(HWND hwndListView,size_t count)
 
     return TRUE;
 }
-BOOL Yinyue200_Main_InitListView(HWND hwndListView)
+#define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ↓",TEXT(name) L" ↑" }
+#define MAINWINDOW_COLUMNCOUNT 5
+void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
 {
+    HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
+    LPWSTR       szString_o[MAINWINDOW_COLUMNCOUNT][3] = {
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("名称"), 
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("ID"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("Column 2"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("Column 3"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("Column 4")
+    };
     LV_COLUMN   lvColumn;
     int         i;
-    TCHAR       szString[5][20] = { TEXT("名称"), TEXT("ID"), TEXT("Column 2"), TEXT("Column 3"), TEXT("Column 4") };
+    LPWSTR       szString[MAINWINDOW_COLUMNCOUNT];
+
+    YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+    int selecol = -1;
+    int mode = 0;
+    if (windata)
+    {
+        selecol = windata->sortcomindex;
+        mode = windata->sortmethod;
+    }
+
+    for (int i = 0; i < MAINWINDOW_COLUMNCOUNT; i++)
+    {
+        szString[i] = szString_o[i][i == selecol ? mode : 0];
+    }
 
     //empty the list
-    ListView_DeleteAllItems(hwndListView);
+    if(first)
+        ListView_DeleteAllItems(hwndListView);
 
     //initialize the columns
     lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     lvColumn.fmt = LVCFMT_LEFT;
     lvColumn.cx = 120;
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < MAINWINDOW_COLUMNCOUNT; i++)
     {
         lvColumn.pszText = szString[i];
-        ListView_InsertColumn(hwndListView, i, &lvColumn);
+        if(first)
+            ListView_InsertColumn(hwndListView, i, &lvColumn);
+        else
+            ListView_SetColumn(hwndListView, i, &lvColumn);
     }
+}
+BOOL Yinyue200_Main_InitListView(HWND hwnd,HWND hwndListView)
+{
+    Yinyue200_Main_SetListViewColumn(hwnd, true);
 
     InsertListViewItems(hwndListView, 0);
 
     return TRUE;
+}
+typedef struct Yinyue200_Main_ListViewSortContext
+{
+    void* (*GetCompareObject)(void* obj);
+    BOOL IS_REV_RESULT;
+} YINYUE200_MAINLISTVIEWSORTCONTEXT;
+int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right)
+{
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    int result = wcscmp(context->GetCompareObject(left), context->GetCompareObject(right));
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
+int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
+{
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    int64_t const* l = context->GetCompareObject(left);
+    int64_t const* r = context->GetCompareObject(right);
+    int result = *l - *r;
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
 }
 void Yinyue200_Main_UpdateListViewData(HWND hwnd)
 {
@@ -336,6 +414,35 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
     YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
     if (windata)
     {
+        YINYUE200_MAINLISTVIEWSORTCONTEXT qsortcontext = { 0 };
+        qsortcontext.IS_REV_RESULT = windata->sortmethod == 2;
+        if (windata->sortstate == 0)
+        {
+            windata->sortstate = 1;
+            vector nn = vector_clone(&windata->UnsortedNowList);
+            VECTOR_FREE(windata->NowList);
+            VECTOR_MOVE(windata->NowList, nn);
+            switch (windata->sortcomindex)
+            {
+            case -1:
+            {
+                //do nothing
+                break;
+            }
+            case 0:
+            {
+                qsortcontext.GetCompareObject = yinyue200_GetProductRecordName;
+                vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_PWSTRCompare, &qsortcontext);
+                break;
+            }
+            case 1:
+                qsortcontext.GetCompareObject = yinyue200_GetProductRecordID;
+                vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_int64Compare, &qsortcontext);
+                break;
+            default:
+                break;
+            }
+        }
         if (IsDlgButtonChecked(hwnd, ID_CHECKBOX_PAGE))
         {
         RESETPAGE:;
@@ -359,13 +466,15 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
             VECTOR_FREE(windata->PagedNowList);
             VECTOR_MOVE(windata->PagedNowList, nn);
         }
+        Yinyue200_Main_SetListViewColumn(hwnd, false);
         InsertListViewItems(listview, VECTOR_TOTAL(windata->PagedNowList));
 
         wchar_t message[30];
         swprintf(message, 30, L"已加载 %d 项", (int)(VECTOR_TOTAL(windata->NowList)));
-        SendMessage(GetDlgItem(hwnd,ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(0, 0), message);
+        SendMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(0, 0), message);
     }
 }
+
 void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
 {
     HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
@@ -398,7 +507,8 @@ void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
 void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
 {
     vector t = vector_clone(&yinyue200_ProductList);;
-    VECTOR_MOVE(windata->NowList, t);
+    VECTOR_MOVE(windata->UnsortedNowList, t);
+    windata->sortstate = 0;
     Yinyue200_Main_UpdateListViewData(hwnd);
 }
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -440,7 +550,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         SetMenu(hwnd, hMenubar);
 
         HWND listview = Yinyue200_Main_CreateListView(hwnd);
-        Yinyue200_Main_InitListView(listview);
+        Yinyue200_Main_InitListView(hwnd,listview);
 
         int buttony = 500;
         int buttonx = 10;
@@ -543,10 +653,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                 if (windata)
                 {
-                    
-                    vector t = vector_clone(&yinyue200_ProductList);;
-                    VECTOR_MOVE(windata->NowList, t);
-                    Yinyue200_Main_UpdateListViewData(hwnd);
+                    yinyue200_main_loadnowlist(hwnd, windata);
                 }
             }
         }

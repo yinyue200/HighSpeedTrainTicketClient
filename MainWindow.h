@@ -17,9 +17,13 @@
 typedef struct Yinyue200_MainWindowData
 {
     HWND WindowHwnd;
+    vector UnsortedNowList;
     vector NowList;
     vector PagedNowList;
     int pagestart;
+    int sortcomindex;//排序的列号
+    int sortstate;//是否已经应用排序
+    int sortmethod;//升降序
 } YINYUE200_MAINWINDOWDATA;
 void CreateMainWindow();
 void Yinyue200_Main_UpdateListViewData(HWND hwnd);

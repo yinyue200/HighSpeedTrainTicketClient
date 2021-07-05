@@ -96,3 +96,8 @@ vector vector_clone(vector* right)
         memcpy(vec.items, right->items, sizeof(void*) * right->capacity);
     return vec;
 }
+
+void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func,void* context)
+{
+    qsort_s(vec->items, vector_total(vec), sizeof(void*), func, context);
+}

@@ -169,9 +169,9 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 }
 
 
-                for (size_t i = 0; i < VECTOR_TOTAL(mainwindow->NowList); i++)
+                for (size_t i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
                 {
-                    PRODUCTRECORD* record = VECTOR_GET(mainwindow->NowList, PRODUCTRECORD*, i);
+                    PRODUCTRECORD* record = VECTOR_GET(mainwindow->UnsortedNowList, PRODUCTRECORD*, i);
                     BOOL SHOULDREV = TRUE;
                     if (IsNameFieldChk)
                     {
@@ -199,13 +199,14 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
                     if (!SHOULDREV)
                     {
-                        VECTOR_DELETE(mainwindow->NowList, i);
+                        VECTOR_DELETE(mainwindow->UnsortedNowList, i);
                         i--;
                     }
                 }
 
                 free(NameFieldText);
                 free(IdFieldText);
+                mainwindow->sortstate = 0;
                 Yinyue200_Main_UpdateListViewData(mainwindow->WindowHwnd);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }

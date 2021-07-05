@@ -13,7 +13,16 @@
 //
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
-
+#define DEFINE_GETMEMBERMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj)\
+{\
+PRODUCTRECORD_PTR p = obj;\
+return p->name;\
+}
+#define DEFINE_GETMEMBERADDRMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj)\
+{\
+PRODUCTRECORD_PTR p = obj;\
+return &p->name;\
+}
 #include "ProductRecord.h"
 
 PRODUCTRECORD_PTR CreateProductRecord()
@@ -199,3 +208,5 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 	}
 	return vec;
 }
+DEFINE_GETMEMBERMETHOD(Name);
+DEFINE_GETMEMBERADDRMETHOD(ID);

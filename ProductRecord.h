@@ -17,6 +17,7 @@
 #include <Windows.h>
 #include <stdint.h>
 #include "common.h"
+#define YINYUE200_DEFINESIG_GETMEMBERMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj);
 enum ProductState
 {
 	PRODUCTSTATE_UNKNOWN=0,
@@ -41,3 +42,5 @@ typedef  PRODUCTRECORD* PRODUCTRECORD_PTR;
 PRODUCTRECORD_PTR CreateProductRecord();
 vector* ProductRecordLoadToVector(LPWSTR path);
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec);
+YINYUE200_DEFINESIG_GETMEMBERMETHOD(Name)
+YINYUE200_DEFINESIG_GETMEMBERMETHOD(ID)
