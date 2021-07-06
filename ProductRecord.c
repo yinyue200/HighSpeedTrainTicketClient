@@ -129,6 +129,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 			{
 				int laststart = 0;
 				int tindex = 0;
+				BOOL lastisbl = FALSE;
 				PRODUCTRECORD_PTR p = CreateProductRecord();
 				if (p)
 				{
@@ -166,12 +167,12 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 								}
 							}
 							tindex++;
-							laststart = i;
+							laststart = i + 1;
 						}
 						if (one == '\r' || one == '\n')
 						{
-							laststart = i;
-							if (size > 0)
+							laststart = i + 1;
+							if (!lastisbl)
 							{
 								tindex = 0;
 								VECTOR_ADD(*vec, p);
@@ -181,6 +182,11 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									UnrecoveryableFailed();
 								}
 							}
+							lastisbl = true;
+						}
+						else
+						{
+							lastisbl = false;
 						}
 					}
 				}

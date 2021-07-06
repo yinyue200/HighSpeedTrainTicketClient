@@ -35,6 +35,7 @@
 #define ID_MENU_FLITER 11
 #define ID_MENU_FLITERLOADALL 12
 #define ID_STATUSBAR_MAIN 13
+#define ID_BUTTON_REMOVESELECTEDITEMS 14
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
 {
@@ -128,6 +129,8 @@ HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE
 
     
     configstatusbar(hwndParent, hwndStatus);
+
+    return hwndStatus;
 }
 void CreateMainWindow()
 {
@@ -278,6 +281,15 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         }
         windata->sortstate = 0;
         Yinyue200_Main_UpdateListViewData(hWnd);
+    }
+    case NM_DBLCLK:
+    {
+        LPNMITEMACTIVATE lpnmitem = lParam;
+        if (lpnmitem->iItem >= 0)
+        {
+            CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, lpnmitem->iItem));
+        }
+        break;
     }
     }
 
@@ -509,6 +521,8 @@ void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
     vector t = vector_clone(&yinyue200_ProductList);;
     VECTOR_MOVE(windata->UnsortedNowList, t);
     windata->sortstate = 0;
+    //OutputDebugString((VECTOR_GET(windata->UnsortedNowList,PRODUCTRECORD_PTR,0))->Name);
+
     Yinyue200_Main_UpdateListViewData(hwnd);
 }
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -605,11 +619,24 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ID_BUTTON_NEXTPAGE,       // No menu.
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);      // Pointer not needed.
+        HWND hwndRemoveSelectedItemsButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"删除所选",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
+            buttonx,         // x position 
+            buttony,         // y position 
+            100,        // Button width
+            50,        // Button height
+            hwnd,     // Parent window
+            ID_BUTTON_REMOVESELECTEDITEMS,       // No menu.
+            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
 
         YINYUE200_MAINWINDOWDATA* windata = malloc(sizeof(YINYUE200_MAINWINDOWDATA));
         if (windata)
         {
             memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
+            windata->sortcomindex = -1;
             windata->WindowHwnd = hwnd;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
             UpdateCheckBoxInfo(hwnd, windata);
@@ -640,7 +667,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
         else if (LOWORD(wParam) == ID_MENU_ADDRECORD)
         {
-            CreateEditItemWindow();
+            CreateEditItemWindow(NULL);
         }
         else if (LOWORD(wParam) == ID_MENU_SAVE)
         {
@@ -683,21 +710,62 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 {
                 case BN_CLICKED:
                 {
-                    if (LOWORD(wParam) == ID_CHECKBOX_PAGE)
+                    switch (LOWORD(wParam))
                     {
-                        UpdateCheckBoxInfo(hwnd,windata);
-                    }
-                    else if (LOWORD(wParam) == ID_BUTTON_NEXTPAGE)
-                    {
+                    case ID_CHECKBOX_PAGE:
+                        UpdateCheckBoxInfo(hwnd, windata);
+                        break;
+                    case ID_BUTTON_NEXTPAGE:
                         windata->pagestart += MAIN_DISPLAYPAGESIZE;
                         Yinyue200_Main_UpdateListViewData(hwnd);
-                    }
-                    else if (LOWORD(wParam) == ID_BUTTON_PREVPAGE)
-                    {
+                        break;
+                    case ID_BUTTON_PREVPAGE:
                         windata->pagestart -= MAIN_DISPLAYPAGESIZE;
                         if (windata->pagestart < 0)
                             windata->pagestart = 0;
                         Yinyue200_Main_UpdateListViewData(hwnd);
+                        break;
+                    case ID_BUTTON_REMOVESELECTEDITEMS: 
+                    {
+                        HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
+                        int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                        if (iPos == -1)
+                        {
+                            MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                        }
+                        windata->sortstate = 0;
+                        while (iPos != -1) {
+                            // iPos is the index of a selected item
+                            // do whatever you want with it
+                            PRODUCTRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, iPos);
+                            for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
+                            {
+                                PRODUCTRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
+                                if (allproduct == productrecord)
+                                {
+                                    VECTOR_DELETE(yinyue200_ProductList, i);
+                                    break;
+                                }
+                            }
+                            for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
+                            {
+                                PRODUCTRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, PRODUCTRECORD_PTR, i);
+                                if (allproduct == productrecord)
+                                {
+                                    VECTOR_DELETE(windata->UnsortedNowList, i);
+                                    break;
+                                }
+                            }
+
+
+                            // Get the next selected item
+                            iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                        }
+                        Yinyue200_Main_UpdateListViewData(hwnd);
+                    }
+
+                    default:
+                        break;
                     }
                 }
                 break;

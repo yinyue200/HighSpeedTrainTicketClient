@@ -1,4 +1,5 @@
 #pragma once
+#include "ProductRecord.h"
 //  SimpleStoreErp
 //	Copyright(C) 2021 “Û‘Ω
 //
@@ -14,4 +15,4 @@
 //
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
-void CreateEditItemWindow();
+void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord);

@@ -20,9 +20,12 @@
 #define ID_BUTTON_CANCEL 3
 #define ID_EDIT_ID 4
 #define ID_EDIT_TYPE 5
-
+typedef struct EditItemWindowData
+{
+    PRODUCTRECORD_PTR ProductRecord;
+} EDITITEMWINDOWDATA;
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow()
+void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
@@ -35,6 +38,9 @@ void CreateEditItemWindow()
 
     WORD result = RegisterClass(&wc);
     //printf("%d", result);
+
+    EDITITEMWINDOWDATA* windowdata = yinyue200_safemalloc(sizeof(EDITITEMWINDOWDATA));
+    windowdata->ProductRecord = productrecord;
 
     // Create the window.
 
@@ -50,7 +56,7 @@ void CreateEditItemWindow()
         NULL,       // Parent window    
         NULL,       // Menu
         yinyue200_hInstance,  // Instance handle
-        NULL        // Additional application data
+        windowdata        // Additional application data
     );
 
     if (hwnd == NULL)
@@ -59,22 +65,29 @@ void CreateEditItemWindow()
         return 0;
     }
 
+
+
     ShowWindow(hwnd, yinyue200_nCmdShow);
 
 
-    return 0;
+    return;
 }
-typedef struct EditItemWindowData
-{
-    HWND NameLabelHwnd;
-    HWND hwndEdit_Name;
-    HWND NameLabelId;
-    HWND hwndEdit_ID;
-    HWND NameLabelType;
-    HWND hwndEdit_Type;
-    HWND hwndButton_Save;
-    HWND hwndButton_Cancel;
-} EDITITEMWINDOWDATA;
+
+#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(chwnd, WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
+#define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(chwnd, WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(chwnd, WM_SETTEXT, 0, _temp_buffer);}
+#define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
+#define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+int64_t _temp_int64;\
+if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
+{\
+    productrecord->##member = _temp_int64;\
+}\
+else\
+{\
+    MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
+}\
+free(_temp_int64_str);\
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -83,6 +96,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     {
         AddWindowCount();
         int lasty = 10;
+
+        {
+            CREATESTRUCT* cs = lParam;
+            SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
+        }
+
+        EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+
         HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
             , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         lasty += 25;
@@ -138,29 +159,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             10+100+10, lasty, 100, 50,
             hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         lasty += 50;
-        SendMessage(hwndEdit_Name, WM_SETTEXT, 0, L"");
+        PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord;
+        
         SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"名称");
+        SETNULLORPRODUCTINFOMEMBERDATA(hwndEdit_Name, Name);
         SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
-        SendMessage(hwndEdit_ID, WM_SETTEXT, 0, L"");
+        SETNULLORPRODUCTINFOMEMBERINTDATA(hwndEdit_ID, ID);
         SendMessage(NameLabelType, WM_SETTEXT, 0, L"类型");
-        EDITITEMWINDOWDATA* windowdata = malloc(sizeof(EDITITEMWINDOWDATA));
-        if (windowdata != NULL)
-        {
-            windowdata->hwndButton_Cancel = hwndButton_Cancel;
-            windowdata->NameLabelHwnd = NameLabelHwnd;
-            windowdata->hwndEdit_Name = hwndEdit_Name;
-            windowdata->NameLabelId = NameLabelId;
-            windowdata->hwndEdit_ID = hwndEdit_ID;
-            windowdata->hwndButton_Save = hwndButton_Save;
-            windowdata->NameLabelType = NameLabelType;
-            windowdata->hwndEdit_Type = hwndEdit_Type;
-            SetProp(hwnd, YINYUE200_WINDOW_DATA, windowdata);
-        }
-        else
-        {
-            UnrecoveryableFailed();
-        }
-
+        
     }
     return 0;
     case WM_COMMAND:
@@ -172,26 +178,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             if (LOWORD(wParam) == ID_BUTTON_SAVE)
             {
                 EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                PWCHAR name = CreateWstrForWindowText(windowdata->hwndEdit_Name);
-                PWCHAR idstr = CreateWstrForWindowText(windowdata->hwndEdit_ID);
                 
-                PRODUCTRECORD_PTR productrecord = CreateProductRecord();
+                PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord == NULL ? 
+                    CreateProductRecord() : windowdata->ProductRecord;
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
+                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
 
-                productrecord->Name = name;
-                //wchar_t* IDBuffer = yinyue200_safemalloc(30 * sizeof(wchar_t));
-                //swprintf(IDBuffer, 30, L"%d", productrecord->ID);
-                int64_t id;
-                if (swscanf(idstr, L"%lld", &id) == 1)
-                {
-                    productrecord->ID = id;
-                }
-                else
-                {
-                    MessageBox(hwnd, L"ID 格式错误", NULL, 0);
-                }
-                free(idstr);
-
-                VECTOR_ADD(yinyue200_ProductList, productrecord);
+                if(windowdata->ProductRecord == NULL)
+                    VECTOR_ADD(yinyue200_ProductList, productrecord);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
             else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
