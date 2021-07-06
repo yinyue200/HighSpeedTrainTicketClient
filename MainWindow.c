@@ -19,6 +19,7 @@
 #include "ProductRecord.h"
 #include "UserSetting.h"
 #include "LoadDataFilterWindow.h"
+#include "InputDialogBox.h"
 #include <CommCtrl.h>
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
@@ -36,6 +37,11 @@
 #define ID_MENU_FLITERLOADALL 12
 #define ID_STATUSBAR_MAIN 13
 #define ID_BUTTON_REMOVESELECTEDITEMS 14
+#define ID_MENU_REMOVEUSER 15
+#define ID_MENU_ADDUSER 16
+#define ID_MENU_CHANGEPERR 17
+#define ID_MENU_CHANGEPWD 18
+#define ID_MENU_SHOWUSERSLIST 19
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
 {
@@ -525,6 +531,18 @@ void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
 
     Yinyue200_Main_UpdateListViewData(hwnd);
 }
+BOOL CALLBACK GoToProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    //switch (message)
+    //{
+    //case WM_INITDIALOG:
+    //    return TRUE;
+    //default:
+    //    break;
+    //}
+    return FALSE;
+}
+
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -560,6 +578,11 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有");
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITER, L"筛选现有数据");
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询");
+        AppendMenu(hUsr, MF_STRING, ID_MENU_REMOVEUSER, L"删除用户");
+        AppendMenu(hUsr, MF_STRING, ID_MENU_ADDUSER, L"添加用户");
+        AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPERR, L"修改用户权限");
+        AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"修改密码");
+        AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
 
         SetMenu(hwnd, hMenubar);
 
@@ -657,34 +680,31 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
     case WM_COMMAND:
     {
-        if (LOWORD(wParam) == ID_MENU_VWS)
+        switch (LOWORD(wParam))
         {
+        case ID_MENU_VWS:
             ShellExecute(NULL, L"Open", L"https://github.com/yinyue200", NULL, NULL, SW_SHOWNORMAL);
-        }
-        else if (LOWORD(wParam) == ID_MENU_ABOUT)
-        {
-            MessageBox(NULL, L"版本 0.0.1\r\nA GUI program\r\nold fashion design", L"关于", 0);
-        }
-        else if (LOWORD(wParam) == ID_MENU_ADDRECORD)
-        {
+            break;
+        case ID_MENU_ABOUT:
+            MessageBox(hwnd, L"版本 0.0.1\r\nA GUI program\r\nold fashion design", L"关于", 0);
+            break;
+        case ID_MENU_ADDRECORD:
             CreateEditItemWindow(NULL);
-        }
-        else if (LOWORD(wParam) == ID_MENU_SAVE)
-        {
-            yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(),&yinyue200_ProductList);
+            break;
+        case ID_MENU_SAVE:
+            yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(), &yinyue200_ProductList);
             MessageBox(hwnd, L"保存成功", L"消息", 0);
-        }
-        else if (LOWORD(wParam) == ID_MENU_LOADALL)
+            break;
+        case ID_MENU_LOADALL:
         {
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            if (windata)
             {
-                YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                if (windata)
-                {
-                    yinyue200_main_loadnowlist(hwnd, windata);
-                }
+                yinyue200_main_loadnowlist(hwnd, windata);
             }
+            break;
         }
-        else if (LOWORD(wParam) == ID_MENU_FLITERLOADALL)
+        case ID_MENU_FLITERLOADALL:
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
@@ -692,16 +712,24 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 yinyue200_main_loadnowlist(hwnd, windata);
                 CreateLoadDataFilterWindow(windata);
             }
+            break;
         }
-        else if (LOWORD(wParam) == ID_MENU_FLITER)
+        case ID_MENU_FLITER:
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
             {
                 CreateLoadDataFilterWindow(windata);
             }
+            break;
         }
-        else
+        case ID_MENU_ADDUSER:
+        {
+            DialogBoxIndirect(yinyue200_hInstance, createinputbox(L"test", L"test"), hwnd, GoToProc);
+            int ret = GetLastError();
+            break;
+        }
+        default:
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
@@ -725,7 +753,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             windata->pagestart = 0;
                         Yinyue200_Main_UpdateListViewData(hwnd);
                         break;
-                    case ID_BUTTON_REMOVESELECTEDITEMS: 
+                    case ID_BUTTON_REMOVESELECTEDITEMS:
                     {
                         HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
                         int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
@@ -775,13 +803,13 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                     {
                     case ID_EDIT_PAGE:
                     {
-                        HWND editpagectrl = GetDlgItem(hwnd,ID_EDIT_PAGE);
+                        HWND editpagectrl = GetDlgItem(hwnd, ID_EDIT_PAGE);
                         LPWSTR pagestr = CreateWstrForWindowText(editpagectrl);
                         int pagenum;
                         int startpos;
-                        if (swscanf(pagestr, L"%d", &pagenum) == 1&& 
-                            ((startpos=(pagenum-1)*MAIN_DISPLAYPAGESIZE)<VECTOR_TOTAL(windata->NowList)||startpos==0)
-                            &&startpos>=0
+                        if (swscanf(pagestr, L"%d", &pagenum) == 1 &&
+                            ((startpos = (pagenum - 1) * MAIN_DISPLAYPAGESIZE) < VECTOR_TOTAL(windata->NowList) || startpos == 0)
+                            && startpos >= 0
                             )
                         {
                             windata->pagestart = startpos;
@@ -793,7 +821,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             PostMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(1, 0), L"无效的页码");
                         }
                     }
-                        break;
+                    break;
                     default:
                         break;
                     }
@@ -801,7 +829,8 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 break;
                 }
             }
-
+        }
+            break;
         }
     }
     return 0;

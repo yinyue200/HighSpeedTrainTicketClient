@@ -28,6 +28,7 @@ vector yinyue200_ProductList;
 HINSTANCE yinyue200_hInstance;
 int yinyue200_nCmdShow;
 atomic_int yinyue200_windowCount = 0;
+USERDATAINFO_PTR yinyue200_LoganUserInfo;
 void AddWindowCount()
 {
     atomic_fetch_add(&yinyue200_windowCount,1);

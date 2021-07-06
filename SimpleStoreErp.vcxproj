@@ -150,11 +150,15 @@
     <ClCompile Include="common.c" />
     <ClCompile Include="EditItemWindow.c" />
     <ClCompile Include="cJSON.c" />
+    <ClCompile Include="InputDialogBox.c" />
     <ClCompile Include="LoadDataFilterWindow.c" />
+    <ClCompile Include="LoginWindow.c" />
     <ClCompile Include="MainWindow.c" />
     <ClCompile Include="ProductRecord.c" />
+    <ClCompile Include="sha256.c" />
     <ClCompile Include="SimpleStoreErp.c" />
     <ClCompile Include="stdatomic.c" />
+    <ClCompile Include="UserManage.c" />
     <ClCompile Include="UserSetting.c" />
     <ClCompile Include="vector.c" />
   </ItemGroup>
@@ -162,10 +166,14 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="EditItemWindow.h" />
     <ClInclude Include="cJSON.h" />
+    <ClInclude Include="InputDialogBox.h" />
     <ClInclude Include="LoadDataFilterWindow.h" />
+    <ClInclude Include="LoginWindow.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="ProductRecord.h" />
+    <ClInclude Include="sha256.h" />
     <ClInclude Include="stdatomic.h" />
+    <ClInclude Include="UserManage.h" />
     <ClInclude Include="UserSetting.h" />
     <ClInclude Include="vector.h" />
   </ItemGroup>

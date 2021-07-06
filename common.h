@@ -20,13 +20,16 @@
 #include "vector.h"
 #include <string.h>
 #include <stdio.h>
+#include "UserManage.h"
 
 #define YINYUE200_WINDOW_DATA L"YINYUE200_WINDOW_DATA"
 
 extern HINSTANCE yinyue200_hInstance;
 extern int yinyue200_nCmdShow;
 extern vector yinyue200_ProductList;
+extern USERDATAINFO_PTR yinyue200_LoganUserInfo;
 
+LPWORD lpwAlign(LPWORD lpIn);
 void AddWindowCount();
 void DecreaseWindowCount();
 bool CheckIfNoWindow();

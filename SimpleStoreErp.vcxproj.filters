@@ -45,6 +45,18 @@
     <ClCompile Include="LoadDataFilterWindow.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UserManage.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginWindow.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sha256.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputDialogBox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -72,6 +84,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LoadDataFilterWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UserManage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sha256.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputDialogBox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

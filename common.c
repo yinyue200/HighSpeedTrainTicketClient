@@ -15,6 +15,16 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
 #include "cJSON.h"
+LPWORD lpwAlign(LPWORD lpIn)
+{
+	ULONG ul;
+
+	ul = (ULONG)lpIn;
+	ul++;
+	ul >>= 1;
+	ul <<= 1;
+	return (ULONG)ul;
+}
 PWCHAR CreateWSTR(size_t length)
 {
 	return malloc(length * sizeof(wchar_t));

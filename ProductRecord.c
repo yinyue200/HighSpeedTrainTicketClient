@@ -153,6 +153,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 								{
 								case 0:
 									p->Name = info;
+									break;
 								case 1:
 								{
 									int64_t id;
@@ -160,6 +161,8 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									{
 										p->ID = id;
 									}
+									free(info);
+									break;
 								}
 									//p->ID = info;
 								default:
