@@ -58,6 +58,43 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 	}
 
 }
+#define LOADINTDATATOVECTOR(member,caseid) case caseid:\
+{\
+	int64_t id;\
+	if (swscanf(info, L"%lld", &id) == 1)\
+	{\
+		p->##member = id;\
+	}\
+	free(info);\
+	break;\
+}
+#define LOADPRICEDATATOVECTOR(member,caseid) case caseid:\
+{\
+	double id;\
+	if (swscanf(info, L"%lf", &id) == 1)\
+	{\
+		p->##member = id;\
+	}\
+	free(info);\
+	break;\
+}
+#define LOADWSTRDATATOVECTOR(member,caseid) case caseid:\
+{\
+	p->##member = info;\
+	break;\
+}
+#define SAVEWSTRDATATOVECTOR(member) \
+{\
+	FailedIfFalse(WritePWSTR(record->##member, hFile));\
+	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}
+#define SAVEINTDATATOVECTOR(member) \
+{\
+	wchar_t idbuffer[30];\
+	swprintf_s(idbuffer, 30, L"%lld", record->##member);\
+	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
+	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 {
 	HANDLE hFile = CreateFile(path,               // file to open
@@ -77,12 +114,8 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 	for (size_t i = 0; i < length; i++)
 	{
 		PRODUCTRECORD_PTR record = VECTOR_GET(*vec, PRODUCTRECORD_PTR, i);
-		FailedIfFalse(WritePWSTR(record->Name, hFile));
-		FailedIfFalse(WritePWSTR(L"\t",hFile));
-		wchar_t idbuffer[30];
-		swprintf_s(idbuffer, 30, L"%lld", record->ID);
-		FailedIfFalse(WritePWSTR(idbuffer, hFile));
-		FailedIfFalse(WritePWSTR(L"\t", hFile));
+		SAVEWSTRDATATOVECTOR(Name)
+		SAVEINTDATATOVECTOR(ID)
 
 
 
@@ -164,6 +197,17 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									free(info);
 									break;
 								}
+									LOADINTDATATOVECTOR(Type, 2)
+									LOADWSTRDATATOVECTOR(State, 3)
+									LOADINTDATATOVECTOR(Date, 4)
+									LOADWSTRDATATOVECTOR(ProvideBy, 5)
+									LOADWSTRDATATOVECTOR(RecievedBy, 6)
+									LOADWSTRDATATOVECTOR(ResentBy, 7)
+									LOADINTDATATOVECTOR(Count, 8)
+									LOADPRICEDATATOVECTOR(Cost, 9)
+									LOADPRICEDATATOVECTOR(Price, 10)
+									LOADPRICEDATATOVECTOR(ResentPrice, 11)
+									LOADWSTRDATATOVECTOR(Signer, 12)
 									//p->ID = info;
 								default:
 									break;
@@ -219,3 +263,14 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 }
 DEFINE_GETMEMBERMETHOD(Name);
 DEFINE_GETMEMBERADDRMETHOD(ID);
+DEFINE_GETMEMBERMETHOD(Type)
+DEFINE_GETMEMBERMETHOD(State)
+DEFINE_GETMEMBERMETHOD(Date)
+DEFINE_GETMEMBERMETHOD(ProvideBy)
+DEFINE_GETMEMBERMETHOD(RecievedBy)
+DEFINE_GETMEMBERMETHOD(ResentBy)
+DEFINE_GETMEMBERMETHOD(Count)
+DEFINE_GETMEMBERADDRMETHOD(Cost)
+DEFINE_GETMEMBERADDRMETHOD(Price)
+DEFINE_GETMEMBERADDRMETHOD(ResentPrice)
+DEFINE_GETMEMBERMETHOD(Signer)

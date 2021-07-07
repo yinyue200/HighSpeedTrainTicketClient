@@ -185,7 +185,32 @@ void edititemlogined(void* context)
 {
     CreateEditItemWindow(context, yinyue200_LoganUserInfo==NULL?false: wcscmp(yinyue200_LoganUserInfo->Type , L"ADMIN")==0);
 }
-
+#define LISTVIEWNOTIFTLOADCOLINT(caseid,membername) case caseid:\
+{\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%lld"),\
+        record->##membername);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLDOUBLE(caseid,membername) case caseid:\
+{\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%lf"),\
+        record->##membername);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLWSTR(caseid,membername) case caseid:\
+{\
+    if(record->##membername!=NULL)\
+        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,record->##membername, _TRUNCATE);\
+    else\
+        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,L"", _TRUNCATE);\
+    break;\
+}
 LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
 {
     LPNMHDR  lpnmh = (LPNMHDR)lParam;
@@ -204,32 +229,38 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         PRODUCTRECORD* record = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD*, lpdi->item.iItem);
         if (record)
         {
+            if (lpdi->item.mask & LVIF_TEXT)
+            {
+                switch (lpdi->item.iSubItem)
+                {
+                    LISTVIEWNOTIFTLOADCOLWSTR(0, Name)
+                    LISTVIEWNOTIFTLOADCOLINT(1,ID)
+                    LISTVIEWNOTIFTLOADCOLWSTR(2, Type)
+                    LISTVIEWNOTIFTLOADCOLWSTR(3, State)
+                    LISTVIEWNOTIFTLOADCOLINT(4, Date)
+                    LISTVIEWNOTIFTLOADCOLWSTR(5, ProvideBy)
+                    LISTVIEWNOTIFTLOADCOLWSTR(6, RecievedBy)
+                    LISTVIEWNOTIFTLOADCOLWSTR(7, ResentBy)
+                    LISTVIEWNOTIFTLOADCOLINT(8, Count)
+                    LISTVIEWNOTIFTLOADCOLDOUBLE(9, Cost)
+                    LISTVIEWNOTIFTLOADCOLDOUBLE(10, Price)
+                    LISTVIEWNOTIFTLOADCOLDOUBLE(11, ResentPrice)
+                    LISTVIEWNOTIFTLOADCOLWSTR(12, Signer)
+
+                default:
+                {
+                    swprintf_s(szString, _countof(szString),
+                        TEXT("项目 %d - Column %d"),
+                        lpdi->item.iItem + 1, lpdi->item.iSubItem);
+                    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
+                        szString, _TRUNCATE);
+                }
+                }
+
+            }
             if (lpdi->item.iSubItem)
             {
-                if (lpdi->item.mask & LVIF_TEXT)
-                {
-                    switch (lpdi->item.iSubItem)
-                    {
-                    case 1:
-                    {
-                        swprintf_s(szString, _countof(szString),
-                            TEXT("%lld"),
-                            record->ID);
-                        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
-                            szString, _TRUNCATE);
-                        break;
-                    }
-                    default:
-                    {
-                        swprintf_s(szString, _countof(szString),
-                            TEXT("项目 %d - Column %d"),
-                            lpdi->item.iItem + 1, lpdi->item.iSubItem);
-                        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
-                            szString, _TRUNCATE);
-                    }
-                    }
-
-                }
+                
             }
             else
             {
@@ -349,16 +380,24 @@ BOOL InsertListViewItems(HWND hwndListView,size_t count)
     return TRUE;
 }
 #define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ↓",TEXT(name) L" ↑" }
-#define MAINWINDOW_COLUMNCOUNT 5
+#define MAINWINDOW_COLUMNCOUNT 13
 void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
 {
     HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
     LPWSTR       szString_o[MAINWINDOW_COLUMNCOUNT][3] = {
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("名称"), 
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("ID"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("Column 2"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("Column 3"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("Column 4")
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("类型"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("状态"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("日期"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("供货商"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("收货商"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("退货商"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("数量"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("进价"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("销售价"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("退货价"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("经手人"),
     };
     LV_COLUMN   lvColumn;
     int         i;
@@ -428,6 +467,23 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
     else
         return result;
 }
+int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
+{
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    double const* l = context->GetCompareObject(left);
+    double const* r = context->GetCompareObject(right);
+    int result = *l - *r;
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
+#define ITEM_COMPAREIMPL(casenum,comparetail,name)  case casenum: \
+{\
+    qsortcontext.GetCompareObject = yinyue200_GetProductRecord##name;\
+    vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_##comparetail##Compare, &qsortcontext);\
+    break;\
+}
 void Yinyue200_Main_UpdateListViewData(HWND hwnd)
 {
     HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
@@ -452,16 +508,20 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
                 //do nothing
                 break;
             }
-            case 0:
-            {
-                qsortcontext.GetCompareObject = yinyue200_GetProductRecordName;
-                vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_PWSTRCompare, &qsortcontext);
-                break;
-            }
-            case 1:
-                qsortcontext.GetCompareObject = yinyue200_GetProductRecordID;
-                vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_int64Compare, &qsortcontext);
-                break;
+                ITEM_COMPAREIMPL(0,PWSTR,Name)
+                ITEM_COMPAREIMPL(1,int64,ID)
+                ITEM_COMPAREIMPL(2, PWSTR, Type)
+                ITEM_COMPAREIMPL(3, PWSTR, State)
+                ITEM_COMPAREIMPL(4, int64, Date)
+                ITEM_COMPAREIMPL(5, PWSTR, ProvideBy)
+                ITEM_COMPAREIMPL(6, PWSTR, RecievedBy)
+                ITEM_COMPAREIMPL(7, PWSTR, ResentBy)
+                ITEM_COMPAREIMPL(8, int64, Count)
+                ITEM_COMPAREIMPL(9, double, Cost)
+                ITEM_COMPAREIMPL(10, double, Price)
+                ITEM_COMPAREIMPL(11, double, ResentPrice)
+                ITEM_COMPAREIMPL(12, PWSTR, Signer)
+
             default:
                 break;
             }

@@ -125,10 +125,10 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         lasty += 50;
         Edit_SetPasswordChar(hwndEdit_Pwd, L'*');
-        SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"名称");
+        SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"用户名");
         if (windowdata->UserName != NULL)
             SendMessage(hwndEdit_Name, WM_SETTEXT, 0, windowdata->UserName);
-        SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
+        SendMessage(NameLabelId, WM_SETTEXT, 0, L"密码");
         PostMessage(hwndEdit_Pwd, WM_SETTEXT, 0, L"");
 
     }

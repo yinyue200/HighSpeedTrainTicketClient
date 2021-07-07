@@ -20,6 +20,16 @@
 #define ID_BUTTON_CANCEL 3
 #define ID_EDIT_ID 4
 #define ID_EDIT_TYPE 5
+#define ID_EDIT_STATE 6
+#define ID_EDIT_DATE 7
+#define ID_EDIT_PROVIDEBY 8
+#define ID_EDIT_RECIEVEDBY 9
+#define ID_EDIT_RESENTBY 10
+#define ID_EDIT_COUNT 11
+#define ID_EDIT_COST 12
+#define ID_EDIT_PRICE 13
+#define ID_EDIT_RESENTPRICE 14
+#define ID_EDIT_SIGNER 15
 typedef struct EditItemWindowData
 {
     PRODUCTRECORD_PTR ProductRecord;
@@ -53,7 +63,7 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        CW_USEDEFAULT, CW_USEDEFAULT, 700, 750,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -77,6 +87,7 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
 
 #define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(chwnd, WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
 #define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(chwnd, WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(chwnd, WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(chwnd, WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(chwnd, WM_SETTEXT, 0, _temp_buffer);}
 #define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
 #define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64;\
@@ -90,6 +101,24 @@ else\
 }\
 free(_temp_int64_str);\
 }
+#define SAVEPRODUCTINFOMEMBERPRICEDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+double _temp_int64;\
+if (swscanf(_temp_int64_str, L"%lf", &_temp_int64) == 1)\
+{\
+    productrecord->##member = _temp_int64;\
+}\
+else\
+{\
+    MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
+}\
+free(_temp_int64_str);\
+}
+#define FORCESPACE  
+#define ADDLABELANDEDIT(ctrl_id,CTRL_EDIT_ID,displaylabel) HWND Hwnd_##ctrl_id##_Label = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25 , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);\
+lasty += 25;\
+HWND hwnd_##ctrl_id##_Edit = CreateWindow(L"EDIT", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | ES_LEFT, 10, lasty, 500, 25, hwnd, (HMENU)CTRL_EDIT_ID, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL); \
+lasty += 25; \
+SendMessage(Hwnd_##ctrl_id##_Label,WM_SETTEXT,0,displaylabel);
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -134,20 +163,20 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);        // pointer not needed
         lasty += 25;
-        HWND NameLabelType = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
-        HWND hwndEdit_Type = CreateWindow(
-            L"EDIT",
-            NULL,
-            WS_BORDER | WS_CHILD | WS_VISIBLE |
-            ES_LEFT,
-            10, lasty, 500, 25,
-            hwnd,
-            (HMENU)ID_EDIT_TYPE,
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);
-        lasty += 25;
+
+        ADDLABELANDEDIT(TYPE, ID_EDIT_TYPE,L"类型");
+        ADDLABELANDEDIT(STATE, ID_EDIT_STATE, L"状态");
+        ADDLABELANDEDIT(DATE, ID_EDIT_DATE, L"日期");
+        ADDLABELANDEDIT(PROVIDEBY, ID_EDIT_PROVIDEBY, L"供货商");
+        ADDLABELANDEDIT(RECIEVEDBY, ID_EDIT_RECIEVEDBY, L"收货商");
+        ADDLABELANDEDIT(RESENTBY, ID_EDIT_RESENTBY, L"退货商");
+        ADDLABELANDEDIT(COUNT, ID_EDIT_COUNT, L"数量");
+        ADDLABELANDEDIT(COST, ID_EDIT_COST, L"进价");
+        ADDLABELANDEDIT(PRICE, ID_EDIT_PRICE, L"销售价");
+        ADDLABELANDEDIT(RESENTPRICE, ID_EDIT_RESENTPRICE, L"退货价");
+        ADDLABELANDEDIT(SIGNER, ID_EDIT_SIGNER, L"经手人");
+
+
         HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
             L"BUTTON",
             L"保存",      // Button text 
@@ -167,7 +196,18 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         SETNULLORPRODUCTINFOMEMBERDATA(hwndEdit_Name, Name);
         SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
         SETNULLORPRODUCTINFOMEMBERINTDATA(hwndEdit_ID, ID);
-        SendMessage(NameLabelType, WM_SETTEXT, 0, L"类型");
+        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_TYPE_Edit, Type);
+        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_STATE_Edit, State);
+        SETNULLORPRODUCTINFOMEMBERINTDATA(hwnd_DATE_Edit, Date);
+        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_PROVIDEBY_Edit, ProvideBy);
+        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_RECIEVEDBY_Edit, RecievedBy);
+        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_RESENTBY_Edit, ResentBy);
+        SETNULLORPRODUCTINFOMEMBERINTDATA(hwnd_COUNT_Edit, Count);
+        SETNULLORPRODUCTINFOMEMBERPRICEDATA(hwnd_COST_Edit, Cost);
+        SETNULLORPRODUCTINFOMEMBERPRICEDATA(hwnd_PRICE_Edit, Price);
+        SETNULLORPRODUCTINFOMEMBERPRICEDATA(hwnd_RESENTPRICE_Edit, ResentPrice);
+        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_SIGNER_Edit, Signer);
+
 
         if (!windowdata->enablesave)
         {
@@ -190,6 +230,17 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     CreateProductRecord() : windowdata->ProductRecord;
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
                 SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
+                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_DATE, Date);
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_PROVIDEBY, ProvideBy);
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_RECIEVEDBY, RecievedBy);
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_RESENTBY, ResentBy);
+                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_COUNT, Count);
+                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_COST, Cost);
+                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_PRICE, Price);
+                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_RESENTPRICE, ResentPrice);
+                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_SIGNER, Signer);
 
                 if(windowdata->ProductRecord == NULL)
                     VECTOR_ADD(yinyue200_ProductList, productrecord);
