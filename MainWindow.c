@@ -1112,7 +1112,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             break;
         }
         case ID_MENU_VWS:
-            ShellExecute(NULL, L"Open", L"https://github.com/yinyue200", NULL, NULL, SW_SHOWNORMAL);
+            ShellExecute(NULL, L"Open", L"https://github.com/yinyue200/SimpleStoreErp", NULL, NULL, SW_SHOWNORMAL);
             break;
         case ID_MENU_ABOUT:
             MessageBox(hwnd, L"°æ±¾ 0.0.1\r\nA GUI program\r\nold fashion design", L"¹ØÓÚ", 0);
