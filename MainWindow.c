@@ -65,7 +65,7 @@ void configstatusbar(HWND hwndParent,HWND  hwndStatus)
         if (paParts)
         {
             // Calculate the right edge coordinate for each part, and
-// copy the coordinates to the array.
+            // copy the coordinates to the array.
             int nWidth = rcClient.right / cParts;
             int rightEdge = nWidth;
             for (int i = 0; i < cParts; i++) {
@@ -532,6 +532,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
         }
         if (IsDlgButtonChecked(hwnd, ID_CHECKBOX_PAGE))
         {
+            //分页显示相关代码
         RESETPAGE:;
             VECTOR_CLEAR(windata->PagedNowList);
             for (size_t i = windata->pagestart; i < VECTOR_TOTAL(windata->NowList)&&i< windata->pagestart+ MAIN_DISPLAYPAGESIZE; i++)
@@ -561,7 +562,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
         SendMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(0, 0), message);//更新状态栏
     }
 }
-
+//更新按钮状态并更新主列表
 void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
 {
     Yinyue200_Main_UpdateListViewData(hwnd);
@@ -593,6 +594,7 @@ void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
     }
     else
     {
+        //分页显示复选框关闭时，隐藏相关控件
         ShowWindow(lastpagebtn, SW_HIDE);
         ShowWindow(nextpagebtn, SW_HIDE);
         ShowWindow(editpagebtn, SW_HIDE);
@@ -602,10 +604,9 @@ void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
 {
     vector t = vector_clone(&yinyue200_ProductList);;
     VECTOR_MOVE(windata->UnsortedNowList, t);
-    windata->sortstate = 0;
-    //OutputDebugString((VECTOR_GET(windata->UnsortedNowList,PRODUCTRECORD_PTR,0))->Name);
+    windata->sortstate = 0;//设置排序状态为未排序，强制重新排序
 
-    Yinyue200_Main_UpdateListViewData(hwnd);
+    UpdateCheckBoxInfo(hwnd, windata);
 }
 typedef struct yinyue200_action_addusercontext
 {
@@ -615,6 +616,8 @@ typedef struct yinyue200_action_addusercontext
 } YINYUE200_ACTION_ADDUSERCONTEXT; 
 void adduserpwdinputedrepeat(void* context, LPWSTR userpwd)
 {
+    //新增用户确认密码输入完成回调
+
     YINYUE200_ACTION_ADDUSERCONTEXT* con = context;
     EnableWindow(con->hwnd, true);
     if (userpwd != NULL)
@@ -657,6 +660,7 @@ void adduserpwdinputedrepeat(void* context, LPWSTR userpwd)
             USERDATAINFO_PTR one = vector_get(vec, i);
             if (wcscmp(one->Name, con->Username) == 0)
             {
+                //如果用户已存在则修改已有用户而不是创建新用户
                 free(one->PasswordHash);
                 free(one->Type);
                 one->PasswordHash = pwdhash;
@@ -701,12 +705,15 @@ void adduserpwdinputedrepeat(void* context, LPWSTR userpwd)
     }
     else
     {
+        //用户按了取消按钮
         free(con->Password);
         free(con->Username);
     }
 }
 void adduserpwdinputed(void* context, LPWSTR userpwd)
 {
+    //新增用户密码输入完成回调
+
     YINYUE200_ACTION_ADDUSERCONTEXT* con = context;
     if (userpwd != NULL)
     {
@@ -722,6 +729,8 @@ void adduserpwdinputed(void* context, LPWSTR userpwd)
 }
 void addusernameinputed(void* context, LPWSTR username)
 {
+    //添加用户用户名输入完成回调
+
     if (username != NULL)
     {
         YINYUE200_ACTION_ADDUSERCONTEXT* context_next = yinyue200_safemalloc(sizeof(YINYUE200_ACTION_ADDUSERCONTEXT));
@@ -732,11 +741,14 @@ void addusernameinputed(void* context, LPWSTR username)
     }
     else
     {
+        //用户按了取消按钮
         EnableWindow(context, true);
     }
 }
 void removeusernameinputed(void* context, LPWSTR username)
 {
+    //删除用户用户名输入完成回调
+
     if (username != NULL)
     {
         vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
@@ -768,6 +780,7 @@ void removeusernameinputed(void* context, LPWSTR username)
     }
     else
     {
+        //用户按了取消按钮
         EnableWindow(context, true);
     }
 }
@@ -959,10 +972,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HMENU hAns = CreateMenu();
         HMENU hUsr = CreateMenu();
         HMENU hHelp = CreateMenu();
-        //HMENU hSave = CreateMenu();
-        //HMENU hLoadAll = CreateMenu();
-        //HMENU hfliter = CreateMenu();
-        //HMENU hfliterLoadAll = CreateMenu();
+
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFile, L"文件");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFind, L"查询");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAdd, L"新增");
@@ -1225,7 +1235,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         if (swscanf(pagestr, L"%d", &pagenum) == 1 &&
                             ((startpos = (pagenum - 1) * MAIN_DISPLAYPAGESIZE) < VECTOR_TOTAL(windata->NowList) || startpos == 0)
                             && startpos >= 0
-                            )
+                            )//验证输入的页码是否有效
                         {
                             if (windata->pagestart != startpos)//只有当实际下标起点改变时才执行操作
                             {
@@ -1261,7 +1271,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
-        PostQuitMessage(0);
+        PostQuitMessage(0);//当主函数退出时发送退出程序消息
         return 0;
     }
     case WM_SIZE:

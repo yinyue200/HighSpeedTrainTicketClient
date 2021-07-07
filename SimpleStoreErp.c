@@ -17,7 +17,7 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")//to Enable Visual Styles
 #include "common.h"
 #include "stdatomic.h"
 #include "vector.h"
@@ -50,6 +50,8 @@ void createmain(void* context)
 {
     CreateMainWindow();
 }
+
+//Ö÷º¯Êý
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     {

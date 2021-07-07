@@ -98,7 +98,7 @@ vector* UserRecordLoadToVector(LPWSTR path)
 					{
 						if (size > 0)
 						{
-							PWCHAR info = yinyue200_safemalloc(size * 2 + 2);
+							PWCHAR info = yinyue200_safemalloc(size * 2 + 2);//假定UTF-8的每个字节最多可以在UTF-16中占两个字节
 							int sizechars = MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
 							info[sizechars] = 0;
 							switch (tindex)
@@ -158,7 +158,7 @@ vector* UserRecordLoadToVector(LPWSTR path)
 void Hash256LPWSTR(LPWSTR str,wchar_t buf[65])
 {
 	int len = wcslen(str);
-	char out[65];
+	char out[65];//SHA-256 的字符串表示形式有64个字符
 	buf[64] = 0;
 	sha256(str, len * sizeof(wchar_t) / sizeof(unsigned char),out);
 	for (size_t i = 0; i < 64; i++)
