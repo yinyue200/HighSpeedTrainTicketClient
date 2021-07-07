@@ -36,9 +36,6 @@
     <ClCompile Include="common.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cJSON.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UserSetting.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -75,9 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cJSON.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UserSetting.h">

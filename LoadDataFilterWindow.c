@@ -90,7 +90,7 @@ PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);
 BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
 PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
 int64_t Field##name##Int_Top;int64_t Field##name##Int_Bottom;\
-{\
+if(Is##name##FieldChk){\
 int _temp_ret_sscanf= swscanf(Field##name##Text, L"%lld-%lld", &Field##name##Int_Bottom,&Field##name##Int_Top);\
 if(Field##name##Int_Bottom>Field##name##Int_Top){\
 int64_t _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Int_Bottom;Field##name##Int_Bottom=Field##name##Int_Top;\
@@ -111,7 +111,7 @@ free(Field##name##Text);
 BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
 PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
 double Field##name##Int_Top;double Field##name##Int_Bottom;\
-{\
+if(Is##name##FieldChk){\
 int _temp_ret_sscanf= swscanf(Field##name##Text, L"%lf-%lf", &Field##name##Int_Bottom,&Field##name##Int_Top);\
 if(Field##name##Int_Bottom>Field##name##Int_Top){\
 double _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Int_Bottom;Field##name##Int_Bottom=Field##name##Int_Top;\
