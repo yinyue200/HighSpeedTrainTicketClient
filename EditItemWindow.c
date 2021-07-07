@@ -30,6 +30,7 @@
 #define ID_EDIT_PRICE 13
 #define ID_EDIT_RESENTPRICE 14
 #define ID_EDIT_SIGNER 15
+#define ID_BUTTON_SAVEANDNEXT 16
 typedef struct EditItemWindowData
 {
     PRODUCTRECORD_PTR ProductRecord;
@@ -85,9 +86,9 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
     return;
 }
 
-#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(chwnd, WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
-#define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(chwnd, WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(chwnd, WM_SETTEXT, 0, _temp_buffer);}
-#define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(chwnd, WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(chwnd, WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
+#define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
 #define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64;\
@@ -119,6 +120,22 @@ lasty += 25;\
 HWND hwnd_##ctrl_id##_Edit = CreateWindow(L"EDIT", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | ES_LEFT, 10, lasty, 500, 25, hwnd, (HMENU)CTRL_EDIT_ID, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL); \
 lasty += 25; \
 SendMessage(Hwnd_##ctrl_id##_Label,WM_SETTEXT,0,displaylabel);
+void edititemwindow_initctrl(HWND hwnd,PRODUCTRECORD_PTR productrecord)
+{
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
+    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
+    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_DATE, Date);
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_PROVIDEBY, ProvideBy);
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_RECIEVEDBY, RecievedBy);
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_RESENTBY, ResentBy);
+    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_COUNT, Count);
+    SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_COST, Cost);
+    SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_PRICE, Price);
+    SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_RESENTPRICE, ResentPrice);
+    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_SIGNER, Signer);
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -183,31 +200,25 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
             10, lasty,100,50,
             hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),NULL);
+        HWND hwndButton_SaveAndNext = CreateWindow(
+            L"BUTTON",
+            L"保存并添加下一个",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
+            10 + 100 + 10, lasty, 200, 50,
+            hwnd, (HMENU)ID_BUTTON_SAVEANDNEXT, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         HWND hwndButton_Cancel = CreateWindow(
             L"BUTTON",
             L"取消",      // Button text 
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10+100+10, lasty, 100, 50,
+            10+300+20, lasty, 100, 50,
             hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         lasty += 50;
         PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord;
         
         SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"名称");
-        SETNULLORPRODUCTINFOMEMBERDATA(hwndEdit_Name, Name);
         SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
-        SETNULLORPRODUCTINFOMEMBERINTDATA(hwndEdit_ID, ID);
-        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_TYPE_Edit, Type);
-        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_STATE_Edit, State);
-        SETNULLORPRODUCTINFOMEMBERINTDATA(hwnd_DATE_Edit, Date);
-        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_PROVIDEBY_Edit, ProvideBy);
-        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_RECIEVEDBY_Edit, RecievedBy);
-        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_RESENTBY_Edit, ResentBy);
-        SETNULLORPRODUCTINFOMEMBERINTDATA(hwnd_COUNT_Edit, Count);
-        SETNULLORPRODUCTINFOMEMBERPRICEDATA(hwnd_COST_Edit, Cost);
-        SETNULLORPRODUCTINFOMEMBERPRICEDATA(hwnd_PRICE_Edit, Price);
-        SETNULLORPRODUCTINFOMEMBERPRICEDATA(hwnd_RESENTPRICE_Edit, ResentPrice);
-        SETNULLORPRODUCTINFOMEMBERDATA(hwnd_SIGNER_Edit, Signer);
 
+        edititemwindow_initctrl(hwnd, productrecord);
 
         if (!windowdata->enablesave)
         {
@@ -222,11 +233,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         {
         case BN_CLICKED:
         {
-            if (LOWORD(wParam) == ID_BUTTON_SAVE)
+            switch (LOWORD(wParam))
+            {
+            case ID_BUTTON_SAVEANDNEXT:
+            case ID_BUTTON_SAVE:
             {
                 EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                
-                PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord == NULL ? 
+
+                PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord == NULL ?
                     CreateProductRecord() : windowdata->ProductRecord;
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
                 SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
@@ -242,13 +256,25 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_RESENTPRICE, ResentPrice);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_SIGNER, Signer);
 
-                if(windowdata->ProductRecord == NULL)
+                if (windowdata->ProductRecord == NULL)
                     VECTOR_ADD(yinyue200_ProductList, productrecord);
-                SendMessage(hwnd, WM_CLOSE, NULL, NULL);
+
+                if (LOWORD(wParam) == ID_BUTTON_SAVEANDNEXT)
+                {
+                    windowdata->ProductRecord = NULL;
+                    edititemwindow_initctrl(hwnd, NULL);
+                }
+                else
+                {
+                    SendMessage(hwnd, WM_CLOSE, NULL, NULL);
+                }
+                break;
             }
-            else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
-            {
+            case ID_BUTTON_CANCEL:
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
+                break;
+            default:
+                break;
             }
         }
             break;

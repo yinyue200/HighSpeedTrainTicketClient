@@ -409,7 +409,10 @@ void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
     if (windata)
     {
         selecol = windata->sortcomindex;
-        mode = windata->sortmethod;
+        if (selecol >= 0)
+        {
+            mode = windata->sortmethod;
+        }
     }
 
     for (int i = 0; i < MAINWINDOW_COLUMNCOUNT; i++)
@@ -450,7 +453,11 @@ typedef struct Yinyue200_Main_ListViewSortContext
 int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right)
 {
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
-    int result = wcscmp(context->GetCompareObject(left), context->GetCompareObject(right));
+    PRODUCTRECORD_PTR* leftrecord = left;
+    PRODUCTRECORD_PTR* rightrecord = right;
+    LPWSTR leftstr = context->GetCompareObject(*leftrecord);
+    LPWSTR rightstr = context->GetCompareObject(*rightrecord);
+    int result = wcscmp(leftstr, rightstr);
     if (context->IS_REV_RESULT)
         return -result;
     else
@@ -458,9 +465,11 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
 }
 int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
 {
+    PRODUCTRECORD_PTR* leftrecord = left;
+    PRODUCTRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
-    int64_t const* l = context->GetCompareObject(left);
-    int64_t const* r = context->GetCompareObject(right);
+    int64_t const* l = context->GetCompareObject(*leftrecord);
+    int64_t const* r = context->GetCompareObject(*rightrecord);
     int result = *l - *r;
     if (context->IS_REV_RESULT)
         return -result;
@@ -469,9 +478,11 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
 }
 int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
 {
+    PRODUCTRECORD_PTR* leftrecord = left;
+    PRODUCTRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
-    double const* l = context->GetCompareObject(left);
-    double const* r = context->GetCompareObject(right);
+    double const* l = context->GetCompareObject(*leftrecord);
+    double const* r = context->GetCompareObject(*rightrecord);
     int result = *l - *r;
     if (context->IS_REV_RESULT)
         return -result;
