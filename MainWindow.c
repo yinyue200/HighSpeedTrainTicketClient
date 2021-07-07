@@ -43,6 +43,7 @@
 #define ID_MENU_CHANGEPERR 17
 #define ID_MENU_CHANGEPWD 18
 #define ID_MENU_SHOWUSERSLIST 19
+#define ID_MENU_IMPORT 20
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
 {
@@ -803,6 +804,28 @@ void logincheckmsg(void* context)
             CreateInputBoxWindow(L"输入要删除的用户", removeusernameinputed, hwnd, false);
             break;
         }
+        case ID_MENU_IMPORT:
+        {
+            OPENFILENAME ofn = { 0 };
+            wchar_t strFile[MAX_PATH];
+            memset(strFile, 0, sizeof(char) * MAX_PATH);
+            ofn.lStructSize = sizeof(OPENFILENAME);
+            ofn.lpstrFile = strFile;
+            ofn.nMaxFile = MAX_PATH;
+            ofn.Flags = OFN_FILEMUSTEXIST;
+            if (GetOpenFileName(&ofn))   //strFile得到用户所选择文件的路径和文件名 ; 
+            {
+                vector* vec = ProductRecordLoadToVector(strFile);
+                for (size_t i = 0; i < vector_total(vec); i++)
+                {
+                    PRODUCTRECORD_PTR one = vector_get(vec, i);
+                    vector_add(&yinyue200_ProductList, one);
+                }
+                vector_free(vec);
+                free(vec);
+            }
+            break;
+        }
         case ID_MENU_ADDRECORD:
         {
             CreateEditItemWindow(NULL,true);
@@ -902,6 +925,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"关于");
         AppendMenu(hAdd, MF_STRING, ID_MENU_ADDRECORD, L"添加单个条目");
         AppendMenu(hFile, MF_STRING, ID_MENU_SAVE, L"保存");
+        AppendMenu(hFile, MF_STRING, ID_MENU_IMPORT, L"导入数据");
         AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有");
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITER, L"筛选现有数据");
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询");
@@ -1046,6 +1070,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             break;
         }
+        case ID_MENU_IMPORT:
         case ID_MENU_ADDRECORD:
         case ID_MENU_REMOVEUSER:
         case ID_MENU_CHANGEPWD:
