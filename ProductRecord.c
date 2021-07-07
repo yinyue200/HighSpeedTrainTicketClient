@@ -35,6 +35,8 @@ PRODUCTRECORD_PTR CreateProductRecord()
 }
 bool WritePWSTR(PWSTR str, HANDLE hFile)
 {
+	if (str == NULL)
+		return true;
 	size_t len = wcslen(str);
 	size_t utf8len = len * sizeof(wchar_t) * 2;
 	char* utf8bytes = malloc(utf8len);
@@ -95,6 +97,13 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
 }
+#define SAVEDOUBLEDATATOVECTOR(member) \
+{\
+	wchar_t idbuffer[30];\
+	swprintf_s(idbuffer, 30, L"%lf", record->##member);\
+	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
+	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 {
 	HANDLE hFile = CreateFile(path,               // file to open
@@ -116,7 +125,17 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 		PRODUCTRECORD_PTR record = VECTOR_GET(*vec, PRODUCTRECORD_PTR, i);
 		SAVEWSTRDATATOVECTOR(Name)
 		SAVEINTDATATOVECTOR(ID)
-
+		SAVEWSTRDATATOVECTOR(Type)
+		SAVEWSTRDATATOVECTOR(State)
+		SAVEINTDATATOVECTOR(Date)
+		SAVEWSTRDATATOVECTOR(ProvideBy)
+		SAVEWSTRDATATOVECTOR(RecievedBy)
+		SAVEWSTRDATATOVECTOR(ResentBy)
+		SAVEINTDATATOVECTOR(Count)
+		SAVEDOUBLEDATATOVECTOR(Cost)
+		SAVEDOUBLEDATATOVECTOR(Price)
+		SAVEDOUBLEDATATOVECTOR(ResentPrice)
+		SAVEWSTRDATATOVECTOR(Signer)
 
 
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
@@ -197,7 +216,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									free(info);
 									break;
 								}
-									LOADINTDATATOVECTOR(Type, 2)
+									LOADWSTRDATATOVECTOR(Type, 2)
 									LOADWSTRDATATOVECTOR(State, 3)
 									LOADINTDATATOVECTOR(Date, 4)
 									LOADWSTRDATATOVECTOR(ProvideBy, 5)
