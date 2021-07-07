@@ -366,7 +366,7 @@ BOOL InsertListViewItems(HWND hwndListView,size_t count)
 
     return TRUE;
 }
-#define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ¡ý",TEXT(name) L" ¡ü" }
+#define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ¡ü",TEXT(name) L" ¡ý" }
 #define MAINWINDOW_COLUMNCOUNT 13
 void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
 {
