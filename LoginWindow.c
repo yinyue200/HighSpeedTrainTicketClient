@@ -46,7 +46,7 @@ void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcon
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        CW_USEDEFAULT, CW_USEDEFAULT, 600, 300,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -85,7 +85,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
             , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
+        lasty += 30;
         HWND hwndEdit_Name = CreateWindow(
             L"EDIT",   // predefined class 
             NULL,         // no window title 
@@ -96,10 +96,10 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             (HMENU)ID_EDIT_NAME,   // edit control ID 
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);        // pointer not needed 
-        lasty += 25;
+        lasty += 30;
         HWND NameLabelId = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
             , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
+        lasty += 30;
         HWND hwndEdit_Pwd = CreateWindow(
             L"EDIT",   // predefined class 
             NULL,         // no window title 
@@ -110,7 +110,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             (HMENU)ID_EDIT_PWD,   // edit control ID 
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);        // pointer not needed
-        lasty += 25;
+        lasty += 35;
         HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
             L"BUTTON",
             L"±£´æ",      // Button text 

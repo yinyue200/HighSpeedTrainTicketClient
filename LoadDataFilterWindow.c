@@ -59,7 +59,7 @@ void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 850, 750,
+        CW_USEDEFAULT, CW_USEDEFAULT, 850, 800,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -181,6 +181,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         CREATECTRL(PRICE, L"销售价")
         CREATECTRL(RESENTPRICE, L"退货价")
         CREATECTRL(SIGNER, L"经手人")
+        lasty += 5;
         HWND hwndButton_Save = CreateWindow(
             L"BUTTON",
             L"确定",      // Button text 

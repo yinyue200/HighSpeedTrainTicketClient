@@ -64,7 +64,7 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 700, 750,
+        CW_USEDEFAULT, CW_USEDEFAULT, 700, 770,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -193,7 +193,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         ADDLABELANDEDIT(RESENTPRICE, ID_EDIT_RESENTPRICE, L"退货价");
         ADDLABELANDEDIT(SIGNER, ID_EDIT_SIGNER, L"经手人");
 
-
+        lasty += 10;
         HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
             L"BUTTON",
             L"保存",      // Button text 
