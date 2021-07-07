@@ -44,6 +44,10 @@
 #define ID_MENU_CHANGEPWD 18
 #define ID_MENU_SHOWUSERSLIST 19
 #define ID_MENU_IMPORT 20
+#define ID_MENU_CALCMAINPROVIDER 21
+#define ID_MENU_CALCMAINRECIVER 22
+#define ID_MENU_CALCMAINRESENTER 23
+
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
 {
@@ -772,6 +776,55 @@ void removeusernameinputed(void* context, LPWSTR username)
         EnableWindow(context, true);
     }
 }
+typedef struct yinyue200_MainWindow_calctempdata
+{
+    LPWSTR MemberData;
+    int Count;
+} YINYUE200_MAINWINDOW_CALCTEMPDATA;
+void calcmaindata(void* (*getmember)(void*), HWND hwnd)
+{
+    VECTOR_INIT(calc_temp_list);
+    for (int i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
+    {
+        PRODUCTRECORD_PTR bbb = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
+        YINYUE200_MAINWINDOW_CALCTEMPDATA* aaafinal = NULL;
+        for (int j = 0; j < VECTOR_TOTAL(calc_temp_list); j++)
+        {
+            YINYUE200_MAINWINDOW_CALCTEMPDATA* aaa = VECTOR_GET(calc_temp_list, YINYUE200_MAINWINDOW_CALCTEMPDATA*, j);
+            wchar_t* mem = (wchar_t*)(getmember(bbb));
+            if (aaa->MemberData == mem ||wcscmp(aaa->MemberData, mem) == 0)
+            {
+                aaafinal = aaa;
+                aaa->Count++;
+                break;
+            }
+        }
+        if (aaafinal == NULL)
+        {
+            aaafinal = malloc(sizeof(YINYUE200_MAINWINDOW_CALCTEMPDATA));
+            aaafinal->MemberData = getmember(bbb);
+            aaafinal->Count = 1;
+            vector_add(&calc_temp_list, aaafinal);
+        }
+    }
+    YINYUE200_MAINWINDOW_CALCTEMPDATA* max = NULL;
+    for (int k = 0; k < VECTOR_TOTAL(calc_temp_list); k++)
+    {
+        YINYUE200_MAINWINDOW_CALCTEMPDATA* aaa = VECTOR_GET(calc_temp_list, struct agent*, k);
+        if (max == NULL || aaa->Count > max->Count)
+        {
+            max = aaa;
+        }
+    }
+    if (max == NULL)
+    {
+        MessageBox(hwnd, L"没有统计结果", L"统计结果", 0);
+    }
+    else
+    {
+        MessageBox(hwnd, max->MemberData, L"统计结果", 0);
+    }
+}
 typedef struct yinyue200_LoginCheckContext
 {
     WPARAM wParam;
@@ -933,6 +986,10 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hUsr, MF_STRING, ID_MENU_ADDUSER, L"添加用户");
         AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"重设用户密码和权限");
         AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINPROVIDER, L"显示主要供货商");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRECIVER, L"显示主要收货商");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRESENTER, L"显示主要退货商");
+
 
         SetMenu(hwnd, hMenubar);
 
@@ -1032,6 +1089,21 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
         switch (LOWORD(wParam))
         {
+        case ID_MENU_CALCMAINPROVIDER:
+        {
+            calcmaindata(yinyue200_GetProductRecordProvideBy, hwnd);
+            break;
+        }
+        case ID_MENU_CALCMAINRECIVER:
+        {
+            calcmaindata(yinyue200_GetProductRecordRecievedBy, hwnd);
+            break;
+        }
+        case ID_MENU_CALCMAINRESENTER:
+        {
+            calcmaindata(yinyue200_GetProductRecordResentBy, hwnd);
+            break;
+        }
         case ID_MENU_VWS:
             ShellExecute(NULL, L"Open", L"https://github.com/yinyue200", NULL, NULL, SW_SHOWNORMAL);
             break;
