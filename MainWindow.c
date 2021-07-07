@@ -19,7 +19,8 @@
 #include "ProductRecord.h"
 #include "UserSetting.h"
 #include "LoadDataFilterWindow.h"
-#include "InputDialogBox.h"
+#include "LoginWindow.h"
+#include "InputBoxWindow.h"
 #include <CommCtrl.h>
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
@@ -180,6 +181,10 @@ void CreateMainWindow()
 
     return 0;
 }
+void edititemlogined(void* context)
+{
+    CreateEditItemWindow(context, yinyue200_LoganUserInfo==NULL?false: wcscmp(yinyue200_LoganUserInfo->Type , L"ADMIN")==0);
+}
 
 LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
 {
@@ -293,7 +298,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         LPNMITEMACTIVATE lpnmitem = lParam;
         if (lpnmitem->iItem >= 0)
         {
-            CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, lpnmitem->iItem));
+            CreateLoginWindow(GetNowLoginedUserName(), edititemlogined, VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, lpnmitem->iItem));
         }
         break;
     }
@@ -531,16 +536,267 @@ void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
 
     Yinyue200_Main_UpdateListViewData(hwnd);
 }
-BOOL CALLBACK GoToProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+typedef struct yinyue200_action_addusercontext
 {
-    //switch (message)
-    //{
-    //case WM_INITDIALOG:
-    //    return TRUE;
-    //default:
-    //    break;
-    //}
-    return FALSE;
+    HWND hwnd;
+    LPWSTR Username;
+    LPWSTR Password;
+} YINYUE200_ACTION_ADDUSERCONTEXT; 
+void adduserpwdinputedrepeat(void* context, LPWSTR userpwd)
+{
+    YINYUE200_ACTION_ADDUSERCONTEXT* con = context;
+    EnableWindow(con->hwnd, true);
+    if (userpwd != NULL)
+    {
+        if (wcscmp(userpwd, con->Password) != 0)
+        {
+            MessageBox(con->hwnd, L"两次密码不一致", NULL, 0);
+            free(con->Password);
+            free(con->Username);
+            return;
+        }
+        bool ISADMIN;
+        int msgboxret = MessageBox(con->hwnd, L"该用户是否要设置为管理员用户", L"创建用户", MB_YESNOCANCEL | MB_ICONQUESTION);
+        switch (msgboxret)
+        {
+        case IDYES:
+        {
+            ISADMIN = true;
+            break;
+        }
+        case IDNO:
+        {
+            ISADMIN = false;
+            break;
+        }
+        default:
+            free(con->Password);
+            free(con->Username);
+            return;
+        }
+        wchar_t pwdhash[65];
+        Hash256LPWSTR(con->Password, pwdhash);
+        free(con->Password);
+        vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
+        bool added = false;
+        LPWSTR adminstr = L"ADMIN";
+        LPWSTR normalstr = L"NORMAL";
+        for (size_t i = 0; i < vector_total(vec); i++)
+        {
+            USERDATAINFO_PTR one = vector_get(vec, i);
+            if (wcscmp(one->Name, con->Username) == 0)
+            {
+                free(one->PasswordHash);
+                free(one->Type);
+                one->PasswordHash = pwdhash;
+                one->Type = ISADMIN ? adminstr : normalstr;
+                goto USERINFOADDEND;
+            }
+        }
+
+        USERDATAINFO* userinfo = yinyue200_safemalloc(sizeof(USERDATAINFO));
+        added = true;  
+        userinfo->Name = con->Username;
+        userinfo->PasswordHash = pwdhash;
+        userinfo->Type = ISADMIN ? adminstr : normalstr;
+        vector_add(vec, userinfo);
+    USERINFOADDEND:;
+        yinyue200_UserRecordSaveToFile(yinyue200_GetUserConfigFilePath(), vec);
+
+        if (added)
+        {
+            free(userinfo);
+        }
+        size_t vv = added ? vector_total(vec) - 1 : vector_total(vec);
+        for (size_t i = 0; i < vv; i++)
+        {
+            USERDATAINFO_PTR one = vector_get(vec, i);
+            free(one->Name);
+            if (one->PasswordHash != pwdhash)
+            {
+                free(one->PasswordHash);
+            }
+            if (one->Type != adminstr && one->Type != normalstr)
+            {
+                free(one->Type);
+            }
+            free(one);
+        }
+
+        
+        free(con->Username);
+        vector_free(vec);
+        free(vec);
+    }
+    else
+    {
+        free(con->Password);
+        free(con->Username);
+    }
+}
+void adduserpwdinputed(void* context, LPWSTR userpwd)
+{
+    YINYUE200_ACTION_ADDUSERCONTEXT* con = context;
+    if (userpwd != NULL)
+    {
+        con->Password = userpwd;
+        CreateInputBoxWindow(L"再次输入密码", adduserpwdinputedrepeat, context, true);
+    }
+    else
+    {
+        EnableWindow(con->hwnd, true);
+        free(con->Username);
+        free(con);
+    }
+}
+void addusernameinputed(void* context, LPWSTR username)
+{
+    if (username != NULL)
+    {
+        YINYUE200_ACTION_ADDUSERCONTEXT* context_next = yinyue200_safemalloc(sizeof(YINYUE200_ACTION_ADDUSERCONTEXT));
+        memset(context_next, 0, sizeof(YINYUE200_ACTION_ADDUSERCONTEXT));
+        context_next->hwnd = context;
+        context_next->Username = username;
+        CreateInputBoxWindow(L"输入密码", adduserpwdinputed, context_next,true);
+    }
+    else
+    {
+        EnableWindow(context, true);
+    }
+}
+void removeusernameinputed(void* context, LPWSTR username)
+{
+    if (username != NULL)
+    {
+        vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
+        for (size_t i = 0; i < vector_total(vec); i++)
+        {
+            USERDATAINFO_PTR one = vector_get(vec, i);
+            if (wcscmp(one->Name, username)==0)
+            {
+                vector_delete(vec, i);
+                free(one->Name);
+                free(one->PasswordHash);
+                free(one->Type);
+                free(one);
+                i--;
+            }
+
+        }
+        yinyue200_UserRecordSaveToFile(yinyue200_GetUserConfigFilePath(), vec);
+        for (size_t i = 0; i < vector_total(vec); i++)
+        {
+            USERDATAINFO_PTR one = vector_get(vec, i);
+            free(one->Name);
+            free(one->PasswordHash);
+            free(one->Type);
+            free(one);
+        }
+        vector_free(vec);
+        free(vec);
+    }
+    else
+    {
+        EnableWindow(context, true);
+    }
+}
+typedef struct yinyue200_LoginCheckContext
+{
+    WPARAM wParam;
+    HWND hwnd;
+} YINYUE200_LOGINCHECKCONTEXT;
+void logincheckmsg(void* context)
+{
+    if (yinyue200_LoganUserInfo!=NULL&&wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN")==0)
+    {
+        YINYUE200_LOGINCHECKCONTEXT* ycontext = context;
+        HWND hwnd = ycontext->hwnd;
+        WPARAM wParam = ycontext->wParam;
+        switch (LOWORD(wParam))
+        {
+        case ID_MENU_ADDUSER:
+        {
+            EnableWindow(hwnd, false);
+            CreateInputBoxWindow(L"输入要添加的用户名", addusernameinputed, hwnd, false);
+            break;
+        }
+        case ID_MENU_CHANGEPWD:
+        {
+            EnableWindow(hwnd, false);
+            CreateInputBoxWindow(L"输入要修改密码的用户名", addusernameinputed, hwnd, false);
+            break;
+        }
+        case ID_MENU_REMOVEUSER:
+        {
+            EnableWindow(hwnd, false);
+            CreateInputBoxWindow(L"输入要删除的用户", removeusernameinputed, hwnd, false);
+            break;
+        }
+        case ID_MENU_ADDRECORD:
+        {
+            CreateEditItemWindow(NULL,true);
+            break;
+        }
+        default:
+            switch (HIWORD(wParam))
+            {
+            case BN_CLICKED:
+            {
+                switch (LOWORD(wParam))
+                {
+                case ID_BUTTON_REMOVESELECTEDITEMS:
+                {
+                    YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                    HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
+                    int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                    if (iPos == -1)
+                    {
+                        MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                    }
+                    windata->sortstate = 0;
+                    while (iPos != -1) {
+                        // iPos is the index of a selected item
+                        // do whatever you want with it
+                        PRODUCTRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, iPos);
+                        for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
+                        {
+                            PRODUCTRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
+                            if (allproduct == productrecord)
+                            {
+                                VECTOR_DELETE(yinyue200_ProductList, i);
+                                break;
+                            }
+                        }
+                        for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
+                        {
+                            PRODUCTRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, PRODUCTRECORD_PTR, i);
+                            if (allproduct == productrecord)
+                            {
+                                VECTOR_DELETE(windata->UnsortedNowList, i);
+                                break;
+                            }
+                        }
+
+
+                        // Get the next selected item
+                        iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                    }
+                    Yinyue200_Main_UpdateListViewData(hwnd);
+                }
+
+                default:
+                    break;
+                }
+            }
+                break;
+            }
+            break;
+        }
+    }
+    else
+    {
+        MessageBox(NULL, L"需要管理员权限", NULL, 0);
+    }
 }
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -580,8 +836,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询");
         AppendMenu(hUsr, MF_STRING, ID_MENU_REMOVEUSER, L"删除用户");
         AppendMenu(hUsr, MF_STRING, ID_MENU_ADDUSER, L"添加用户");
-        AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPERR, L"修改用户权限");
-        AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"修改密码");
+        AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"重设用户密码和权限");
         AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
 
         SetMenu(hwnd, hMenubar);
@@ -688,9 +943,6 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         case ID_MENU_ABOUT:
             MessageBox(hwnd, L"版本 0.0.1\r\nA GUI program\r\nold fashion design", L"关于", 0);
             break;
-        case ID_MENU_ADDRECORD:
-            CreateEditItemWindow(NULL);
-            break;
         case ID_MENU_SAVE:
             yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(), &yinyue200_ProductList);
             MessageBox(hwnd, L"保存成功", L"消息", 0);
@@ -723,10 +975,40 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             break;
         }
+        case ID_MENU_ADDRECORD:
+        case ID_MENU_REMOVEUSER:
+        case ID_MENU_CHANGEPWD:
         case ID_MENU_ADDUSER:
         {
-            DialogBoxIndirect(yinyue200_hInstance, createinputbox(L"test", L"test"), hwnd, GoToProc);
-            int ret = GetLastError();
+            YINYUE200_LOGINCHECKCONTEXT* lcc = yinyue200_safemalloc(sizeof(YINYUE200_LOGINCHECKCONTEXT));
+            lcc->hwnd = hwnd;
+            lcc->wParam = wParam;
+            CreateLoginWindow(GetNowLoginedUserName(), logincheckmsg, lcc);
+            break;
+        }
+        case ID_MENU_SHOWUSERSLIST:
+        {
+            wchar_t* buf = yinyue200_safemalloc(2000);
+
+            wchar_t *now = buf;
+
+            vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
+            for (size_t i = 0; i < vector_total(vec); i++)
+            {
+                USERDATAINFO_PTR one = vector_get(vec, i);
+                int ret = swprintf_s(now, 1000 - (now - buf), L"%s %s\n", one->Name, one->Type);
+                now += ret;
+                free(one->Name);
+                free(one->PasswordHash);
+                free(one->Type);
+                free(one);
+            }
+            vector_free(vec);
+            free(vec);
+
+            MessageBox(NULL, buf, L"用户列表", 0);
+
+            free(buf);
             break;
         }
         default:
@@ -755,43 +1037,11 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         break;
                     case ID_BUTTON_REMOVESELECTEDITEMS:
                     {
-                        HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
-                        int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
-                        if (iPos == -1)
-                        {
-                            MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
-                        }
-                        windata->sortstate = 0;
-                        while (iPos != -1) {
-                            // iPos is the index of a selected item
-                            // do whatever you want with it
-                            PRODUCTRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, iPos);
-                            for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
-                            {
-                                PRODUCTRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
-                                if (allproduct == productrecord)
-                                {
-                                    VECTOR_DELETE(yinyue200_ProductList, i);
-                                    break;
-                                }
-                            }
-                            for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
-                            {
-                                PRODUCTRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, PRODUCTRECORD_PTR, i);
-                                if (allproduct == productrecord)
-                                {
-                                    VECTOR_DELETE(windata->UnsortedNowList, i);
-                                    break;
-                                }
-                            }
-
-
-                            // Get the next selected item
-                            iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
-                        }
-                        Yinyue200_Main_UpdateListViewData(hwnd);
+                        YINYUE200_LOGINCHECKCONTEXT* lcc = yinyue200_safemalloc(sizeof(YINYUE200_LOGINCHECKCONTEXT));
+                        lcc->hwnd = hwnd;
+                        lcc->wParam = wParam;
+                        CreateLoginWindow(GetNowLoginedUserName(), logincheckmsg, lcc);
                     }
-
                     default:
                         break;
                     }

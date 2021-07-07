@@ -141,14 +141,14 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 						{
 							if (size > 0)
 							{
-								PWCHAR info = malloc(size * 2);
+								PWCHAR info = malloc(size * 2 + 2);
 								if (info == NULL)
 								{
 									UnrecoveryableFailed();
 									return NULL;
 								}
-								memset(info, 0, size * 2);
-								MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+								int sizechars = MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+								info[sizechars] = 0;
 								switch (tindex)
 								{
 								case 0:

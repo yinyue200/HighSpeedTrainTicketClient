@@ -23,9 +23,10 @@
 typedef struct EditItemWindowData
 {
     PRODUCTRECORD_PTR ProductRecord;
+    bool enablesave;
 } EDITITEMWINDOWDATA;
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord)
+void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
@@ -41,6 +42,7 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord)
 
     EDITITEMWINDOWDATA* windowdata = yinyue200_safemalloc(sizeof(EDITITEMWINDOWDATA));
     windowdata->ProductRecord = productrecord;
+    windowdata->enablesave = enablesave;
 
     // Create the window.
 
@@ -166,6 +168,11 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
         SETNULLORPRODUCTINFOMEMBERINTDATA(hwndEdit_ID, ID);
         SendMessage(NameLabelType, WM_SETTEXT, 0, L"ÀàÐÍ");
+
+        if (!windowdata->enablesave)
+        {
+            EnableWindow(hwndButton_Save, false);
+        }
         
     }
     return 0;

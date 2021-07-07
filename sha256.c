@@ -25,7 +25,9 @@ static const uint32_t k[64] = {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-void sha256(const unsigned char* data, size_t len, unsigned char* out) {
+void sha256(const unsigned char* data, size_t len, unsigned char* out1) {
+    unsigned char out[65];
+    out[64] = 0;
     uint32_t h0 = 0x6a09e667;
     uint32_t h1 = 0xbb67ae85;
     uint32_t h2 = 0x3c6ef372;
@@ -113,8 +115,12 @@ void sha256(const unsigned char* data, size_t len, unsigned char* out) {
     copy_uint32(out + 6, h6);
     copy_uint32(out + 7, h7);
     free(buf);
-    /*for(int i=0;i<32;i++)
+    
+    for(int i=0;i<32;i++)
     {
-        printf("%x",out[i]);
-    }*/
+        sprintf(out1,"%02x",out[i]);
+        out1 += 2;
+    }
+    out1 -= 64;
+    ;
 }

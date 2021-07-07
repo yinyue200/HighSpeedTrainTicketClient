@@ -23,12 +23,13 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "vector.h"
 #include "ProductRecord.h"
 #include "UserSetting.h"
+#include "LoginWindow.h"
 
 vector yinyue200_ProductList;
 HINSTANCE yinyue200_hInstance;
 int yinyue200_nCmdShow;
 atomic_int yinyue200_windowCount = 0;
-USERDATAINFO_PTR yinyue200_LoganUserInfo;
+USERDATAINFO_PTR yinyue200_LoganUserInfo = NULL;
 void AddWindowCount()
 {
     atomic_fetch_add(&yinyue200_windowCount,1);
@@ -45,7 +46,10 @@ bool CheckIfNoWindow()
     }
     return false;
 }
-
+void createmain(void* context)
+{
+    CreateMainWindow();
+}
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     {
@@ -55,7 +59,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     yinyue200_hInstance = hInstance;
     yinyue200_nCmdShow = nCmdShow;
-    CreateMainWindow();
+
+    CreateLoginWindow(NULL, createmain, NULL);
     return MessageLoop();
 }
 

@@ -6,6 +6,12 @@
 #define ID_BUTTON_SAVE 3
 #define ID_BUTTON_CANCEL 4
 LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LPWSTR GetNowLoginedUserName()
+{
+    if (yinyue200_LoganUserInfo == NULL)
+        return NULL;
+    return yinyue200_LoganUserInfo->Name;
+}
 typedef struct LoginWindowData
 {
     LPWSTR UserName;
@@ -139,31 +145,54 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
                 LPWSTR username = CreateWstrForWindowText(GetDlgItem(hwnd,ID_EDIT_NAME));
                 LPWSTR password = CreateWstrForWindowText(GetDlgItem(hwnd, ID_EDIT_PWD));
-                wchar_t pwdhash[33];
+                wchar_t pwdhash[65];
                 Hash256LPWSTR(password, pwdhash);
                 free(password);
-                bool SUCC;
+                bool SUCC = false;
                 for (size_t i = 0; i < vector_total(vec); i++)
                 {
                     USERDATAINFO_PTR item = vector_get(vec, i);
                     if (wcscmp(username, item->Name) == 0 && wcscmp(pwdhash, item->PasswordHash) == 0)
                     {
-                        free(yinyue200_LoganUserInfo);
+                        if (yinyue200_LoganUserInfo != NULL)
+                        {
+                            free(yinyue200_LoganUserInfo->Name);
+                            free(yinyue200_LoganUserInfo->PasswordHash);
+                            free(yinyue200_LoganUserInfo->Type);
+                            free(yinyue200_LoganUserInfo);
+                        }
                         yinyue200_LoganUserInfo = item;
                         SUCC = true;
                         break;
                     }
                     else
                     {
+                        free(item->Name);
+                        free(item->PasswordHash);
+                        free(item->Type);
                         free(item);
                     }
                 }
+                if (!SUCC)
+                {
+                    if (yinyue200_LoganUserInfo != NULL)
+                    {
+                        free(yinyue200_LoganUserInfo->Name);
+                        free(yinyue200_LoganUserInfo->PasswordHash);
+                        free(yinyue200_LoganUserInfo->Type);
+                        free(yinyue200_LoganUserInfo);
+                    }
+                    yinyue200_LoganUserInfo = NULL;
+                }
                 vector_free(vec);
+                free(vec);
+                free(username);
                 windowdata->callback(windowdata->callbackcontext);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
             else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
             {
+                yinyue200_LoganUserInfo = NULL;
                 windowdata->callback(windowdata->callbackcontext);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }

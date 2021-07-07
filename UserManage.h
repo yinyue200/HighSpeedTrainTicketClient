@@ -11,4 +11,4 @@ typedef struct UserDataInfo
 typedef USERDATAINFO* USERDATAINFO_PTR;
 bool yinyue200_UserRecordSaveToFile(LPWSTR path, vector* vec);
 vector* UserRecordLoadToVector(LPWSTR path);
-void Hash256LPWSTR(LPWSTR str, wchar_t buf[33]);
+void Hash256LPWSTR(LPWSTR str, wchar_t buf[65]);

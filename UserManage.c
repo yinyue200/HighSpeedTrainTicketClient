@@ -83,9 +83,9 @@ vector* UserRecordLoadToVector(LPWSTR path)
 					{
 						if (size > 0)
 						{
-							PWCHAR info = yinyue200_safemalloc(size * 2);
-							memset(info, 0, size * 2);
-							MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+							PWCHAR info = yinyue200_safemalloc(size * 2 + 2);
+							int sizechars = MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+							info[sizechars] = 0;
 							switch (tindex)
 							{
 							case 0:
@@ -140,13 +140,13 @@ vector* UserRecordLoadToVector(LPWSTR path)
 	}
 	return vec;
 }
-void Hash256LPWSTR(LPWSTR str,wchar_t buf[33])
+void Hash256LPWSTR(LPWSTR str,wchar_t buf[65])
 {
 	int len = wcslen(str);
-	char out[33];
-	out[32] = 0;
-	sha256(&str, len * sizeof(wchar_t) / sizeof(unsigned char),out);
-	for (size_t i = 0; i < 33; i++)
+	char out[65];
+	buf[64] = 0;
+	sha256(str, len * sizeof(wchar_t) / sizeof(unsigned char),out);
+	for (size_t i = 0; i < 64; i++)
 	{
 		buf[i] = out[i];
 	}

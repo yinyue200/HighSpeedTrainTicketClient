@@ -150,7 +150,7 @@
     <ClCompile Include="common.c" />
     <ClCompile Include="EditItemWindow.c" />
     <ClCompile Include="cJSON.c" />
-    <ClCompile Include="InputDialogBox.c" />
+    <ClCompile Include="InputBoxWindow.c" />
     <ClCompile Include="LoadDataFilterWindow.c" />
     <ClCompile Include="LoginWindow.c" />
     <ClCompile Include="MainWindow.c" />
@@ -166,7 +166,7 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="EditItemWindow.h" />
     <ClInclude Include="cJSON.h" />
-    <ClInclude Include="InputDialogBox.h" />
+    <ClInclude Include="InputBoxWindow.h" />
     <ClInclude Include="LoadDataFilterWindow.h" />
     <ClInclude Include="LoginWindow.h" />
     <ClInclude Include="MainWindow.h" />
