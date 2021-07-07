@@ -546,7 +546,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
         {
         RESETPAGE:;
             VECTOR_CLEAR(windata->PagedNowList);
-            for (size_t i = windata->pagestart; i < VECTOR_TOTAL(windata->NowList); i++)
+            for (size_t i = windata->pagestart; i < VECTOR_TOTAL(windata->NowList)&&i< windata->pagestart+ MAIN_DISPLAYPAGESIZE; i++)
             {
                 VECTOR_ADD(windata->PagedNowList, vector_get(&windata->NowList, i));
             }
@@ -576,10 +576,10 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
 
 void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
 {
+    Yinyue200_Main_UpdateListViewData(hwnd);
     HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
     HWND nextpagebtn = GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE);
     HWND editpagebtn = GetDlgItem(hwnd, ID_EDIT_PAGE);
-
     if (IsDlgButtonChecked(hwnd, ID_CHECKBOX_PAGE))
     {
         ShowWindow(lastpagebtn, SW_SHOW);
@@ -594,6 +594,14 @@ void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
             EnableWindow(nextpagebtn, TRUE);
         }
         EnableWindow(lastpagebtn, windowdata->pagestart > 0);
+        wchar_t buf[30];
+        swprintf(buf, 30, L"%d", windowdata->pagestart / MAIN_DISPLAYPAGESIZE + 1);
+        LPWSTR editpagestr = CreateWstrForWindowText(editpagebtn);
+        if (wcscmp(editpagestr, buf) != 0)
+        {
+            SendMessage(editpagebtn, WM_SETTEXT, 0, buf);
+        }
+        free(editpagestr);
     }
     else
     {
@@ -601,7 +609,6 @@ void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
         ShowWindow(nextpagebtn, SW_HIDE);
         ShowWindow(editpagebtn, SW_HIDE);
     }
-    Yinyue200_Main_UpdateListViewData(hwnd);
 }
 void yinyue200_main_loadnowlist(HWND hwnd,YINYUE200_MAINWINDOWDATA *windata)
 {
@@ -1049,6 +1056,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ID_BUTTON_NEXTPAGE,       // No menu.
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);      // Pointer not needed.
+        buttonx += 100;
         HWND hwndRemoveSelectedItemsButton = CreateWindow(
             L"BUTTON",  // Predefined class; Unicode assumed 
             L"É¾³ýËùÑ¡",      // Button text 
@@ -1195,13 +1203,13 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         break;
                     case ID_BUTTON_NEXTPAGE:
                         windata->pagestart += MAIN_DISPLAYPAGESIZE;
-                        Yinyue200_Main_UpdateListViewData(hwnd);
+                        UpdateCheckBoxInfo(hwnd, windata);
                         break;
                     case ID_BUTTON_PREVPAGE:
                         windata->pagestart -= MAIN_DISPLAYPAGESIZE;
                         if (windata->pagestart < 0)
                             windata->pagestart = 0;
-                        Yinyue200_Main_UpdateListViewData(hwnd);
+                        UpdateCheckBoxInfo(hwnd, windata);
                         break;
                     case ID_BUTTON_REMOVESELECTEDITEMS:
                     {
@@ -1231,7 +1239,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             )
                         {
                             windata->pagestart = startpos;
-                            Yinyue200_Main_UpdateListViewData(hwnd);
+                            UpdateCheckBoxInfo(hwnd,windata);
                             PostMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(1, 0), L"");
                         }
                         else
