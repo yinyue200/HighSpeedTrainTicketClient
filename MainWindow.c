@@ -1276,7 +1276,19 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
         int x = LOWORD(lParam);
         int y = HIWORD(lParam);
+        int buttony = y - 75;
         OnStatusbarSize(hwnd, wParam, x, y);
+        int buttonx = 10;
+        SetWindowPos(GetDlgItem(hwnd, ID_LISTVIEW_MAIN), HWND_TOP, -1, -1, x, buttony, SWP_NOMOVE);
+        SetWindowPos(GetDlgItem(hwnd, ID_CHECKBOX_PAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
+        buttonx += 100;
+        SetWindowPos(GetDlgItem(hwnd, ID_BUTTON_PREVPAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
+        buttonx += 100;
+        SetWindowPos(GetDlgItem(hwnd, ID_EDIT_PAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
+        buttonx += 100;
+        SetWindowPos(GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
+        buttonx += 100;
+        SetWindowPos(GetDlgItem(hwnd, ID_BUTTON_REMOVESELECTEDITEMS), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
         break;
     }
     case WM_PAINT:
