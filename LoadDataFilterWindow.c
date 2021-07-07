@@ -194,7 +194,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
             10 + 100 + 10, lasty, 100, 50,
             hwnd, ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
         lasty += 50;
-        SendMessage(WindowLabel, WM_SETTEXT, 0, L"填写筛选条件，留空为不填");
+        SendMessage(WindowLabel, WM_SETTEXT, 0, L"填写筛选条件，部分字段可用“-”表示范围");
 
 
     }
