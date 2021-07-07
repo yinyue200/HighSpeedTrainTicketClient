@@ -15,5 +15,7 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 #include "common.h"
+//获取数据文件路径
 PWCHAR yinyue200_GetConfigFilePath();
+//获取用户信息配置路径
 PWCHAR yinyue200_GetUserConfigFilePath();

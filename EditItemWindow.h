@@ -15,4 +15,6 @@
 //
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+//创建并打开编辑单个记录信息窗体
 void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord, bool enablesave);

@@ -20,7 +20,7 @@ typedef struct Yinyue200_MainWindowData
     vector UnsortedNowList;
     vector NowList;
     vector PagedNowList;
-    int pagestart;
+    int pagestart;//当前页起始下标
     int sortcomindex;//排序的列号
     int sortstate;//是否已经应用排序
     int sortmethod;//升降序

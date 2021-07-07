@@ -17,11 +17,14 @@
 #include <Windows.h>
 #include <stdint.h>
 #include "common.h"
+//构造获取 ProductRecord 成员的函数声明的宏
 #define YINYUE200_DEFINESIG_GETMEMBERMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj);
+//商品状态（暂时未使用）
 enum ProductState
 {
 	PRODUCTSTATE_UNKNOWN=0,
 };
+//记录信息
 typedef struct ProductRecord
 {
 	wchar_t* Name;//0
@@ -39,10 +42,16 @@ typedef struct ProductRecord
 	wchar_t* Signer;//12
 } PRODUCTRECORD;
 typedef  PRODUCTRECORD* PRODUCTRECORD_PTR;
+//创建记录，并传递所有权（调用者负责free）
 PRODUCTRECORD_PTR CreateProductRecord();
+//读取记录信息
 vector* ProductRecordLoadToVector(LPWSTR path);
+//写入记录到文件
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec);
-bool WritePWSTR(PWSTR str, HANDLE hFile);
+//写入宽字符串到文件
+bool WritePWSTR(PCWSTR str, HANDLE hFile);
+
+//=======构造获取 ProductRecord 成员的函数声明=======
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Name)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(ID)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Type)
@@ -56,4 +65,5 @@ YINYUE200_DEFINESIG_GETMEMBERMETHOD(Cost)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Price)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(ResentPrice)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Signer)
+//========
 

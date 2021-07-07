@@ -263,24 +263,6 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                 }
 
             }
-            if (lpdi->item.iSubItem)
-            {
-                
-            }
-            else
-            {
-                //load name
-                if (lpdi->item.mask & LVIF_TEXT)
-                {
-                    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,
-                        record->Name, _TRUNCATE);
-                }
-
-                if (lpdi->item.mask & LVIF_IMAGE)
-                {
-                    lpdi->item.iImage = 0;
-                }
-            }
         }   
     }
     return 0;
@@ -403,7 +385,7 @@ void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("销售价"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("退货价"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("经手人"),
-    };
+    };//二维数组，存储不同列在不同排序状态下的列头字符串
     LV_COLUMN   lvColumn;
     int         i;
     LPWSTR       szString[MAINWINDOW_COLUMNCOUNT];
@@ -452,11 +434,14 @@ BOOL Yinyue200_Main_InitListView(HWND hwnd,HWND hwndListView)
 }
 typedef struct Yinyue200_Main_ListViewSortContext
 {
+    //获取排序成员
     void* (*GetCompareObject)(void* obj);
+    //是否反转比较结果
     BOOL IS_REV_RESULT;
 } YINYUE200_MAINLISTVIEWSORTCONTEXT;
 int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right)
 {
+    //宽字符串排序比较函数
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     PRODUCTRECORD_PTR* leftrecord = left;
     PRODUCTRECORD_PTR* rightrecord = right;
@@ -470,6 +455,7 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
 }
 int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
 {
+    //整型排序比较函数
     PRODUCTRECORD_PTR* leftrecord = left;
     PRODUCTRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
@@ -483,6 +469,7 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
 }
 int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
 {
+    //浮点排序比较函数
     PRODUCTRECORD_PTR* leftrecord = left;
     PRODUCTRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
@@ -524,6 +511,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
                 //do nothing
                 break;
             }
+                //以下是不同字段排序代码实现
                 ITEM_COMPAREIMPL(0,PWSTR,Name)
                 ITEM_COMPAREIMPL(1,int64,ID)
                 ITEM_COMPAREIMPL(2, PWSTR, Type)
@@ -570,7 +558,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
 
         wchar_t message[30];
         swprintf(message, 30, L"已加载 %d 项", (int)(VECTOR_TOTAL(windata->NowList)));
-        SendMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(0, 0), message);
+        SendMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(0, 0), message);//更新状态栏
     }
 }
 
@@ -597,7 +585,7 @@ void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
         wchar_t buf[30];
         swprintf(buf, 30, L"%d", windowdata->pagestart / MAIN_DISPLAYPAGESIZE + 1);
         LPWSTR editpagestr = CreateWstrForWindowText(editpagebtn);
-        if (wcscmp(editpagestr, buf) != 0)
+        if (wcscmp(editpagestr, buf) != 0)//只有当页码改变时才发送消息
         {
             SendMessage(editpagebtn, WM_SETTEXT, 0, buf);
         }
@@ -695,11 +683,11 @@ void adduserpwdinputedrepeat(void* context, LPWSTR userpwd)
         {
             USERDATAINFO_PTR one = vector_get(vec, i);
             free(one->Name);
-            if (one->PasswordHash != pwdhash)
+            if (one->PasswordHash != pwdhash)//防止释放不在堆中的内容
             {
                 free(one->PasswordHash);
             }
-            if (one->Type != adminstr && one->Type != normalstr)
+            if (one->Type != adminstr && one->Type != normalstr)//防止释放不在堆中的内容
             {
                 free(one->Type);
             }
@@ -788,6 +776,7 @@ typedef struct yinyue200_MainWindow_calctempdata
     LPWSTR MemberData;
     int Count;
 } YINYUE200_MAINWINDOW_CALCTEMPDATA;
+//统计函数
 void calcmaindata(void* (*getmember)(void*), HWND hwnd)
 {
     VECTOR_INIT(calc_temp_list);
@@ -808,7 +797,7 @@ void calcmaindata(void* (*getmember)(void*), HWND hwnd)
         }
         if (aaafinal == NULL)
         {
-            aaafinal = malloc(sizeof(YINYUE200_MAINWINDOW_CALCTEMPDATA));
+            aaafinal = yinyue200_safemalloc(sizeof(YINYUE200_MAINWINDOW_CALCTEMPDATA));
             aaafinal->MemberData = getmember(bbb);
             aaafinal->Count = 1;
             vector_add(&calc_temp_list, aaafinal);
@@ -1238,8 +1227,11 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             && startpos >= 0
                             )
                         {
-                            windata->pagestart = startpos;
-                            UpdateCheckBoxInfo(hwnd,windata);
+                            if (windata->pagestart != startpos)//只有当实际下标起点改变时才执行操作
+                            {
+                                windata->pagestart = startpos;
+                                UpdateCheckBoxInfo(hwnd, windata);
+                            }
                             PostMessage(GetDlgItem(hwnd, ID_STATUSBAR_MAIN), SB_SETTEXT, MAKEWPARAM(1, 0), L"");
                         }
                         else

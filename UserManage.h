@@ -17,13 +17,20 @@
 #include <windows.h>
 #include <stdbool.h>
 #include "vector.h"
+//存储用户信息
 typedef struct UserDataInfo
 {
+	//用户名
 	PWCHAR Name;
+	//密码 SHA-256
 	PWCHAR PasswordHash;
+	//用户类型 ADMIN/NORMAL
 	PWCHAR Type;
 } USERDATAINFO;
 typedef USERDATAINFO* USERDATAINFO_PTR;
+//写入用户信息
 bool yinyue200_UserRecordSaveToFile(LPWSTR path, vector* vec);
+//读取用户信息
 vector* UserRecordLoadToVector(LPWSTR path);
+//对宽字符串做 SHA-256 运算
 void Hash256LPWSTR(LPWSTR str, wchar_t buf[65]);

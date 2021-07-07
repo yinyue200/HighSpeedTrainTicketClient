@@ -13,11 +13,15 @@
 //
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
+ 
+
+//构造获取 ProductRecord 成员的函数定义的宏
 #define DEFINE_GETMEMBERMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj)\
 {\
 PRODUCTRECORD_PTR p = obj;\
 return p->name;\
 }
+//构造获取 ProductRecord 成员的地址的函数定义的宏
 #define DEFINE_GETMEMBERADDRMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj)\
 {\
 PRODUCTRECORD_PTR p = obj;\
@@ -33,12 +37,12 @@ PRODUCTRECORD_PTR CreateProductRecord()
 	memset(PT, 0, sizeof(PRODUCTRECORD));
 	return PT;
 }
-bool WritePWSTR(PWSTR str, HANDLE hFile)
+bool WritePWSTR(PCWSTR str, HANDLE hFile)
 {
 	if (str == NULL)
 		return true;
 	size_t len = wcslen(str);
-	size_t utf8len = len * sizeof(wchar_t) * 2;
+	size_t utf8len = len * sizeof(wchar_t) * 2;//假定一个 UTF-16 编码单元在 UTF-8 中最多使用四个字节表示
 	char* utf8bytes = malloc(utf8len);
 	if (utf8bytes)
 	{
@@ -50,7 +54,7 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 			free(utf8bytes);
 			return true;
 		}
-		int reason = GetLastError();
+		int reason = GetLastError();//错误原因，仅供调试
 		free(utf8bytes);
 		return false;
 	}
@@ -60,6 +64,7 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 	}
 
 }
+//caseid是信息列数（0开始） member是成员名称
 #define LOADINTDATATOVECTOR(member,caseid) case caseid:\
 {\
 	int64_t id;\
@@ -70,6 +75,7 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 	free(info);\
 	break;\
 }
+//caseid是信息列数（0开始） member是成员名称
 #define LOADPRICEDATATOVECTOR(member,caseid) case caseid:\
 {\
 	double id;\
@@ -80,16 +86,19 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 	free(info);\
 	break;\
 }
+//caseid是信息列数（0开始） member是成员名称
 #define LOADWSTRDATATOVECTOR(member,caseid) case caseid:\
 {\
 	p->##member = info;\
 	break;\
 }
+//member是成员名称
 #define SAVEWSTRDATATOVECTOR(member) \
 {\
 	FailedIfFalse(WritePWSTR(record->##member, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
 }
+//member是成员名称
 #define SAVEINTDATATOVECTOR(member) \
 {\
 	wchar_t idbuffer[30];\
@@ -97,6 +106,7 @@ bool WritePWSTR(PWSTR str, HANDLE hFile)
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
 }
+//member是成员名称
 #define SAVEDOUBLEDATATOVECTOR(member) \
 {\
 	wchar_t idbuffer[30];\
@@ -110,7 +120,7 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 		GENERIC_READ|GENERIC_WRITE,          // open for reading
 		0,       // share for reading
 		NULL,                  // default security
-		CREATE_ALWAYS,
+		CREATE_ALWAYS, //create file always
 		FILE_ATTRIBUTE_NORMAL, // normal file
 		NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -227,7 +237,6 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									LOADPRICEDATATOVECTOR(Price, 10)
 									LOADPRICEDATATOVECTOR(ResentPrice, 11)
 									LOADWSTRDATATOVECTOR(Signer, 12)
-									//p->ID = info;
 								default:
 									break;
 								}
@@ -280,6 +289,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 	}
 	return vec;
 }
+
 DEFINE_GETMEMBERMETHOD(Name);
 DEFINE_GETMEMBERADDRMETHOD(ID);
 DEFINE_GETMEMBERMETHOD(Type)
