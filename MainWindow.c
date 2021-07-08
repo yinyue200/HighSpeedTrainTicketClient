@@ -1003,7 +1003,6 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINPROVIDER, L"显示主要供货商");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRECIVER, L"显示主要收货商");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRESENTER, L"显示主要退货商");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRESENTER, L"显示主要经手人");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINSIGNER, L"显示主要经手人");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCASH, L"显示总利润");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCOST, L"显示总成本");
