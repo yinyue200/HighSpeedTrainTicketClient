@@ -838,6 +838,7 @@ typedef struct yinyue200_LoginCheckContext
 {
     WPARAM wParam;
     HWND hwnd;
+    vector* vec;
 } YINYUE200_LOGINCHECKCONTEXT;
 void logincheckmsg(void* context)
 {
@@ -903,17 +904,9 @@ void logincheckmsg(void* context)
                 case ID_BUTTON_REMOVESELECTEDITEMS:
                 {
                     YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                    HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
-                    int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
-                    if (iPos == -1)
+                    for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
-                    }
-                    windata->sortstate = 0;
-                    while (iPos != -1) {
-                        // iPos is the index of a selected item
-                        // do whatever you want with it
-                        PRODUCTRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, iPos);
+                        PRODUCTRECORD_PTR productrecord = vector_get(ycontext->vec, i);
                         for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
                         {
                             PRODUCTRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
@@ -932,13 +925,24 @@ void logincheckmsg(void* context)
                                 break;
                             }
                         }
-
-
-                        // Get the next selected item
-                        iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
                     }
-                    Yinyue200_Main_UpdateListViewData(hwnd);
-                }
+                    UpdateCheckBoxInfo(hwnd, windata);
+                    for (size_t i = 0; i < vector_total(ycontext->vec); i++)
+                    {
+                        PRODUCTRECORD_PTR productrecord = vector_get(ycontext->vec, i);
+                        free(productrecord->Name);
+                        free(productrecord->ProvideBy);
+                        free(productrecord->RecievedBy);
+                        free(productrecord->ResentBy);
+                        free(productrecord->Signer);
+                        free(productrecord->Type);
+                        free(productrecord->State);
+                        free(productrecord);
+                    }
+                    vector_free(ycontext->vec);
+                    free(ycontext->vec);
+                    break;
+                }    
 
                 default:
                     break;
@@ -1215,10 +1219,44 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         break;
                     case ID_BUTTON_REMOVESELECTEDITEMS:
                     {
-                        YINYUE200_LOGINCHECKCONTEXT* lcc = yinyue200_safemalloc(sizeof(YINYUE200_LOGINCHECKCONTEXT));
-                        lcc->hwnd = hwnd;
-                        lcc->wParam = wParam;
-                        CreateLoginWindow(GetNowLoginedUserName(), logincheckmsg, lcc);
+                        HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
+                        int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                        if (iPos == -1)
+                        {
+                            MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                        }
+                        else
+                        {
+                            vector* vec = yinyue200_safemalloc(sizeof(vector));
+                            vector_init(vec);
+
+                            windata->sortstate = 0;
+                            while (iPos != -1) {
+                                // iPos is the index of a selected item
+                                // do whatever you want with it
+                                PRODUCTRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, iPos);
+                                vector_add(vec, productrecord);
+
+                                // Get the next selected item
+                                iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                            }
+                            wchar_t warningmsg[50];
+                            swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total(vec));
+                            if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
+                            {
+                                YINYUE200_LOGINCHECKCONTEXT* lcc = yinyue200_safemalloc(sizeof(YINYUE200_LOGINCHECKCONTEXT));
+                                lcc->hwnd = hwnd;
+                                lcc->wParam = wParam;
+                                lcc->vec = vec;
+                                CreateLoginWindow(GetNowLoginedUserName(), logincheckmsg, lcc);
+                            }
+                            else
+                            {
+                                vector_free(vec);
+                                free(vec);
+                            }
+                        }    
+
                     }
                     default:
                         break;
