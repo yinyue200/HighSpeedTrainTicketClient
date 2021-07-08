@@ -247,9 +247,9 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 						if (one == '\r' || one == '\n')
 						{
 							laststart = i + 1;
+							tindex = 0;
 							if (!lastisbl)
-							{
-								tindex = 0;
+							{			
 								VECTOR_ADD(*vec, p);
 								p = CreateProductRecord();
 								if (p == NULL)

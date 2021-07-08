@@ -122,6 +122,40 @@ else\
 }\
 }\
 free(Field##name##Text);
+#define PREDEFINELOADDATAFILTERPROC_DATE(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
+BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
+PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
+int64_t Field##name##Int_Top;int64_t Field##name##Int_Bottom;\
+if(Is##name##FieldChk){\
+int _temp_a1,_temp_b1,_temp_c1,_temp_a2,_temp_b2,_temp_c2;int _temp_ret_sscanf=2;\
+int _temp_ret_sscanf_date= swscanf(Field##name##Text, L"%d/%d/%d-%d/%d/%d", &_temp_a1,&_temp_b1,&_temp_c1, &_temp_a2,&_temp_b2,&_temp_c2);\
+if(_temp_ret_sscanf_date==3)\
+{\
+    Field##name##Int_Bottom=_temp_a1*10000+_temp_b1*100+_temp_c1;Field##name##Int_Top=Field##name##Int_Bottom;\
+}\
+else if(_temp_ret_sscanf_date==6)\
+{\
+    Field##name##Int_Bottom=_temp_a1*10000+_temp_b1*100+_temp_c1;Field##name##Int_Top=_temp_a2*10000+_temp_b2*100+_temp_c2;\
+}\
+else\
+{\
+    _temp_ret_sscanf = swscanf(Field##name##Text, L"%lld-%lld", &Field##name##Int_Bottom,&Field##name##Int_Top);\
+}\
+if(Field##name##Int_Bottom>Field##name##Int_Top){\
+int64_t _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Int_Bottom;Field##name##Int_Bottom=Field##name##Int_Top;\
+Field##name##Int_Top=_temp_PREDEFINELOADDATAFILTERPROC_INT_swap;}\
+if (_temp_ret_sscanf==1)\
+{\
+    Field##name##Int_Bottom=Field##name##Int_Top;\
+}\
+else if(_temp_ret_sscanf==2){}\
+else\
+{\
+    MessageBox(hwnd, displayname L" 格式错误", NULL, 0);\
+    Is##name##FieldChk = false;\
+}\
+}\
+free(Field##name##Text);
 #define PREDEFINELOADDATAFILTERPROC_DOUBLE(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
 BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
 PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
@@ -235,7 +269,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 PREDEFINELOADDATAFILTERPROC_INT(ID,ID, L"ID")
                 PREDEFINELOADDATAFILTERPROC(Type,TYPE)
                 PREDEFINELOADDATAFILTERPROC(State, STATE)
-                PREDEFINELOADDATAFILTERPROC_INT(Date,DATE, L"日期")
+                PREDEFINELOADDATAFILTERPROC_DATE(Date,DATE, L"日期")
                 PREDEFINELOADDATAFILTERPROC(ProvideBy,PROVIDEBY)
                 PREDEFINELOADDATAFILTERPROC(RecievedBy,RECIEVEDBY)
                 PREDEFINELOADDATAFILTERPROC(ResentBy,RESENTBY)

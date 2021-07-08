@@ -102,6 +102,24 @@ else\
 }\
 free(_temp_int64_str);\
 }
+#define SAVEPRODUCTINFOMEMBERDATEDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+int64_t _temp_int64;\
+int _temp_a,_temp_b,_temp_c;\
+if (swscanf(_temp_int64_str, L"%d/%d/%d", &_temp_a,&_temp_b,&_temp_c) == 3)\
+{\
+    _temp_int64=_temp_a*10000+_temp_b*100+_temp_c;\
+    productrecord->##member = _temp_int64;\
+}\
+else if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
+{\
+    productrecord->##member = _temp_int64;\
+}\
+else\
+{\
+    MessageBox(hwnd, TEXT(#member) L"∏Ò Ω¥ÌŒÛ", NULL, 0);\
+}\
+free(_temp_int64_str);\
+}
 #define SAVEPRODUCTINFOMEMBERPRICEDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 double _temp_int64;\
 if (swscanf(_temp_int64_str, L"%lf", &_temp_int64) == 1)\
@@ -246,7 +264,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
-                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_DATE, Date);
+                SAVEPRODUCTINFOMEMBERDATEDATA(ID_EDIT_DATE, Date);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_PROVIDEBY, ProvideBy);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_RECIEVEDBY, RecievedBy);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_RESENTBY, ResentBy);
