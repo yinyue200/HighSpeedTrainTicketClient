@@ -47,6 +47,9 @@
 #define ID_MENU_CALCMAINPROVIDER 21
 #define ID_MENU_CALCMAINRECIVER 22
 #define ID_MENU_CALCMAINRESENTER 23
+#define ID_MENU_CALCMAINSIGNER 24
+#define ID_MENU_CALCALLCASH 25
+#define ID_MENU_CALCALLCOST 26
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
@@ -792,10 +795,11 @@ typedef struct yinyue200_MainWindow_calctempdata
 //统计函数
 void calcmaindata(void* (*getmember)(void*), HWND hwnd)
 {
+    YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
     VECTOR_INIT(calc_temp_list);
-    for (int i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
+    for (int i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
     {
-        PRODUCTRECORD_PTR bbb = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
+        PRODUCTRECORD_PTR bbb = VECTOR_GET(windata->UnsortedNowList, PRODUCTRECORD_PTR, i);
         YINYUE200_MAINWINDOW_CALCTEMPDATA* aaafinal = NULL;
         for (int j = 0; j < VECTOR_TOTAL(calc_temp_list); j++)
         {
@@ -999,6 +1003,11 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINPROVIDER, L"显示主要供货商");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRECIVER, L"显示主要收货商");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRESENTER, L"显示主要退货商");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRESENTER, L"显示主要经手人");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINSIGNER, L"显示主要经手人");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCASH, L"显示总利润");
+        AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCOST, L"显示总成本");
+
 
 
         SetMenu(hwnd, hMenubar);
@@ -1113,6 +1122,39 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         case ID_MENU_CALCMAINRESENTER:
         {
             calcmaindata(yinyue200_GetProductRecordResentBy, hwnd);
+            break;
+        }
+        case ID_MENU_CALCMAINSIGNER:
+        {
+            calcmaindata(yinyue200_GetProductRecordSigner, hwnd);
+            break;
+        }
+        case ID_MENU_CALCALLCASH:
+        {
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            double cash = 0.0;
+            for (size_t i = 0; i < vector_total(&windata->UnsortedNowList); i++)
+            {
+                PRODUCTRECORD_PTR one = vector_get(&windata->UnsortedNowList, i);
+                cash += (one->Price - one->Cost) * one->Count;
+            }
+            wchar_t strmsg[60];
+            swprintf_s(strmsg, 60, L"售出利润：%lf", cash);
+            MessageBox(hwnd, strmsg, L"统计结果", 0);
+            break;
+        }
+        case ID_MENU_CALCALLCOST:
+        {
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            double cash = 0.0;
+            for (size_t i = 0; i < vector_total(&windata->UnsortedNowList); i++)
+            {
+                PRODUCTRECORD_PTR one = vector_get(&windata->UnsortedNowList, i);
+                cash += one->Cost * one->Count;
+            }
+            wchar_t strmsg[60];
+            swprintf_s(strmsg, 60, L"总成本：%lf", cash);
+            MessageBox(hwnd, strmsg, L"统计结果", 0);
             break;
         }
         case ID_MENU_VWS:

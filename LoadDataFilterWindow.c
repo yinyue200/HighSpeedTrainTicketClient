@@ -179,7 +179,7 @@ else\
 free(Field##name##Text);
 #define LOADDATAFILTERPROC_FLITER_WSTR(name) if (Is##name##FieldChk)\
 {\
-    if (wcscmp(record->name, Field##name##Text))\
+    if (wcscmp(record->name, Field##name##Text)==0)\
     {\
         SHOULDREV &= TRUE;\
     }\
