@@ -96,7 +96,7 @@ if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
 {\
     productrecord->##member = _temp_int64;\
 }\
-else\
+else if(_temp_int64_str[0]!=0)\
 {\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
@@ -114,7 +114,7 @@ else if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
 {\
     productrecord->##member = _temp_int64;\
 }\
-else\
+else  if(_temp_int64_str[0]!=0)\
 {\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
@@ -126,7 +126,7 @@ if (swscanf(_temp_int64_str, L"%lf", &_temp_int64) == 1)\
 {\
     productrecord->##member = _temp_int64;\
 }\
-else\
+else  if(_temp_int64_str[0]!=0)\
 {\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
