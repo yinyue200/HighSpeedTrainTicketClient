@@ -16,6 +16,7 @@
 #include "LoginWindow.h"
 #include "UserManage.h"
 #include "UserSetting.h"
+#include "DpiHelper.h"
 #define ID_EDIT_NAME 1
 #define ID_EDIT_PWD 2
 #define ID_BUTTON_SAVE 3
@@ -32,6 +33,7 @@ typedef struct LoginWindowData
     LPWSTR UserName;
     void (*callback)(void*);
     void* callbackcontext;
+    HFONT Font;
 } LOGINWINDOWDATA;
 void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcontext)
 {
@@ -96,7 +98,10 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
         }
 
+        HFONT font = yinyue200_CreateDefaultFont(hwnd);
+
         LOGINWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        windowdata->Font = font;
 
         HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
             , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
@@ -132,18 +137,22 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
             10, lasty, 100, 50,
             hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        SendMessage(hwndButton_Save, WM_SETFONT, font, true);
         HWND hwndButton_Cancel = CreateWindow(
             L"BUTTON",
             L"取消",      // Button text 
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
             10 + 100 + 10, lasty, 100, 50,
             hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        SendMessage(hwndButton_Cancel, WM_SETFONT, font, true);
         lasty += 50;
         Edit_SetPasswordChar(hwndEdit_Pwd, L'*');
         SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"用户名");
+        SendMessage(NameLabelHwnd, WM_SETFONT, font, true);
         if (windowdata->UserName != NULL)
             SendMessage(hwndEdit_Name, WM_SETTEXT, 0, windowdata->UserName);
         SendMessage(NameLabelId, WM_SETTEXT, 0, L"密码");
+        SendMessage(NameLabelId, WM_SETFONT, font, true);
         PostMessage(hwndEdit_Pwd, WM_SETTEXT, 0, L"");
 
     }
@@ -218,9 +227,12 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     return 0;
     case WM_DESTROY:
     {
-        HANDLE windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        LOGINWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         if (windowdata != NULL)
+        {
+            yinyue200_DeleteFont(windowdata->Font);
             free(windowdata);
+        }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
         return 0;

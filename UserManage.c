@@ -116,7 +116,8 @@ vector* UserRecordLoadToVector(LPWSTR path)
 								break;
 							}
 						}
-						tindex++;
+						if(one == '\t')
+							tindex++;
 						laststart = i + 1;
 					}
 					if (one == '\r' || one == '\n')

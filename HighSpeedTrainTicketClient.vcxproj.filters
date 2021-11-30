@@ -54,6 +54,9 @@
     <ClCompile Include="InputBoxWindow.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DpiHelper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -92,5 +95,11 @@
     <ClInclude Include="InputBoxWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DpiHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
   </ItemGroup>
 </Project>

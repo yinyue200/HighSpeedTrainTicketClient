@@ -21,6 +21,7 @@
 #include "LoadDataFilterWindow.h"
 #include "LoginWindow.h"
 #include "InputBoxWindow.h"
+#include "DpiHelper.h"
 #include <CommCtrl.h>
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
@@ -1016,6 +1017,8 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
         int buttony = 500;
         int buttonx = 10;
+        HFONT font = yinyue200_CreateDefaultFont(hwnd);
+
         HWND hwndPageButton = CreateWindow(
             L"BUTTON",  // Predefined class; Unicode assumed 
             L"°´Ò³ÏÔÊ¾",      // Button text 
@@ -1028,6 +1031,8 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ID_CHECKBOX_PAGE,       // No menu.
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);      // Pointer not needed.
+        SendMessage(hwndPageButton, WM_SETFONT, font, true);
+
         buttonx+=100;
         HWND hwndPrevPageButton = CreateWindow(
             L"BUTTON",  // Predefined class; Unicode assumed 
@@ -1081,19 +1086,13 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
             NULL);      // Pointer not needed.
 
-        YINYUE200_MAINWINDOWDATA* windata = malloc(sizeof(YINYUE200_MAINWINDOWDATA));
-        if (windata)
-        {
-            memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
-            windata->sortcomindex = -1;
-            windata->WindowHwnd = hwnd;
-            SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
-            UpdateCheckBoxInfo(hwnd, windata);
-        }
-        else
-        {
-            UnrecoveryableFailed();
-        }
+        YINYUE200_MAINWINDOWDATA* windata = yinyue200_safemalloc(sizeof(YINYUE200_MAINWINDOWDATA));
+        memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
+        windata->Font = font;
+        windata->sortcomindex = -1;
+        windata->WindowHwnd = hwnd;
+        SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
+        UpdateCheckBoxInfo(hwnd, windata);
     }
     return 0;
     case WM_NOTIFY:
@@ -1349,6 +1348,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         if (windata)
         {
+            yinyue200_DeleteFont(windata->Font);
             free(windata);
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
