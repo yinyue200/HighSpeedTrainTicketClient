@@ -22,6 +22,7 @@
 #include "ProductRecord.h"
 #include "UserSetting.h"
 #include "LoginWindow.h"
+#include "DpiHelper.h"
 
 vector yinyue200_ProductList;
 HINSTANCE yinyue200_hInstance;
@@ -65,6 +66,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     yinyue200_hInstance = hInstance;
     yinyue200_nCmdShow = nCmdShow;
+    yinyue200_InitDpiHelper();
 
     CreateLoginWindow(NULL, createmain, NULL);
     return MessageLoop();
