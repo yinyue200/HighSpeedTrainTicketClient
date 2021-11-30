@@ -235,6 +235,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
+        CheckIfNoWindowAndQuit();
         return 0;
     }
 

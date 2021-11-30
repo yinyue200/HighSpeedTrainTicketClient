@@ -50,7 +50,13 @@ void createmain(void* context)
 }
 
 //Ö÷º¯Êý
+#ifdef _MSC_VER
+#pragma warning(disable:28251)
+#endif
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+#ifdef _MSC_VER
+#pragma warning(default:28251)
+#endif
 {
     {
         vector* p = ProductRecordLoadToVector(yinyue200_GetConfigFilePath());
