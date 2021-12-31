@@ -69,3 +69,9 @@ void* yinyue200_safemalloc(size_t size)
 		return NULL;
 	}
 }
+void* yinyue200_safemallocandclear(size_t size)
+{
+	void* p = yinyue200_safemalloc(size);
+	memset(p, 0, size);
+	return p;
+}

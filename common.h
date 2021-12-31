@@ -65,3 +65,4 @@ void CheckIfNoWindowAndQuit();
 void FailedIfFalse(bool state);
 //当 malloc 失败时调用 UnrecoveryableFailed()
 void* yinyue200_safemalloc(size_t size);
+void* yinyue200_safemallocandclear(size_t size);

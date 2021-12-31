@@ -17,10 +17,13 @@
 #include "UserManage.h"
 #include "UserSetting.h"
 #include "DpiHelper.h"
+#include "ControlsCommonOperation.h"
 #define ID_EDIT_NAME 1
 #define ID_EDIT_PWD 2
 #define ID_BUTTON_SAVE 3
 #define ID_BUTTON_CANCEL 4
+#define ID_LABEL_USERNAME 5
+#define ID_LABEL_PWD 6
 LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LPWSTR GetNowLoginedUserName()
 {
@@ -33,12 +36,12 @@ typedef struct LoginWindowData
     LPWSTR UserName;
     void (*callback)(void*);
     void* callbackcontext;
-    HFONT Font;
+    vector usedfont;
 } LOGINWINDOWDATA;
 void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcontext)
 {
     // Register the window class.
-    const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.LoginWindow";
+    const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.LoginWindow";
 
     WNDCLASS wc = { 0 };
 
@@ -49,10 +52,11 @@ void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcon
     WORD result = RegisterClass(&wc);
     //printf("%d", result);
 
-    LOGINWINDOWDATA* windowdata = yinyue200_safemalloc(sizeof(LOGINWINDOWDATA));
+    LOGINWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(LOGINWINDOWDATA));
     windowdata->UserName = username;
     windowdata->callback = callback;
     windowdata->callbackcontext = callbackcontext;
+    vector_init(&windowdata->usedfont);
 
     // Create the window.
 
@@ -63,7 +67,7 @@ void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcon
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 600, 300,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -84,6 +88,24 @@ void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcon
 
     return;
 }
+void LayoutControls_LoginWindow(HWND hwnd, UINT dpi, LOGINWINDOWDATA *windata)
+{
+    Yinyue200_SetWindowSize(hwnd, 600, 300, dpi);
+    int lasty = 10;
+    HFONT font = yinyue200_CreateDefaultFont(hwnd);
+    vector_add(&windata->usedfont, font);
+    YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_USERNAME, 10, lasty, 500, 25);
+    lasty += 30;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_NAME, 10, lasty, 500, 25);
+    lasty += 30;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_PWD, 10, lasty, 500, 25);
+    lasty += 30;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_PWD, 10, lasty, 500, 25);
+    lasty += 30;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE,10, lasty, 100, 50);
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_CANCEL, 10 + 100 + 50, lasty, 100, 50);
+
+}
 LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -91,70 +113,25 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_CREATE:
     {
         AddWindowCount();
-        int lasty = 10;
 
         {
             CREATESTRUCT* cs = lParam;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
         }
 
-        HFONT font = yinyue200_CreateDefaultFont(hwnd);
-
         LOGINWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-        windowdata->Font = font;
 
-        HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 30;
-        HWND hwndEdit_Name = CreateWindow(
-            L"EDIT",   // predefined class 
-            NULL,         // no window title 
-            WS_BORDER | WS_CHILD | WS_VISIBLE |
-            ES_LEFT,
-            10, lasty, 500, 25,   //MAYBE set size in WM_SIZE message 
-            hwnd,         // parent window 
-            (HMENU)ID_EDIT_NAME,   // edit control ID 
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);        // pointer not needed 
-        lasty += 30;
-        HWND NameLabelId = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 30;
-        HWND hwndEdit_Pwd = CreateWindow(
-            L"EDIT",   // predefined class 
-            NULL,         // no window title 
-            WS_BORDER | WS_CHILD | WS_VISIBLE |
-            ES_LEFT,
-            10, lasty, 500, 25,
-            hwnd,         // parent window 
-            (HMENU)ID_EDIT_PWD,   // edit control ID 
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);        // pointer not needed
-        lasty += 35;
-        HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
-            L"BUTTON",
-            L"登录",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10, lasty, 100, 50,
-            hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        SendMessage(hwndButton_Save, WM_SETFONT, font, true);
-        HWND hwndButton_Cancel = CreateWindow(
-            L"BUTTON",
-            L"取消",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10 + 100 + 10, lasty, 100, 50,
-            hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        SendMessage(hwndButton_Cancel, WM_SETFONT, font, true);
-        lasty += 50;
+        HWND hwndLabel_Name = Yinyue200_FastCreateLabelControls(hwnd, ID_LABEL_USERNAME, L"用户名");
+        HWND hwndEdit_Name = Yinyue200_FastCreateEditControls(hwnd, ID_EDIT_NAME);
+        HWND hwndLabel_Pwd = Yinyue200_FastCreateLabelControls(hwnd, ID_LABEL_PWD, L"密码");
+        HWND hwndEdit_Pwd = Yinyue200_FastCreateEditControls(hwnd, ID_EDIT_PWD);
+        HWND hwndButton_Save = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_SAVE, L"登录");
+        HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_CANCEL, L"取消");
         Edit_SetPasswordChar(hwndEdit_Pwd, L'*');
-        SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"用户名");
-        SendMessage(NameLabelHwnd, WM_SETFONT, font, true);
         if (windowdata->UserName != NULL)
             SendMessage(hwndEdit_Name, WM_SETTEXT, 0, windowdata->UserName);
-        SendMessage(NameLabelId, WM_SETTEXT, 0, L"密码");
-        SendMessage(NameLabelId, WM_SETFONT, font, true);
         PostMessage(hwndEdit_Pwd, WM_SETTEXT, 0, L"");
-
+        LayoutControls_LoginWindow(hwnd, yinyue200_GetDpiForWindow(hwnd), windowdata);
     }
     return 0;
     case WM_COMMAND:
@@ -230,7 +207,11 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         LOGINWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         if (windowdata != NULL)
         {
-            yinyue200_DeleteFont(windowdata->Font);
+            for (int i = 0; i < windowdata->usedfont.total; i++)
+            {
+                yinyue200_DeleteFont(vector_get(&windowdata->usedfont, i));
+            }
+            vector_free(&windowdata->usedfont);
             free(windowdata);
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
@@ -238,8 +219,14 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         CheckIfNoWindowAndQuit();
         return 0;
     }
-
-
+    case WM_DPICHANGED:
+    {
+        LOGINWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        UINT dpi = HIWORD(wParam);
+        RECT* prcNewWin = (RECT*)lParam;
+        // 重新摆放子窗口控件
+        LayoutControls_LoginWindow(hwnd, dpi, windowdata);
+    }
     case WM_PAINT:
     {
         PAINTSTRUCT ps;

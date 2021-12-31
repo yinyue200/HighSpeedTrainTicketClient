@@ -94,26 +94,26 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
 }
 //member是成员名称
 #define SAVEWSTRDATATOVECTOR(member) \
-{\
+do{\
 	FailedIfFalse(WritePWSTR(record->##member, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}
+}while(0)
 //member是成员名称
 #define SAVEINTDATATOVECTOR(member) \
-{\
+do{\
 	wchar_t idbuffer[30];\
 	swprintf_s(idbuffer, 30, L"%lld", record->##member);\
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}
+}while(0)
 //member是成员名称
 #define SAVEDOUBLEDATATOVECTOR(member) \
-{\
+do{\
 	wchar_t idbuffer[30];\
 	swprintf_s(idbuffer, 30, L"%lf", record->##member);\
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}
+}while(0)
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 {
 	HANDLE hFile = CreateFile(path,               // file to open
@@ -133,19 +133,19 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 	for (size_t i = 0; i < length; i++)
 	{
 		PRODUCTRECORD_PTR record = VECTOR_GET(*vec, PRODUCTRECORD_PTR, i);
-		SAVEWSTRDATATOVECTOR(Name)
-		SAVEINTDATATOVECTOR(ID)
-		SAVEWSTRDATATOVECTOR(Type)
-		SAVEWSTRDATATOVECTOR(State)
-		SAVEINTDATATOVECTOR(Date)
-		SAVEWSTRDATATOVECTOR(ProvideBy)
-		SAVEWSTRDATATOVECTOR(RecievedBy)
-		SAVEWSTRDATATOVECTOR(ResentBy)
-		SAVEINTDATATOVECTOR(Count)
-		SAVEDOUBLEDATATOVECTOR(Cost)
-		SAVEDOUBLEDATATOVECTOR(Price)
-		SAVEDOUBLEDATATOVECTOR(ResentPrice)
-		SAVEWSTRDATATOVECTOR(Signer)
+		SAVEWSTRDATATOVECTOR(Name);
+		SAVEINTDATATOVECTOR(ID);
+		SAVEWSTRDATATOVECTOR(Type);
+		SAVEWSTRDATATOVECTOR(State);
+		SAVEINTDATATOVECTOR(Date);
+		SAVEWSTRDATATOVECTOR(ProvideBy);
+		SAVEWSTRDATATOVECTOR(RecievedBy);
+		SAVEWSTRDATATOVECTOR(ResentBy);
+		SAVEINTDATATOVECTOR(Count);
+		SAVEDOUBLEDATATOVECTOR(Cost);
+		SAVEDOUBLEDATATOVECTOR(Price);
+		SAVEDOUBLEDATATOVECTOR(ResentPrice);
+		SAVEWSTRDATATOVECTOR(Signer);
 
 
 		FailedIfFalse(WritePWSTR(L"\n", hFile));

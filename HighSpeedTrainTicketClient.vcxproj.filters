@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\ControlHelpers">
+      <UniqueIdentifier>{44d7f69d-ea72-4505-8ff3-4864bd2250c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ControlHelpers">
+      <UniqueIdentifier>{0417f14a-9be5-4a8b-8648-bee88ad5f568}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimpleStoreErp.c">
@@ -57,6 +63,9 @@
     <ClCompile Include="DpiHelper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ControlsCommonOperation.c">
+      <Filter>Source Files\ControlHelpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -97,6 +106,9 @@
     </ClInclude>
     <ClInclude Include="DpiHelper.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ControlsCommonOperation.h">
+      <Filter>Header Files\ControlHelpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -22,6 +22,7 @@
 #include "LoginWindow.h"
 #include "InputBoxWindow.h"
 #include "DpiHelper.h"
+#include "ControlsCommonOperation.h"
 #include <CommCtrl.h>
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
@@ -101,7 +102,7 @@ void configstatusbar(HWND hwndParent,HWND  hwndStatus)
 //
 //   PURPOSE: Process the WM_SIZE message
 //
-void OnStatusbarSize(HWND hWnd, UINT state, int cx, int cy)
+void OnStatusbarSize(HWND hWnd, int cx, int cy)
 {
     HWND hStatusbar = GetDlgItem(hWnd, ID_STATUSBAR_MAIN);
 
@@ -328,7 +329,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
 
     return 0;
 }
-HWND Yinyue200_Main_CreateListView(HWND hwndParent)
+HWND Yinyue200_Main_CreateListView(HWND hwndParent,UINT dpi)
 {
     DWORD       dwStyle;
     HWND        hwndListView;
@@ -348,8 +349,8 @@ HWND Yinyue200_Main_CreateListView(HWND hwndParent)
         dwStyle,                   // style
         0,                         // x position
         0,                         // y position
-        1000,                         // width
-        500,                         // height
+        YINYUE200_LOGICTOPHYBYDPI(1000,dpi),                         // width
+        YINYUE200_LOGICTOPHYBYDPI(500,dpi),                         // height
         hwndParent,                // parent
         (HMENU)ID_LISTVIEW_MAIN,        // ID
         (HINSTANCE)GetWindowLongPtr(hwndParent, GWLP_HINSTANCE),  // instance
@@ -963,6 +964,29 @@ void logincheckmsg(void* context)
         MessageBox(NULL, L"需要管理员权限", NULL, 0);
     }
 }
+void LayoutControls_MainWindow(HWND hwnd, UINT dpi, YINYUE200_MAINWINDOWDATA* windata,int x,int y)
+{
+    if (windata == NULL)
+        return;
+    HFONT font = windata->Font;
+    double nx = YINYUE200_PHYTOLOGICBYDPI(x, dpi);
+    double ny = YINYUE200_PHYTOLOGICBYDPI(y, dpi);
+
+    double buttony = ny - 75;
+    OnStatusbarSize(hwnd, x, y);
+    int buttonx = 10;
+    SetWindowPos(GetDlgItem(hwnd, ID_LISTVIEW_MAIN), HWND_TOP, -1, -1, x, 
+        YINYUE200_LOGICTOPHYBYDPI_DOUBLE(buttony, dpi), SWP_NOMOVE);
+    YINYUE200_SETCONTROLPOSANDFONT(ID_CHECKBOX_PAGE, buttonx, buttony, 100, 50);
+    buttonx += 100;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_PREVPAGE, buttonx, buttony, 100, 50);
+    buttonx += 100;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_PAGE, buttonx, buttony, 100, 50);
+    buttonx += 100;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_NEXTPAGE, buttonx, buttony, 100, 50);
+    buttonx += 100;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_REMOVESELECTEDITEMS, buttonx, buttony, 100, 50);
+}
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1008,91 +1032,30 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCASH, L"显示总利润");
         AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCOST, L"显示总成本");
 
-
+        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
         SetMenu(hwnd, hMenubar);
 
-        HWND listview = Yinyue200_Main_CreateListView(hwnd);
+        HWND listview = Yinyue200_Main_CreateListView(hwnd, dpi);
         Yinyue200_Main_InitListView(hwnd,listview);
 
-        int buttony = 500;
-        int buttonx = 10;
-        HFONT font = yinyue200_CreateDefaultFont(hwnd);
+        HWND hwndPageButton = Yinyue200_FastCreateCheckBoxControls(hwnd, ID_CHECKBOX_PAGE, L"按页显示");
+        HWND hwndPrevPageButton = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_PREVPAGE, L"上一页");
+        HWND hwndPageInputEdit = Yinyue200_FastCreateEditControls(hwnd, ID_EDIT_PAGE, L"1");
+        HWND hwndNextPageButton = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_NEXTPAGE, L"下一页");
+        HWND hwndRemoveSelectedItemsButton = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_REMOVESELECTEDITEMS, L"删除所选");
 
-        HWND hwndPageButton = CreateWindow(
-            L"BUTTON",  // Predefined class; Unicode assumed 
-            L"按页显示",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,  // Styles 
-            buttonx,         // x position 
-            buttony,         // y position 
-            100,        // Button width
-            50,        // Button height
-            hwnd,     // Parent window
-            ID_CHECKBOX_PAGE,       // No menu.
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);      // Pointer not needed.
-        SendMessage(hwndPageButton, WM_SETFONT, font, true);
-
-        buttonx+=100;
-        HWND hwndPrevPageButton = CreateWindow(
-            L"BUTTON",  // Predefined class; Unicode assumed 
-            L"上一页",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            buttonx,         // x position 
-            buttony,         // y position 
-            100,        // Button width
-            50,        // Button height
-            hwnd,     // Parent window
-            ID_BUTTON_PREVPAGE,       // No menu.
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);      // Pointer not needed.
-        buttonx += 100;
-        HWND hwndPageInputEdit = CreateWindow(
-            L"EDIT",  // Predefined class; Unicode assumed 
-            L"1",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD| WS_BORDER | ES_LEFT,  // Styles 
-            buttonx,         // x position 
-            buttony,         // y position 
-            100,        // Button width
-            50,        // Button height
-            hwnd,     // Parent window
-            ID_EDIT_PAGE,       // No menu.
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);      // Pointer not needed.
-        buttonx += 100;
-        HWND hwndNextPageButton = CreateWindow(
-            L"BUTTON",  // Predefined class; Unicode assumed 
-            L"下一页",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            buttonx,         // x position 
-            buttony,         // y position 
-            100,        // Button width
-            50,        // Button height
-            hwnd,     // Parent window
-            ID_BUTTON_NEXTPAGE,       // No menu.
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);      // Pointer not needed.
-        buttonx += 100;
-        HWND hwndRemoveSelectedItemsButton = CreateWindow(
-            L"BUTTON",  // Predefined class; Unicode assumed 
-            L"删除所选",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            buttonx,         // x position 
-            buttony,         // y position 
-            100,        // Button width
-            50,        // Button height
-            hwnd,     // Parent window
-            ID_BUTTON_REMOVESELECTEDITEMS,       // No menu.
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);      // Pointer not needed.
-
-        YINYUE200_MAINWINDOWDATA* windata = yinyue200_safemalloc(sizeof(YINYUE200_MAINWINDOWDATA));
-        memset(windata, 0, sizeof(YINYUE200_MAINWINDOWDATA));
-        windata->Font = font;
+        YINYUE200_MAINWINDOWDATA* windata = yinyue200_safemallocandclear(sizeof(YINYUE200_MAINWINDOWDATA));
         windata->sortcomindex = -1;
         windata->WindowHwnd = hwnd;
+        windata->Font = yinyue200_CreateDefaultFont(hwnd);
         SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
+
         UpdateCheckBoxInfo(hwnd, windata);
+
+        RECT rect;
+        GetClientRect(hwnd, &rect);
+        LayoutControls_MainWindow(hwnd,dpi , windata, rect.right - rect.left, rect.bottom - rect.top);
     }
     return 0;
     case WM_NOTIFY:
@@ -1358,23 +1321,24 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
     case WM_SIZE:
     {
-        int x = LOWORD(lParam);
-        int y = HIWORD(lParam);
-        int buttony = y - 75;
-        OnStatusbarSize(hwnd, wParam, x, y);
-        int buttonx = 10;
-        SetWindowPos(GetDlgItem(hwnd, ID_LISTVIEW_MAIN), HWND_TOP, -1, -1, x, buttony, SWP_NOMOVE);
-        SetWindowPos(GetDlgItem(hwnd, ID_CHECKBOX_PAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
-        buttonx += 100;
-        SetWindowPos(GetDlgItem(hwnd, ID_BUTTON_PREVPAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
-        buttonx += 100;
-        SetWindowPos(GetDlgItem(hwnd, ID_EDIT_PAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
-        buttonx += 100;
-        SetWindowPos(GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
-        buttonx += 100;
-        SetWindowPos(GetDlgItem(hwnd, ID_BUTTON_REMOVESELECTEDITEMS), HWND_TOP, buttonx, buttony, -1, -1, SWP_NOSIZE);
+        LayoutControls_MainWindow(hwnd, yinyue200_GetDpiForWindow(hwnd),
+            GetProp(hwnd, YINYUE200_WINDOW_DATA), LOWORD(lParam), HIWORD(lParam));
         break;
     }
+    case WM_DPICHANGED:
+    {
+        YINYUE200_MAINWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        UINT dpi = HIWORD(wParam);
+        RECT* prcNewWin = (RECT*)lParam;
+        // 重新摆放子窗口控件
+        RECT rect;
+        GetClientRect(hwnd, &rect);
+        HFONT oldfont = windowdata->Font;
+        windowdata->Font = yinyue200_CreateDefaultFont(hwnd);
+        LayoutControls_MainWindow(hwnd, dpi, windowdata, rect.right - rect.left, rect.bottom - rect.top);
+        yinyue200_DeleteFont(oldfont);
+    }
+    break;
     case WM_PAINT:
     {
         PAINTSTRUCT ps;

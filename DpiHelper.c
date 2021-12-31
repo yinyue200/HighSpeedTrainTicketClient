@@ -66,5 +66,11 @@ HFONT yinyue200_CreateDefaultFont(HWND winhwnd)
 }
 BOOL yinyue200_DeleteFont(HFONT font)
 {
-    return DeleteObject(font);
+    if (font)
+    {
+        BOOL ret = DeleteObject(font);
+#if _DEBUG
+        FailedIfFalse(ret);
+#endif
+    }
 }
