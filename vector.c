@@ -116,3 +116,4 @@ void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func,void
 {
     qsort_s(vec->items, vector_total(vec), sizeof(void*), func, context);
 }
+

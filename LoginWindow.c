@@ -121,12 +121,12 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         LOGINWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
-        HWND hwndLabel_Name = Yinyue200_FastCreateLabelControls(hwnd, ID_LABEL_USERNAME, L"用户名");
-        HWND hwndEdit_Name = Yinyue200_FastCreateEditControls(hwnd, ID_EDIT_NAME);
-        HWND hwndLabel_Pwd = Yinyue200_FastCreateLabelControls(hwnd, ID_LABEL_PWD, L"密码");
-        HWND hwndEdit_Pwd = Yinyue200_FastCreateEditControls(hwnd, ID_EDIT_PWD);
-        HWND hwndButton_Save = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_SAVE, L"登录");
-        HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_CANCEL, L"取消");
+        HWND hwndLabel_Name = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_USERNAME, L"用户名");
+        HWND hwndEdit_Name = Yinyue200_FastCreateEditControl(hwnd, ID_EDIT_NAME);
+        HWND hwndLabel_Pwd = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_PWD, L"密码");
+        HWND hwndEdit_Pwd = Yinyue200_FastCreateEditControl(hwnd, ID_EDIT_PWD);
+        HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"登录");
+        HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
         Edit_SetPasswordChar(hwndEdit_Pwd, L'*');
         if (windowdata->UserName != NULL)
             SendMessage(hwndEdit_Name, WM_SETTEXT, 0, windowdata->UserName);

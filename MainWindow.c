@@ -46,12 +46,6 @@
 #define ID_MENU_CHANGEPWD 18
 #define ID_MENU_SHOWUSERSLIST 19
 #define ID_MENU_IMPORT 20
-#define ID_MENU_CALCMAINPROVIDER 21
-#define ID_MENU_CALCMAINRECIVER 22
-#define ID_MENU_CALCMAINRESENTER 23
-#define ID_MENU_CALCMAINSIGNER 24
-#define ID_MENU_CALCALLCASH 25
-#define ID_MENU_CALCALLCOST 26
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
@@ -236,7 +230,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
     {
         LV_DISPINFO* lpdi = (LV_DISPINFO*)lParam;
         TCHAR szString[MAX_PATH];
-        PRODUCTRECORD* record = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD*, lpdi->item.iItem);
+        TRAINPLANRECORD_PTR record = VECTOR_GET(windata->PagedNowList, TRAINPLANRECORD_PTR, lpdi->item.iItem);
         if (record)
         {
             if (lpdi->item.mask & LVIF_TEXT)
@@ -247,15 +241,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                     LISTVIEWNOTIFTLOADCOLINT(1,ID)
                     LISTVIEWNOTIFTLOADCOLWSTR(2, Type)
                     LISTVIEWNOTIFTLOADCOLWSTR(3, State)
-                    LISTVIEWNOTIFTLOADCOLINT(4, Date)
-                    LISTVIEWNOTIFTLOADCOLWSTR(5, ProvideBy)
-                    LISTVIEWNOTIFTLOADCOLWSTR(6, RecievedBy)
-                    LISTVIEWNOTIFTLOADCOLWSTR(7, ResentBy)
-                    LISTVIEWNOTIFTLOADCOLINT(8, Count)
-                    LISTVIEWNOTIFTLOADCOLDOUBLE(9, Cost)
                     LISTVIEWNOTIFTLOADCOLDOUBLE(10, Price)
-                    LISTVIEWNOTIFTLOADCOLDOUBLE(11, ResentPrice)
-                    LISTVIEWNOTIFTLOADCOLWSTR(12, Signer)
 
                 default:
                 {
@@ -321,7 +307,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         LPNMITEMACTIVATE lpnmitem = lParam;
         if (lpnmitem->iItem >= 0)
         {
-            CreateLoginWindow(GetNowLoginedUserName(), edititemlogined, VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, lpnmitem->iItem));
+            CreateLoginWindow(GetNowLoginedUserName(), edititemlogined, VECTOR_GET(windata->PagedNowList, TRAINPLANRECORD_PTR, lpnmitem->iItem));
         }
         break;
     }
@@ -448,8 +434,8 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
 {
     //宽字符串排序比较函数
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
-    PRODUCTRECORD_PTR* leftrecord = left;
-    PRODUCTRECORD_PTR* rightrecord = right;
+    TRAINPLANRECORD_PTR* leftrecord = left;
+    TRAINPLANRECORD_PTR* rightrecord = right;
     LPWSTR leftstr = context->GetCompareObject(*leftrecord);
     LPWSTR rightstr = context->GetCompareObject(*rightrecord);
     int result = wcscmp(leftstr, rightstr);
@@ -461,8 +447,8 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
 int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
 {
     //整型排序比较函数
-    PRODUCTRECORD_PTR* leftrecord = left;
-    PRODUCTRECORD_PTR* rightrecord = right;
+    TRAINPLANRECORD_PTR* leftrecord = left;
+    TRAINPLANRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     int64_t const* l = context->GetCompareObject(*leftrecord);
     int64_t const* r = context->GetCompareObject(*rightrecord);
@@ -475,8 +461,8 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
 int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
 {
     //浮点排序比较函数
-    PRODUCTRECORD_PTR* leftrecord = left;
-    PRODUCTRECORD_PTR* rightrecord = right;
+    TRAINPLANRECORD_PTR* leftrecord = left;
+    TRAINPLANRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     double const* l = context->GetCompareObject(*leftrecord);
     double const* r = context->GetCompareObject(*rightrecord);
@@ -488,7 +474,7 @@ int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* 
 }
 #define ITEM_COMPAREIMPL(casenum,comparetail,name)  case casenum: \
 {\
-    qsortcontext.GetCompareObject = yinyue200_GetProductRecord##name;\
+    qsortcontext.GetCompareObject = yinyue200_GetTrainPlanRecord##name;\
     vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_##comparetail##Compare, &qsortcontext);\
     break;\
 }
@@ -521,15 +507,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
                 ITEM_COMPAREIMPL(1,int64,ID)
                 ITEM_COMPAREIMPL(2, PWSTR, Type)
                 ITEM_COMPAREIMPL(3, PWSTR, State)
-                ITEM_COMPAREIMPL(4, int64, Date)
-                ITEM_COMPAREIMPL(5, PWSTR, ProvideBy)
-                ITEM_COMPAREIMPL(6, PWSTR, RecievedBy)
-                ITEM_COMPAREIMPL(7, PWSTR, ResentBy)
-                ITEM_COMPAREIMPL(8, int64, Count)
-                ITEM_COMPAREIMPL(9, double, Cost)
                 ITEM_COMPAREIMPL(10, double, Price)
-                ITEM_COMPAREIMPL(11, double, ResentPrice)
-                ITEM_COMPAREIMPL(12, PWSTR, Signer)
 
             default:
                 break;
@@ -801,7 +779,7 @@ void calcmaindata(void* (*getmember)(void*), HWND hwnd)
     VECTOR_INIT(calc_temp_list);
     for (int i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
     {
-        PRODUCTRECORD_PTR bbb = VECTOR_GET(windata->UnsortedNowList, PRODUCTRECORD_PTR, i);
+        TRAINPLANRECORD_PTR bbb = VECTOR_GET(windata->UnsortedNowList, TRAINPLANRECORD_PTR, i);
         YINYUE200_MAINWINDOW_CALCTEMPDATA* aaafinal = NULL;
         for (int j = 0; j < VECTOR_TOTAL(calc_temp_list); j++)
         {
@@ -887,7 +865,7 @@ void logincheckmsg(void* context)
                 vector* vec = ProductRecordLoadToVector(strFile);
                 for (size_t i = 0; i < vector_total(vec); i++)
                 {
-                    PRODUCTRECORD_PTR one = vector_get(vec, i);
+                    TRAINPLANRECORD_PTR one = vector_get(vec, i);
                     vector_add(&yinyue200_ProductList, one);
                 }
                 vector_free(vec);
@@ -912,10 +890,10 @@ void logincheckmsg(void* context)
                     YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        PRODUCTRECORD_PTR productrecord = vector_get(ycontext->vec, i);
+                        TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
                         for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
                         {
-                            PRODUCTRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, PRODUCTRECORD_PTR, i);
+                            TRAINPLANRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, TRAINPLANRECORD_PTR, i);
                             if (allproduct == productrecord)
                             {
                                 VECTOR_DELETE(yinyue200_ProductList, i);
@@ -924,7 +902,7 @@ void logincheckmsg(void* context)
                         }
                         for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
                         {
-                            PRODUCTRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, PRODUCTRECORD_PTR, i);
+                            TRAINPLANRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, TRAINPLANRECORD_PTR, i);
                             if (allproduct == productrecord)
                             {
                                 VECTOR_DELETE(windata->UnsortedNowList, i);
@@ -935,12 +913,8 @@ void logincheckmsg(void* context)
                     UpdateCheckBoxInfo(hwnd, windata);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        PRODUCTRECORD_PTR productrecord = vector_get(ycontext->vec, i);
+                        TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
                         free(productrecord->Name);
-                        free(productrecord->ProvideBy);
-                        free(productrecord->RecievedBy);
-                        free(productrecord->ResentBy);
-                        free(productrecord->Signer);
                         free(productrecord->Type);
                         free(productrecord->State);
                         free(productrecord);
@@ -1025,12 +999,6 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hUsr, MF_STRING, ID_MENU_ADDUSER, L"添加用户");
         AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"重设用户密码和权限");
         AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINPROVIDER, L"显示主要供货商");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRECIVER, L"显示主要收货商");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINRESENTER, L"显示主要退货商");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCMAINSIGNER, L"显示主要经手人");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCASH, L"显示总利润");
-        AppendMenu(hAns, MF_STRING, ID_MENU_CALCALLCOST, L"显示总成本");
 
         UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
@@ -1039,11 +1007,11 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HWND listview = Yinyue200_Main_CreateListView(hwnd, dpi);
         Yinyue200_Main_InitListView(hwnd,listview);
 
-        HWND hwndPageButton = Yinyue200_FastCreateCheckBoxControls(hwnd, ID_CHECKBOX_PAGE, L"按页显示");
-        HWND hwndPrevPageButton = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_PREVPAGE, L"上一页");
-        HWND hwndPageInputEdit = Yinyue200_FastCreateEditControls(hwnd, ID_EDIT_PAGE, L"1");
-        HWND hwndNextPageButton = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_NEXTPAGE, L"下一页");
-        HWND hwndRemoveSelectedItemsButton = Yinyue200_FastCreateButtonControls(hwnd, ID_BUTTON_REMOVESELECTEDITEMS, L"删除所选");
+        HWND hwndPageButton = Yinyue200_FastCreateCheckBoxControl(hwnd, ID_CHECKBOX_PAGE, L"按页显示");
+        HWND hwndPrevPageButton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_PREVPAGE, L"上一页");
+        HWND hwndPageInputEdit = Yinyue200_FastCreateEditControl(hwnd, ID_EDIT_PAGE, L"1");
+        HWND hwndNextPageButton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_NEXTPAGE, L"下一页");
+        HWND hwndRemoveSelectedItemsButton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_REMOVESELECTEDITEMS, L"删除所选");
 
         YINYUE200_MAINWINDOWDATA* windata = yinyue200_safemallocandclear(sizeof(YINYUE200_MAINWINDOWDATA));
         windata->sortcomindex = -1;
@@ -1070,54 +1038,6 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
         switch (LOWORD(wParam))
         {
-        case ID_MENU_CALCMAINPROVIDER:
-        {
-            calcmaindata(yinyue200_GetProductRecordProvideBy, hwnd);
-            break;
-        }
-        case ID_MENU_CALCMAINRECIVER:
-        {
-            calcmaindata(yinyue200_GetProductRecordRecievedBy, hwnd);
-            break;
-        }
-        case ID_MENU_CALCMAINRESENTER:
-        {
-            calcmaindata(yinyue200_GetProductRecordResentBy, hwnd);
-            break;
-        }
-        case ID_MENU_CALCMAINSIGNER:
-        {
-            calcmaindata(yinyue200_GetProductRecordSigner, hwnd);
-            break;
-        }
-        case ID_MENU_CALCALLCASH:
-        {
-            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-            double cash = 0.0;
-            for (size_t i = 0; i < vector_total(&windata->UnsortedNowList); i++)
-            {
-                PRODUCTRECORD_PTR one = vector_get(&windata->UnsortedNowList, i);
-                cash += (one->Price - one->Cost) * one->Count;
-            }
-            wchar_t strmsg[60];
-            swprintf_s(strmsg, 60, L"售出利润：%lf", cash);
-            MessageBox(hwnd, strmsg, L"统计结果", 0);
-            break;
-        }
-        case ID_MENU_CALCALLCOST:
-        {
-            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-            double cash = 0.0;
-            for (size_t i = 0; i < vector_total(&windata->UnsortedNowList); i++)
-            {
-                PRODUCTRECORD_PTR one = vector_get(&windata->UnsortedNowList, i);
-                cash += one->Cost * one->Count;
-            }
-            wchar_t strmsg[60];
-            swprintf_s(strmsg, 60, L"总成本：%lf", cash);
-            MessageBox(hwnd, strmsg, L"统计结果", 0);
-            break;
-        }
         case ID_MENU_VWS:
             ShellExecute(NULL, L"Open", L"https://github.com/yinyue200/SimpleStoreErp", NULL, NULL, SW_SHOWNORMAL);
             break;
@@ -1237,7 +1157,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             while (iPos != -1) {
                                 // iPos is the index of a selected item
                                 // do whatever you want with it
-                                PRODUCTRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, PRODUCTRECORD_PTR, iPos);
+                                TRAINPLANRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, TRAINPLANRECORD_PTR, iPos);
                                 vector_add(vec, productrecord);
 
                                 // Get the next selected item

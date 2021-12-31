@@ -15,29 +15,29 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
 #include "ProductRecord.h"
+#include "ControlsCommonOperation.h"
+#include "DpiHelper.h"
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
 #define ID_EDIT_ID 4
 #define ID_EDIT_TYPE 5
 #define ID_EDIT_STATE 6
-#define ID_EDIT_DATE 7
-#define ID_EDIT_PROVIDEBY 8
-#define ID_EDIT_RECIEVEDBY 9
-#define ID_EDIT_RESENTBY 10
-#define ID_EDIT_COUNT 11
-#define ID_EDIT_COST 12
 #define ID_EDIT_PRICE 13
-#define ID_EDIT_RESENTPRICE 14
-#define ID_EDIT_SIGNER 15
 #define ID_BUTTON_SAVEANDNEXT 16
-typedef struct EditItemWindowData
+#define ID_LABEL_NAME 17
+#define ID_LABEL_ID 18
+#define ID_LABEL_STATE 19
+#define ID_LABEL_PRICE 20
+#define ID_LABEL_TYPE 21
+typedef struct Yinyue200_EditItemWindowData
 {
-    PRODUCTRECORD_PTR ProductRecord;
+    TRAINPLANRECORD_PTR TrainPlanRecord;
     bool enablesave;
-} EDITITEMWINDOWDATA;
+    HFONT lastfont;
+} YINYUE200_EDITITEMWINDOWDATA;
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
+void CreateEditItemWindow(TRAINPLANRECORD_PTR productrecord,bool enablesave)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
@@ -51,8 +51,8 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
     WORD result = RegisterClass(&wc);
     //printf("%d", result);
 
-    EDITITEMWINDOWDATA* windowdata = yinyue200_safemalloc(sizeof(EDITITEMWINDOWDATA));
-    windowdata->ProductRecord = productrecord;
+    YINYUE200_EDITITEMWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(YINYUE200_EDITITEMWINDOWDATA));
+    windowdata->TrainPlanRecord = productrecord;
     windowdata->enablesave = enablesave;
 
     // Create the window.
@@ -64,7 +64,7 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 700, 770,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -88,6 +88,7 @@ void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord,bool enablesave)
 
 #define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
 #define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERPAIROFUINT64DATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[100];swprintf(_temp_buffer,100, L"%llu;%llu", productrecord->##member.Item1, productrecord->##member.Item2); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
 #define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
@@ -95,6 +96,19 @@ int64_t _temp_int64;\
 if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
 {\
     productrecord->##member = _temp_int64;\
+}\
+else if(_temp_int64_str[0]!=0)\
+{\
+    MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
+}\
+free(_temp_int64_str);\
+}
+#define SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+int64_t _temp_int64_1;int64_t _temp_int64_2;\
+if (swscanf(_temp_int64_str, L"%llu;%llu", &_temp_int64_1, &_temp_int64_2) == 2)\
+{\
+    YINYUE200_PAIR_OF_uint64_t_uint64_t _temp_pair_uint64 = {_temp_int64_1,_temp_int64_2};\
+    productrecord->##member = _temp_pair_uint64;\
 }\
 else if(_temp_int64_str[0]!=0)\
 {\
@@ -133,26 +147,39 @@ else  if(_temp_int64_str[0]!=0)\
 free(_temp_int64_str);\
 }
 #define FORCESPACE  
-#define ADDLABELANDEDIT(ctrl_id,CTRL_EDIT_ID,displaylabel) HWND Hwnd_##ctrl_id##_Label = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25 , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);\
-lasty += 25;\
-HWND hwnd_##ctrl_id##_Edit = CreateWindow(L"EDIT", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | ES_LEFT, 10, lasty, 500, 25, hwnd, (HMENU)CTRL_EDIT_ID, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL); \
-lasty += 25; \
-SendMessage(Hwnd_##ctrl_id##_Label,WM_SETTEXT,0,displaylabel);
-void edititemwindow_initctrl(HWND hwnd,PRODUCTRECORD_PTR productrecord)
+#define ADDLABELANDEDIT(ctrl_id,displaylabel) HWND Hwnd_##ctrl_id##_Label =  Yinyue200_FastCreateLabelControl(hwnd,ID_LABEL_##ctrl_id,displaylabel);\
+HWND hwnd_##ctrl_id##_Edit = Yinyue200_FastCreateEditControl(hwnd,ID_EDIT_##ctrl_id);
+#define YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(tag) do{\
+YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_##tag, 10, lasty, 500, 25);\
+lasty+=25;\
+YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 25);\
+lasty+=25;\
+}while (0)
+void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOWDATA* windata)
+{
+    if (windata->lastfont)
+    {
+        HFONT font = windata->lastfont;
+        int lasty = 10;
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(NAME);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(ID);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(TYPE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STATE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(PRICE);
+        lasty += 10;
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVEANDNEXT, 20 + 100, lasty, 100, 50);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_CANCEL, 10 + 200 + 20, lasty, 100, 50);
+
+    }
+}
+void edititemwindow_initctrl(HWND hwnd, TRAINPLANRECORD_PTR productrecord)
 {
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
-    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
+    SETNULLORPRODUCTINFOMEMBERPAIROFUINT64DATA(ID_EDIT_ID, ID);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
-    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_DATE, Date);
-    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_PROVIDEBY, ProvideBy);
-    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_RECIEVEDBY, RecievedBy);
-    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_RESENTBY, ResentBy);
-    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_COUNT, Count);
-    SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_COST, Cost);
     SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_PRICE, Price);
-    SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_RESENTPRICE, ResentPrice);
-    SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_SIGNER, Signer);
 }
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -168,80 +195,33 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
         }
 
-        EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
 
-        HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
-        HWND hwndEdit_Name = CreateWindow(
-            L"EDIT",   // predefined class 
-            NULL,         // no window title 
-            WS_BORDER | WS_CHILD | WS_VISIBLE |
-            ES_LEFT ,
-            10, lasty, 500, 25,   //MAYBE set size in WM_SIZE message 
-            hwnd,         // parent window 
-            (HMENU)ID_EDIT_NAME,   // edit control ID 
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);        // pointer not needed 
-        lasty += 25;
-        HWND NameLabelId = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
-        HWND hwndEdit_ID = CreateWindow(
-            L"EDIT",   // predefined class 
-            NULL,         // no window title 
-            WS_BORDER | WS_CHILD | WS_VISIBLE |
-            ES_LEFT,
-            10, lasty, 500, 25,
-            hwnd,         // parent window 
-            (HMENU)ID_EDIT_ID,   // edit control ID 
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);        // pointer not needed
-        lasty += 25;
-
-        ADDLABELANDEDIT(TYPE, ID_EDIT_TYPE,L"类型");
-        ADDLABELANDEDIT(STATE, ID_EDIT_STATE, L"状态");
-        ADDLABELANDEDIT(DATE, ID_EDIT_DATE, L"日期");
-        ADDLABELANDEDIT(PROVIDEBY, ID_EDIT_PROVIDEBY, L"供货商");
-        ADDLABELANDEDIT(RECIEVEDBY, ID_EDIT_RECIEVEDBY, L"收货商");
-        ADDLABELANDEDIT(RESENTBY, ID_EDIT_RESENTBY, L"退货商");
-        ADDLABELANDEDIT(COUNT, ID_EDIT_COUNT, L"数量");
-        ADDLABELANDEDIT(COST, ID_EDIT_COST, L"进价");
-        ADDLABELANDEDIT(PRICE, ID_EDIT_PRICE, L"销售价");
-        ADDLABELANDEDIT(RESENTPRICE, ID_EDIT_RESENTPRICE, L"退货价");
-        ADDLABELANDEDIT(SIGNER, ID_EDIT_SIGNER, L"经手人");
+        ADDLABELANDEDIT(NAME, L"车次");
+        ADDLABELANDEDIT(ID, L"ID");
+        ADDLABELANDEDIT(TYPE,L"类型");
+        ADDLABELANDEDIT(STATE, L"状态");
+        ADDLABELANDEDIT(PRICE, L"车票价格/公里");
 
         lasty += 10;
-        HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
-            L"BUTTON",
-            L"保存",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10, lasty,100,50,
-            hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),NULL);
-        HWND hwndButton_SaveAndNext = CreateWindow(
-            L"BUTTON",
-            L"保存并添加下一个",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10 + 100 + 10, lasty, 200, 50,
-            hwnd, (HMENU)ID_BUTTON_SAVEANDNEXT, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        HWND hwndButton_Cancel = CreateWindow(
-            L"BUTTON",
-            L"取消",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10+300+20, lasty, 100, 50,
-            hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
+        HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"保存");
+        HWND hwndButton_SaveAndNext = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVEANDNEXT, L"保存并添加下一个");
+        HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
         lasty += 50;
-        PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord;
+        TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
         
-        SendMessage(NameLabelHwnd, WM_SETTEXT, 0, L"名称");
-        SendMessage(NameLabelId, WM_SETTEXT, 0, L"ID");
-
         edititemwindow_initctrl(hwnd, productrecord);
 
         if (!windowdata->enablesave)
         {
             EnableWindow(hwndButton_Save, false);
         }
+        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
+
+        Yinyue200_SetWindowSize(hwnd, 700, 770, dpi);
+
+        LayoutControls_EditItemWindow(hwnd, dpi, windowdata);
         
     }
     return 0;
@@ -256,30 +236,21 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             case ID_BUTTON_SAVEANDNEXT:
             case ID_BUTTON_SAVE:
             {
-                EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
-                PRODUCTRECORD_PTR productrecord = windowdata->ProductRecord == NULL ?
-                    CreateProductRecord() : windowdata->ProductRecord;
+                TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord == NULL ?
+                    CreateTrainPlanRecord() : windowdata->TrainPlanRecord;
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
-                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_ID, ID);
+                SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(ID_EDIT_ID, ID);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
-                SAVEPRODUCTINFOMEMBERDATEDATA(ID_EDIT_DATE, Date);
-                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_PROVIDEBY, ProvideBy);
-                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_RECIEVEDBY, RecievedBy);
-                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_RESENTBY, ResentBy);
-                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_COUNT, Count);
-                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_COST, Cost);
-                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_PRICE, Price);
-                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_RESENTPRICE, ResentPrice);
-                SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_SIGNER, Signer);
 
-                if (windowdata->ProductRecord == NULL)
+                if (windowdata->TrainPlanRecord == NULL)
                     VECTOR_ADD(yinyue200_ProductList, productrecord);
 
                 if (LOWORD(wParam) == ID_BUTTON_SAVEANDNEXT)
                 {
-                    windowdata->ProductRecord = NULL;
+                    windowdata->TrainPlanRecord = NULL;
                     edititemwindow_initctrl(hwnd, NULL);
                 }
                 else
@@ -309,8 +280,17 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         CheckIfNoWindowAndQuit();
         return 0;
     }
-
-
+    case WM_DPICHANGED:
+    {
+        YINYUE200_EDITITEMWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (windowdata && windowdata->lastfont)
+        {
+            yinyue200_DeleteFont(windowdata->lastfont);
+            windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
+            LayoutControls_EditItemWindow(hwnd, HIWORD(wParam), windowdata);
+        }
+        break;
+    }
     case WM_PAINT:
     {
         PAINTSTRUCT ps;

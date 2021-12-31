@@ -281,21 +281,12 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
                 for (size_t i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
                 {
-                    PRODUCTRECORD* record = VECTOR_GET(mainwindow->UnsortedNowList, PRODUCTRECORD*, i);
+                    TRAINPLANRECORD_PTR record = VECTOR_GET(mainwindow->UnsortedNowList, TRAINPLANRECORD_PTR, i);
                     BOOL SHOULDREV = TRUE;
                     LOADDATAFILTERPROC_FLITER_WSTR(Name)
-                    LOADDATAFILTERPROC_FLITER_INT(ID)
                     LOADDATAFILTERPROC_FLITER_WSTR(Type)
                     LOADDATAFILTERPROC_FLITER_WSTR(State)
-                    LOADDATAFILTERPROC_FLITER_INT(Date)
-                    LOADDATAFILTERPROC_FLITER_WSTR(ProvideBy)
-                    LOADDATAFILTERPROC_FLITER_WSTR(RecievedBy)
-                    LOADDATAFILTERPROC_FLITER_WSTR(ResentBy)
-                    LOADDATAFILTERPROC_FLITER_INT(Count)
-                    LOADDATAFILTERPROC_FLITER_INT(Cost)
                     LOADDATAFILTERPROC_FLITER_INT(Price)
-                    LOADDATAFILTERPROC_FLITER_INT(ResentPrice)
-                    LOADDATAFILTERPROC_FLITER_WSTR(Signer)
                     
 
                     if (!SHOULDREV)

@@ -17,4 +17,4 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //创建并打开编辑单个记录信息窗体
-void CreateEditItemWindow(PRODUCTRECORD_PTR productrecord, bool enablesave);
+void CreateEditItemWindow(TRAINPLANRECORD_PTR productrecord, bool enablesave);

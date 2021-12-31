@@ -14,6 +14,7 @@
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
+#include <stdint.h>
 LPWORD lpwAlign(LPWORD lpIn)
 {
 	ULONG ul;
@@ -74,4 +75,42 @@ void* yinyue200_safemallocandclear(size_t size)
 	void* p = yinyue200_safemalloc(size);
 	memset(p, 0, size);
 	return p;
+}
+GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low)
+{
+	unsigned char low64[8] = {
+	(low & 0XFF00000000000000) >> 56,
+	(low & 0X00FF000000000000) >> 48,
+	(low & 0X0000FF0000000000) >> 40,
+	(low & 0X000000FF00000000) >> 32,
+	(low & 0X00000000FF000000) >> 24,
+	(low & 0X0000000000FF0000) >> 16,
+	(low & 0X000000000000FF00) >> 8,
+	(low & 0X00000000000000FF) >> 0,
+	};
+	GUID guid = {
+		(high & 0XFFFFFFFF00000000) >> 32,
+		(high & 0X00000000FFFF0000) >> 16,
+		(high & 0X000000000000FFFF),
+		low64
+	};
+	return guid;
+}
+YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid)
+{
+	uint64_t low = 
+		((uint64_t)guid.Data4[0]) << 56 |
+		((uint64_t)guid.Data4[1]) << 48 |
+		((uint64_t)guid.Data4[2]) << 40 |
+		((uint64_t)guid.Data4[3]) << 32 |
+		((uint64_t)guid.Data4[4]) << 24 |
+		((uint64_t)guid.Data4[5]) << 16 |
+		((uint64_t)guid.Data4[6]) << 8 |
+		((uint64_t)guid.Data4[7]) << 0;
+	YINYUE200_PAIR_OF_uint64_t_uint64_t ret = {
+		(((uint64_t)guid.Data1)<<32)|
+		(((uint64_t)guid.Data2)<<16)| guid.Data3,
+
+	};
+	return ret;
 }

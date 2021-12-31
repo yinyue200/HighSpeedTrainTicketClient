@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include "vector.h"
 #include <string.h>
+#include <stdint.h>
 //  SimpleStoreErp
 //	Copyright(C) 2021 殷越
 //
@@ -36,9 +37,13 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include "UserManage.h"
-
 #define YINYUE200_WINDOW_DATA L"YINYUE200_WINDOW_DATA"
-
+#define YINYUE200_DEFINE_PAIR(type1,type2) typedef struct tag_yinyue200_pair_of_##type1##_##type2 \
+{\
+	type1 Item1;\
+	type2 Item2;\
+} YINYUE200_PAIR_OF_##type1##_##type2;
+YINYUE200_DEFINE_PAIR(uint64_t, uint64_t)
 //进程标识
 extern HINSTANCE yinyue200_hInstance;
 //specifies how the application windows should be display
@@ -65,4 +70,7 @@ void CheckIfNoWindowAndQuit();
 void FailedIfFalse(bool state);
 //当 malloc 失败时调用 UnrecoveryableFailed()
 void* yinyue200_safemalloc(size_t size);
+//调用yinyue200_safemalloc并将内存区域清0
 void* yinyue200_safemallocandclear(size_t size);
+GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low);
+YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid);

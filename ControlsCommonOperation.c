@@ -55,25 +55,30 @@ HWND Yinyue200_FastCreateControl(LPCTSTR type, HWND parent, HMENU id, DWORD styl
         NULL);
 }
 //快速创建文本输入框控件
-HWND Yinyue200_FastCreateEditControls(HWND parent, HMENU id)
+HWND Yinyue200_FastCreateEditControl(HWND parent, HMENU id)
 {
     return Yinyue200_FastCreateControl(L"EDIT", parent, id, WS_BORDER | WS_CHILD | WS_VISIBLE | ES_LEFT, NULL);
 }
 //快速创建按钮控件
-HWND Yinyue200_FastCreateButtonControls(HWND parent, HMENU id, LPCTSTR title)
+HWND Yinyue200_FastCreateButtonControl(HWND parent, HMENU id, LPCTSTR title)
 {
     return Yinyue200_FastCreateControl(L"BUTTON", parent, id, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
         title);
 }
 //快速创建静态文本控件
-HWND Yinyue200_FastCreateLabelControls(HWND parent, HMENU id, LPCTSTR content)
+HWND Yinyue200_FastCreateLabelControl(HWND parent, HMENU id, LPCTSTR content)
 {
-    HWND hwnd = Yinyue200_FastCreateControl(L"STATIC", parent, id, WS_CHILD | WS_VISIBLE, NULL);
+    HWND hwnd = Yinyue200_FastCreateLabelControlWithoutContent(parent, id);
     SendMessage(hwnd, WM_SETTEXT, 0, content);
     return hwnd;
 }
+HWND Yinyue200_FastCreateLabelControlWithoutContent(HWND parent, HMENU id)
+{
+    HWND hwnd = Yinyue200_FastCreateControl(L"STATIC", parent, id, WS_CHILD | WS_VISIBLE, NULL);
+    return hwnd;
+}
 
-HWND Yinyue200_FastCreateCheckBoxControls(HWND parent, HMENU id, LPCTSTR title)
+HWND Yinyue200_FastCreateCheckBoxControl(HWND parent, HMENU id, LPCTSTR title)
 {
     return Yinyue200_FastCreateControl(L"BUTTON", parent, id, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, title);
 }

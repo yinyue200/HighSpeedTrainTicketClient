@@ -16,25 +16,25 @@
  
 
 //构造获取 ProductRecord 成员的函数定义的宏
-#define DEFINE_GETMEMBERMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj)\
+#define DEFINE_GETMEMBERMETHOD(name) void* yinyue200_GetTrainPlanRecord##name(void* obj)\
 {\
-PRODUCTRECORD_PTR p = obj;\
+TRAINPLANRECORD_PTR p = obj;\
 return p->name;\
 }
 //构造获取 ProductRecord 成员的地址的函数定义的宏
-#define DEFINE_GETMEMBERADDRMETHOD(name) void* yinyue200_GetProductRecord##name(void* obj)\
+#define DEFINE_GETMEMBERADDRMETHOD(name) void* yinyue200_GetTrainPlanRecord##name(void* obj)\
 {\
-PRODUCTRECORD_PTR p = obj;\
+TRAINPLANRECORD_PTR p = obj;\
 return &p->name;\
 }
 #include "ProductRecord.h"
 
-PRODUCTRECORD_PTR CreateProductRecord()
+TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 {
-	PRODUCTRECORD_PTR PT = malloc(sizeof(PRODUCTRECORD));
+	TRAINPLANRECORD_PTR PT = malloc(sizeof(TRAINPLANRECORD));
 	if (PT == NULL)
 		return PT;
-	memset(PT, 0, sizeof(PRODUCTRECORD));
+	memset(PT, 0, sizeof(TRAINPLANRECORD));
 	return PT;
 }
 bool WritePWSTR(PCWSTR str, HANDLE hFile)
@@ -106,6 +106,13 @@ do{\
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
 }while(0)
+#define SAVEPAIROFUINT64DATATOVECTOR(member) \
+do{\
+	wchar_t idbuffer[100];\
+	swprintf_s(idbuffer, 100, L"%llu;%llu", record->##member.Item1,record->##member.Item2);\
+	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
+	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}while(0)
 //member是成员名称
 #define SAVEDOUBLEDATATOVECTOR(member) \
 do{\
@@ -132,20 +139,12 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 	size_t length = VECTOR_TOTAL(*vec);
 	for (size_t i = 0; i < length; i++)
 	{
-		PRODUCTRECORD_PTR record = VECTOR_GET(*vec, PRODUCTRECORD_PTR, i);
+		TRAINPLANRECORD_PTR record = VECTOR_GET(*vec, TRAINPLANRECORD_PTR, i);
 		SAVEWSTRDATATOVECTOR(Name);
-		SAVEINTDATATOVECTOR(ID);
+		SAVEPAIROFUINT64DATATOVECTOR(ID);
 		SAVEWSTRDATATOVECTOR(Type);
 		SAVEWSTRDATATOVECTOR(State);
-		SAVEINTDATATOVECTOR(Date);
-		SAVEWSTRDATATOVECTOR(ProvideBy);
-		SAVEWSTRDATATOVECTOR(RecievedBy);
-		SAVEWSTRDATATOVECTOR(ResentBy);
-		SAVEINTDATATOVECTOR(Count);
-		SAVEDOUBLEDATATOVECTOR(Cost);
 		SAVEDOUBLEDATATOVECTOR(Price);
-		SAVEDOUBLEDATATOVECTOR(ResentPrice);
-		SAVEWSTRDATATOVECTOR(Signer);
 
 
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
@@ -192,7 +191,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 				int laststart = 0;
 				int tindex = 0;
 				BOOL lastisbl = FALSE;
-				PRODUCTRECORD_PTR p = CreateProductRecord();
+				TRAINPLANRECORD_PTR p = CreateTrainPlanRecord();
 				if (p)
 				{
 					for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
@@ -218,25 +217,19 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									break;
 								case 1:
 								{
-									int64_t id;
-									if (swscanf(info, L"%lld", &id) == 1)
+									uint64_t id_high;
+									uint64_t id_low;
+									if (swscanf(info, L"%llu;%llu", &id_high,&id_low) == 1)
 									{
-										p->ID = id;
+										YINYUE200_PAIR_OF_uint64_t_uint64_t pair = { id_high,id_low };
+										p->ID = pair;
 									}
 									free(info);
 									break;
 								}
 									LOADWSTRDATATOVECTOR(Type, 2)
 									LOADWSTRDATATOVECTOR(State, 3)
-									LOADINTDATATOVECTOR(Date, 4)
-									LOADWSTRDATATOVECTOR(ProvideBy, 5)
-									LOADWSTRDATATOVECTOR(RecievedBy, 6)
-									LOADWSTRDATATOVECTOR(ResentBy, 7)
-									LOADINTDATATOVECTOR(Count, 8)
-									LOADPRICEDATATOVECTOR(Cost, 9)
-									LOADPRICEDATATOVECTOR(Price, 10)
-									LOADPRICEDATATOVECTOR(ResentPrice, 11)
-									LOADWSTRDATATOVECTOR(Signer, 12)
+									LOADPRICEDATATOVECTOR(Price, 5)
 								default:
 									break;
 								}
@@ -251,7 +244,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 							if (!lastisbl)
 							{			
 								VECTOR_ADD(*vec, p);
-								p = CreateProductRecord();
+								p = CreateTrainPlanRecord();
 								if (p == NULL)
 								{
 									UnrecoveryableFailed();
@@ -294,12 +287,4 @@ DEFINE_GETMEMBERMETHOD(Name);
 DEFINE_GETMEMBERADDRMETHOD(ID);
 DEFINE_GETMEMBERMETHOD(Type)
 DEFINE_GETMEMBERMETHOD(State)
-DEFINE_GETMEMBERADDRMETHOD(Date)
-DEFINE_GETMEMBERMETHOD(ProvideBy)
-DEFINE_GETMEMBERMETHOD(RecievedBy)
-DEFINE_GETMEMBERMETHOD(ResentBy)
-DEFINE_GETMEMBERADDRMETHOD(Count)
-DEFINE_GETMEMBERADDRMETHOD(Cost)
 DEFINE_GETMEMBERADDRMETHOD(Price)
-DEFINE_GETMEMBERADDRMETHOD(ResentPrice)
-DEFINE_GETMEMBERMETHOD(Signer)
