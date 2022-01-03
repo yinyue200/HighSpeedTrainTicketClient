@@ -40,6 +40,15 @@ typedef struct LoginWindowData
 } LOGINWINDOWDATA;
 void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcontext)
 {
+#if YINYUE200_SKIP_LOGINCHECK
+    yinyue200_LoganUserInfo = yinyue200_safemalloc(sizeof(USERDATAINFO));
+    yinyue200_LoganUserInfo->Name= yinyue200_safemalloc(2);
+    yinyue200_LoganUserInfo->Name[0] = 0;
+    yinyue200_LoganUserInfo->Type = L"ADMIN";
+    yinyue200_LoganUserInfo->PasswordHash = NULL;
+    callback(callbackcontext);
+#else
+
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.LoginWindow";
 
@@ -87,6 +96,7 @@ void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcon
 
 
     return;
+#endif
 }
 void LayoutControls_LoginWindow(HWND hwnd, UINT dpi, LOGINWINDOWDATA *windata)
 {
