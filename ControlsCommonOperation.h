@@ -33,7 +33,7 @@ HWND Yinyue200_FastCreateEditControl(HWND parent, HMENU id);
 HWND Yinyue200_FastCreateButtonControl(HWND parent, HMENU id, LPCTSTR title);
 //快速创建静态文本控件
 HWND Yinyue200_FastCreateLabelControl(HWND parent, HMENU id, LPCTSTR content);
-//快速创建复选框控件
+//快速创建静态文本控件
 HWND Yinyue200_FastCreateCheckBoxControl(HWND parent, HMENU id, LPCTSTR content);
 //快速创建复选框控件
 HWND Yinyue200_FastCreateLabelControlWithoutContent(HWND parent, HMENU id);

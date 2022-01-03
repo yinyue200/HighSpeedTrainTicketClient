@@ -36,6 +36,7 @@
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <stdio.h>
+#define YINYUE200_SKIP_LOGINCHECK 1 //调试时是否跳过登录
 #include "UserManage.h"
 #define YINYUE200_WINDOW_DATA L"YINYUE200_WINDOW_DATA"
 #define YINYUE200_DEFINE_PAIR(type1,type2) typedef struct tag_yinyue200_pair_of_##type1##_##type2 \
