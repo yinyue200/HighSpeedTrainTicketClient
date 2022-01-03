@@ -37,3 +37,9 @@ HWND Yinyue200_FastCreateLabelControl(HWND parent, HMENU id, LPCTSTR content);
 HWND Yinyue200_FastCreateCheckBoxControl(HWND parent, HMENU id, LPCTSTR content);
 //快速创建复选框控件
 HWND Yinyue200_FastCreateLabelControlWithoutContent(HWND parent, HMENU id);
+//  Yinyue200_FastCreateDatePickControl creates a DTP control
+//  Returns the handle to the new DTP control if successful, or NULL 
+//  otherwise.
+// 
+//    hwnd - The handle to the window.
+HWND Yinyue200_FastCreateDatePickControl(HWND hwnd, HMENU id);

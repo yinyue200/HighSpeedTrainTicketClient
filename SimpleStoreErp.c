@@ -25,7 +25,7 @@
 #include "DpiHelper.h"
 
 vector yinyue200_ProductList;
-HINSTANCE yinyue200_hInstance;
+HINSTANCE yinyue200_hInstance;//global handle to the program instance.
 int yinyue200_nCmdShow;
 atomic_int yinyue200_windowCount = 0;
 USERDATAINFO_PTR yinyue200_LoganUserInfo = NULL;

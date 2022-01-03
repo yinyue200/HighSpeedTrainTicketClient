@@ -114,3 +114,17 @@ YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid)
 	};
 	return ret;
 }
+FILETIME Yinyue200_ConvertToFileTimeFromUINT64(uint64_t time)
+{
+	ULARGE_INTEGER filetime;
+	filetime.QuadPart = time;
+	FILETIME real_filetime = { filetime.LowPart, filetime.HighPart };
+	return real_filetime;
+}
+uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time)
+{
+	ULARGE_INTEGER integer;
+	integer.LowPart = time.dwLowDateTime;
+	integer.HighPart = time.dwHighDateTime;
+	return integer.QuadPart;
+}

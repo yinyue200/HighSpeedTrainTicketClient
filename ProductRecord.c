@@ -18,23 +18,23 @@
 //构造获取 ProductRecord 成员的函数定义的宏
 #define DEFINE_GETMEMBERMETHOD(name) void* yinyue200_GetTrainPlanRecord##name(void* obj)\
 {\
-TRAINPLANRECORD_PTR p = obj;\
+YINYUE200_TRAINPLANRECORD_PTR p = obj;\
 return p->name;\
 }
 //构造获取 ProductRecord 成员的地址的函数定义的宏
 #define DEFINE_GETMEMBERADDRMETHOD(name) void* yinyue200_GetTrainPlanRecord##name(void* obj)\
 {\
-TRAINPLANRECORD_PTR p = obj;\
+YINYUE200_TRAINPLANRECORD_PTR p = obj;\
 return &p->name;\
 }
 #include "ProductRecord.h"
 
-TRAINPLANRECORD_PTR CreateTrainPlanRecord()
+YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 {
-	TRAINPLANRECORD_PTR PT = malloc(sizeof(TRAINPLANRECORD));
+	YINYUE200_TRAINPLANRECORD_PTR PT = malloc(sizeof(YINYUE200_TRAINPLANRECORD));
 	if (PT == NULL)
 		return PT;
-	memset(PT, 0, sizeof(TRAINPLANRECORD));
+	memset(PT, 0, sizeof(YINYUE200_TRAINPLANRECORD));
 	return PT;
 }
 bool WritePWSTR(PCWSTR str, HANDLE hFile)
@@ -139,12 +139,11 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 	size_t length = VECTOR_TOTAL(*vec);
 	for (size_t i = 0; i < length; i++)
 	{
-		TRAINPLANRECORD_PTR record = VECTOR_GET(*vec, TRAINPLANRECORD_PTR, i);
+		YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(*vec, YINYUE200_TRAINPLANRECORD_PTR, i);
 		SAVEWSTRDATATOVECTOR(Name);
 		SAVEPAIROFUINT64DATATOVECTOR(ID);
 		SAVEWSTRDATATOVECTOR(Type);
 		SAVEWSTRDATATOVECTOR(State);
-		SAVEDOUBLEDATATOVECTOR(Price);
 
 
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
@@ -191,7 +190,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 				int laststart = 0;
 				int tindex = 0;
 				BOOL lastisbl = FALSE;
-				TRAINPLANRECORD_PTR p = CreateTrainPlanRecord();
+				YINYUE200_TRAINPLANRECORD_PTR p = CreateTrainPlanRecord();
 				if (p)
 				{
 					for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
@@ -229,7 +228,6 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 								}
 									LOADWSTRDATATOVECTOR(Type, 2)
 									LOADWSTRDATATOVECTOR(State, 3)
-									LOADPRICEDATATOVECTOR(Price, 5)
 								default:
 									break;
 								}
@@ -287,4 +285,3 @@ DEFINE_GETMEMBERMETHOD(Name);
 DEFINE_GETMEMBERADDRMETHOD(ID);
 DEFINE_GETMEMBERMETHOD(Type)
 DEFINE_GETMEMBERMETHOD(State)
-DEFINE_GETMEMBERADDRMETHOD(Price)

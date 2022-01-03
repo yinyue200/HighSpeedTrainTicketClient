@@ -15,6 +15,8 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "ControlsCommonOperation.h"
 #include "DpiHelper.h"
+#include <CommCtrl.h>
+#include "common.h"
 void Yinyue200_SetWindowFont(HWND hwnd, HFONT font)
 {
     SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
@@ -82,3 +84,37 @@ HWND Yinyue200_FastCreateCheckBoxControl(HWND parent, HMENU id, LPCTSTR title)
 {
     return Yinyue200_FastCreateControl(L"BUTTON", parent, id, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, title);
 }
+//  Yinyue200_FastCreateDatePickControl creates a DTP control
+//  Returns the handle to the new DTP control if successful, or NULL 
+//  otherwise.
+// 
+//    hwnd - The handle to the window.
+HWND Yinyue200_FastCreateDatePickControl(HWND hwnd, HMENU id)
+{
+    HWND hwndDP = CreateWindowEx(0,
+            DATETIMEPICK_CLASS,
+            TEXT("DateTime"),
+            WS_BORDER | WS_CHILD | WS_VISIBLE | DTS_LONGDATEFORMAT,
+            0,0,0,0,
+            hwnd,
+            id,
+            yinyue200_hInstance,
+            NULL);
+
+    return (hwndDP);
+}
+HWND Yinyue200_FastCreateTimePickControl(HWND hwnd, HMENU id)
+{
+    HWND hwndDP = CreateWindowEx(0,
+        DATETIMEPICK_CLASS,
+        TEXT("DateTime"),
+        WS_BORDER | WS_CHILD | WS_VISIBLE | DTS_TIMEFORMAT,
+        0, 0, 0, 0,
+        hwnd,
+        id,
+        yinyue200_hInstance,
+        NULL);
+
+    return (hwndDP);
+}
+

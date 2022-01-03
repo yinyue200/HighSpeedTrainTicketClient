@@ -17,27 +17,32 @@
 #include "ProductRecord.h"
 #include "ControlsCommonOperation.h"
 #include "DpiHelper.h"
+#include <commctrl.h>
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
 #define ID_EDIT_ID 4
 #define ID_EDIT_TYPE 5
 #define ID_EDIT_STATE 6
-#define ID_EDIT_PRICE 13
+#define ID_EDIT_REPEAT 13
+#define ID_EDIT_STARTDATE 14 //首次发车日期编辑控件（日期选择控件）
+#define ID_LABEL_STARTDATE 15
 #define ID_BUTTON_SAVEANDNEXT 16
 #define ID_LABEL_NAME 17
 #define ID_LABEL_ID 18
 #define ID_LABEL_STATE 19
-#define ID_LABEL_PRICE 20
+#define ID_LABEL_REPEAT 20
 #define ID_LABEL_TYPE 21
+#define ID_EDIT_STARTTIME 22 //首次发车时间编辑控件（时间选择控件）
+#define ID_LABEL_STARTTIME 23
 typedef struct Yinyue200_EditItemWindowData
 {
-    TRAINPLANRECORD_PTR TrainPlanRecord;
+    YINYUE200_TRAINPLANRECORD_PTR TrainPlanRecord;
     bool enablesave;
     HFONT lastfont;
 } YINYUE200_EDITITEMWINDOWDATA;
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(TRAINPLANRECORD_PTR productrecord,bool enablesave)
+void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enablesave)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
@@ -150,9 +155,9 @@ free(_temp_int64_str);\
 #define ADDLABELANDEDIT(ctrl_id,displaylabel) HWND Hwnd_##ctrl_id##_Label =  Yinyue200_FastCreateLabelControl(hwnd,ID_LABEL_##ctrl_id,displaylabel);\
 HWND hwnd_##ctrl_id##_Edit = Yinyue200_FastCreateEditControl(hwnd,ID_EDIT_##ctrl_id);
 #define YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(tag) do{\
-YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_##tag, 10, lasty, 500, 25);\
+YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_##tag, 10, lasty, 500, 20);\
 lasty+=25;\
-YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 25);\
+YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 20);\
 lasty+=25;\
 }while (0)
 void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOWDATA* windata)
@@ -165,7 +170,9 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(ID);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(TYPE);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STATE);
-        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(PRICE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(REPEAT);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STARTDATE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STARTTIME);
         lasty += 10;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVEANDNEXT, 20 + 100, lasty, 100, 50);
@@ -173,13 +180,31 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
 
     }
 }
-void edititemwindow_initctrl(HWND hwnd, TRAINPLANRECORD_PTR productrecord)
+//设置编辑控件初值
+void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrecord)
 {
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
     SETNULLORPRODUCTINFOMEMBERPAIROFUINT64DATA(ID_EDIT_ID, ID);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
-    SETNULLORPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_PRICE, Price);
+    SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_REPEAT, Repeat);
+    if (productrecord == NULL)
+    {
+        SYSTEMTIME time;
+        GetLocalTime(&time);//时间的呈现始终呈现本地时间，存储使用 UTC 时间，因此此处获取本地时间
+        DateTime_SetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTDATE), GDT_VALID, &time);
+        DateTime_SetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTTIME), GDT_VALID, &time);
+    }
+    else
+    {
+        FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(productrecord->StartTimePoint);
+        FILETIME localfiletime;
+        FileTimeToLocalFileTime(&filetime, &localfiletime);//lpLocalFileTime cannot be the same as the lpFileTime parameter.
+        SYSTEMTIME systime;
+        FileTimeToSystemTime(&localfiletime, &systime);
+        DateTime_SetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTDATE), GDT_VALID, &systime);
+        DateTime_SetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTTIME), GDT_VALID, &systime);
+    }
 }
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -202,14 +227,19 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         ADDLABELANDEDIT(ID, L"ID");
         ADDLABELANDEDIT(TYPE,L"类型");
         ADDLABELANDEDIT(STATE, L"状态");
-        ADDLABELANDEDIT(PRICE, L"车票价格/公里");
+        ADDLABELANDEDIT(REPEAT, L"该车次发出的频率（单位：天）");
+        HWND hwnd_STARTDATE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTDATE, L"首次发车日期");
+        HWND hwnd_STARTDATE_Edit = Yinyue200_FastCreateDatePickControl(hwnd, ID_EDIT_STARTDATE);
+        HWND hwnd_STARTTIME_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTTIME, L"首次发车时间");
+        HWND hwnd_STARTTIME_Edit = Yinyue200_FastCreateTimePickControl(hwnd, ID_EDIT_STARTTIME);
+
 
         lasty += 10;
         HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"保存");
         HWND hwndButton_SaveAndNext = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVEANDNEXT, L"保存并添加下一个");
         HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
         lasty += 50;
-        TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
+        YINYUE200_TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
         
         edititemwindow_initctrl(hwnd, productrecord);
 
@@ -238,12 +268,28 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             {
                 YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
-                TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord == NULL ?
+                YINYUE200_TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord == NULL ?
                     CreateTrainPlanRecord() : windowdata->TrainPlanRecord;
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
                 SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(ID_EDIT_ID, ID);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
+
+                {
+                    SYSTEMTIME date;
+                    SYSTEMTIME time;
+                    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTDATE), &date);
+                    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTTIME), &time);
+                    date.wHour = time.wHour;
+                    date.wMinute = time.wMinute;
+                    date.wSecond = time.wSecond;
+                    date.wMilliseconds = time.wMilliseconds;
+                    FILETIME filetime;
+                    SystemTimeToFileTime(&date, &filetime);
+                    FILETIME utcfiletime;
+                    LocalFileTimeToFileTime(&filetime, &utcfiletime);
+                    productrecord->StartTimePoint = Yinyue200_ConvertToUINT64FromFileTime(utcfiletime);
+                }
 
                 if (windowdata->TrainPlanRecord == NULL)
                     VECTOR_ADD(yinyue200_ProductList, productrecord);

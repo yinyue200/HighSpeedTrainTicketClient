@@ -24,24 +24,41 @@ enum TrainPlanState
 {
 	TRAINPLANSTATE_UNKNOWN=0,
 };
+typedef struct Yinyue200_StationInfo
+{
+	wchar_t* DisplayName;
+} YINYUE200_STATIONINFO;
+typedef struct Yinyue200_TrainPlanRecord_RoutePoint
+{
+	YINYUE200_STATIONINFO Station;
+	uint64_t RouteRunTimeSpan;//预计从起点站到本站的时间
+	vector Price;//本段票价 类型 YINYUE200_PAIR_OF_wchar_t_double
+	double Distance;//本段距离，以千米为单位，用于递远递减等特殊票价计算规则的计算
+} YINYUE200_TRAINPLANRECORD_ROUTEPOINT;
+typedef YINYUE200_TRAINPLANRECORD_ROUTEPOINT* YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR;
 //车次信息信息
-typedef struct TrainPlanRecord
+typedef struct Yinyue200_TrainPlanRecord
 {
 	//车次信息
 	wchar_t* Name;//0
 	//唯一ID
 	YINYUE200_PAIR_OF_uint64_t_uint64_t ID;//1
 	wchar_t* Type;//2
-	wchar_t* State;//3
-	double Price;//5
-	int64_t Repeat;//6
-	vector Sations;
-	vector TicketCount;
-
-} TRAINPLANRECORD;
-typedef TRAINPLANRECORD* TRAINPLANRECORD_PTR;
+	wchar_t* State;//表示车次当前状态（正常或停开）//3
+	int64_t Repeat;//表示每多少天开行一次本车次列车//6
+	vector RoutePoints;//表示行车路线，YINYUE200_TRAINPLANRECORD_ROUTEPOINT 类型
+	vector TicketCount;//类型 YINYUE200_PAIR_OF_wchar_t_int32_t
+	uint64_t StartTimePoint;//车次首次开行日期时间
+	wchar_t* PricePolicy;//表示本车次是否应用递远递减等特殊票价计算规则
+						 //实际票价计算相当复杂，见参考资料
+						 //目前的设计是尽最大可能使本程序可以在不修改程序本身的前提下在任何票价计算规则下工作
+						 //实际票价计算规则以中国国家铁路集团有限公司及有关单位相关规定为准
+						 //参考资料： 中国铁道出版社 （2021新版）铁路客运运价里程表
+						 //中国铁道出版社 全国铁路客运运价里程接算站示意图 
+} YINYUE200_TRAINPLANRECORD;
+typedef YINYUE200_TRAINPLANRECORD* YINYUE200_TRAINPLANRECORD_PTR;
 //创建记录，并传递所有权（调用者负责free）
-TRAINPLANRECORD_PTR CreateTrainPlanRecord();
+YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord();
 //读取记录信息
 vector* ProductRecordLoadToVector(LPWSTR path);
 //写入记录到文件
@@ -54,8 +71,11 @@ YINYUE200_DEFINESIG_GETMEMBERMETHOD(Name)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(ID)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Type)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(State)
-YINYUE200_DEFINESIG_GETMEMBERMETHOD(Price)
-YINYUE200_DEFINESIG_GETMEMBERMETHOD(Sations)
+YINYUE200_DEFINESIG_GETMEMBERMETHOD(RoutePoints)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(TicketCount)
+YINYUE200_DEFINESIG_GETMEMBERMETHOD(StartTimePoint)
+YINYUE200_DEFINESIG_GETMEMBERMETHOD(PricePolicy)
+YINYUE200_DEFINESIG_GETMEMBERMETHOD(Repeat)
+
 //========
 

@@ -281,12 +281,11 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
                 for (size_t i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
                 {
-                    TRAINPLANRECORD_PTR record = VECTOR_GET(mainwindow->UnsortedNowList, TRAINPLANRECORD_PTR, i);
+                    YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(mainwindow->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
                     BOOL SHOULDREV = TRUE;
                     LOADDATAFILTERPROC_FLITER_WSTR(Name)
                     LOADDATAFILTERPROC_FLITER_WSTR(Type)
                     LOADDATAFILTERPROC_FLITER_WSTR(State)
-                    LOADDATAFILTERPROC_FLITER_INT(Price)
                     
 
                     if (!SHOULDREV)

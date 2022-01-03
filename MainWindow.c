@@ -230,7 +230,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
     {
         LV_DISPINFO* lpdi = (LV_DISPINFO*)lParam;
         TCHAR szString[MAX_PATH];
-        TRAINPLANRECORD_PTR record = VECTOR_GET(windata->PagedNowList, TRAINPLANRECORD_PTR, lpdi->item.iItem);
+        YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, lpdi->item.iItem);
         if (record)
         {
             if (lpdi->item.mask & LVIF_TEXT)
@@ -241,7 +241,6 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                     LISTVIEWNOTIFTLOADCOLINT(1,ID)
                     LISTVIEWNOTIFTLOADCOLWSTR(2, Type)
                     LISTVIEWNOTIFTLOADCOLWSTR(3, State)
-                    LISTVIEWNOTIFTLOADCOLDOUBLE(10, Price)
 
                 default:
                 {
@@ -307,7 +306,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
         LPNMITEMACTIVATE lpnmitem = lParam;
         if (lpnmitem->iItem >= 0)
         {
-            CreateLoginWindow(GetNowLoginedUserName(), edititemlogined, VECTOR_GET(windata->PagedNowList, TRAINPLANRECORD_PTR, lpnmitem->iItem));
+            CreateLoginWindow(GetNowLoginedUserName(), edititemlogined, VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, lpnmitem->iItem));
         }
         break;
     }
@@ -434,8 +433,8 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
 {
     //宽字符串排序比较函数
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
-    TRAINPLANRECORD_PTR* leftrecord = left;
-    TRAINPLANRECORD_PTR* rightrecord = right;
+    YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
+    YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
     LPWSTR leftstr = context->GetCompareObject(*leftrecord);
     LPWSTR rightstr = context->GetCompareObject(*rightrecord);
     int result = wcscmp(leftstr, rightstr);
@@ -447,8 +446,8 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
 int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
 {
     //整型排序比较函数
-    TRAINPLANRECORD_PTR* leftrecord = left;
-    TRAINPLANRECORD_PTR* rightrecord = right;
+    YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
+    YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     int64_t const* l = context->GetCompareObject(*leftrecord);
     int64_t const* r = context->GetCompareObject(*rightrecord);
@@ -461,8 +460,8 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
 int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
 {
     //浮点排序比较函数
-    TRAINPLANRECORD_PTR* leftrecord = left;
-    TRAINPLANRECORD_PTR* rightrecord = right;
+    YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
+    YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     double const* l = context->GetCompareObject(*leftrecord);
     double const* r = context->GetCompareObject(*rightrecord);
@@ -507,7 +506,6 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
                 ITEM_COMPAREIMPL(1,int64,ID)
                 ITEM_COMPAREIMPL(2, PWSTR, Type)
                 ITEM_COMPAREIMPL(3, PWSTR, State)
-                ITEM_COMPAREIMPL(10, double, Price)
 
             default:
                 break;
@@ -779,7 +777,7 @@ void calcmaindata(void* (*getmember)(void*), HWND hwnd)
     VECTOR_INIT(calc_temp_list);
     for (int i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
     {
-        TRAINPLANRECORD_PTR bbb = VECTOR_GET(windata->UnsortedNowList, TRAINPLANRECORD_PTR, i);
+        YINYUE200_TRAINPLANRECORD_PTR bbb = VECTOR_GET(windata->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
         YINYUE200_MAINWINDOW_CALCTEMPDATA* aaafinal = NULL;
         for (int j = 0; j < VECTOR_TOTAL(calc_temp_list); j++)
         {
@@ -865,7 +863,7 @@ void logincheckmsg(void* context)
                 vector* vec = ProductRecordLoadToVector(strFile);
                 for (size_t i = 0; i < vector_total(vec); i++)
                 {
-                    TRAINPLANRECORD_PTR one = vector_get(vec, i);
+                    YINYUE200_TRAINPLANRECORD_PTR one = vector_get(vec, i);
                     vector_add(&yinyue200_ProductList, one);
                 }
                 vector_free(vec);
@@ -890,10 +888,10 @@ void logincheckmsg(void* context)
                     YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
+                        YINYUE200_TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
                         for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
                         {
-                            TRAINPLANRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, TRAINPLANRECORD_PTR, i);
+                            YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, YINYUE200_TRAINPLANRECORD_PTR, i);
                             if (allproduct == productrecord)
                             {
                                 VECTOR_DELETE(yinyue200_ProductList, i);
@@ -902,7 +900,7 @@ void logincheckmsg(void* context)
                         }
                         for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
                         {
-                            TRAINPLANRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, TRAINPLANRECORD_PTR, i);
+                            YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
                             if (allproduct == productrecord)
                             {
                                 VECTOR_DELETE(windata->UnsortedNowList, i);
@@ -913,7 +911,7 @@ void logincheckmsg(void* context)
                     UpdateCheckBoxInfo(hwnd, windata);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
+                        YINYUE200_TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
                         free(productrecord->Name);
                         free(productrecord->Type);
                         free(productrecord->State);
@@ -1157,7 +1155,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             while (iPos != -1) {
                                 // iPos is the index of a selected item
                                 // do whatever you want with it
-                                TRAINPLANRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, TRAINPLANRECORD_PTR, iPos);
+                                YINYUE200_TRAINPLANRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos);
                                 vector_add(vec, productrecord);
 
                                 // Get the next selected item

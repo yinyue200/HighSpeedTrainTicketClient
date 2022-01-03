@@ -44,14 +44,13 @@
 	type2 Item2;\
 } YINYUE200_PAIR_OF_##type1##_##type2;
 YINYUE200_DEFINE_PAIR(uint64_t, uint64_t)
-//进程标识
-extern HINSTANCE yinyue200_hInstance;
-//specifies how the application windows should be display
-extern int yinyue200_nCmdShow;
-//全局记录信息
-extern vector yinyue200_ProductList;
-//当前登录用户信息
-extern USERDATAINFO_PTR yinyue200_LoganUserInfo;
+YINYUE200_DEFINE_PAIR(wchar_t, double)
+YINYUE200_DEFINE_PAIR(wchar_t, int32_t)
+
+extern HINSTANCE yinyue200_hInstance;//global handle to the program instance.
+extern int yinyue200_nCmdShow;//specifies how the application windows should be display
+extern vector yinyue200_ProductList;//全局记录信息
+extern USERDATAINFO_PTR yinyue200_LoganUserInfo;//当前登录用户信息
 
 LPWORD lpwAlign(LPWORD lpIn);
 //增加当前的窗体计数
@@ -74,3 +73,5 @@ void* yinyue200_safemalloc(size_t size);
 void* yinyue200_safemallocandclear(size_t size);
 GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low);
 YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid);
+FILETIME Yinyue200_ConvertToFileTimeFromUINT64(uint64_t time);
+uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time);
