@@ -39,6 +39,7 @@
 #define YINYUE200_SKIP_LOGINCHECK 1 //调试时是否跳过登录
 #include "UserManage.h"
 #define YINYUE200_WINDOW_DATA L"YINYUE200_WINDOW_DATA"
+//C 语言下利用宏实现的类泛型元组结构体定义
 #define YINYUE200_DEFINE_PAIR(type1,type2) typedef struct tag_yinyue200_pair_of_##type1##_##type2 \
 {\
 	type1 Item1;\
@@ -66,6 +67,8 @@ wchar_t* CreateWstrForWindowText(HWND hwnd);
 void UnrecoveryableFailed();
 //检查当前是否没有打卡的窗口，如果没有则退出程序
 void CheckIfNoWindowAndQuit();
+//检查 hresult,当 hresult 值代表失败时退出程序
+void CheckHResult(HRESULT hresult);
 //当 state 为 false 时调用 UnrecoveryableFailed()
 void FailedIfFalse(bool state);
 //当 malloc 失败时调用 UnrecoveryableFailed()
@@ -73,6 +76,6 @@ void* yinyue200_safemalloc(size_t size);
 //调用yinyue200_safemalloc并将内存区域清0
 void* yinyue200_safemallocandclear(size_t size);
 GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low);
-YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid);
+YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertToUint64PairFromGuid(GUID guid);
 FILETIME Yinyue200_ConvertToFileTimeFromUINT64(uint64_t time);
 uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time);

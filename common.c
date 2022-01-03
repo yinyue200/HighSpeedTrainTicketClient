@@ -46,6 +46,10 @@ void CheckIfNoWindowAndQuit()
 	if (CheckIfNoWindow())
 		PostQuitMessage(0);
 }
+void CheckHResult(HRESULT hresult)
+{
+	FailedIfFalse(SUCCEEDED(hresult));
+}
 void FailedIfFalse(bool state)
 {
 	if (state)
@@ -96,7 +100,7 @@ GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low)
 	};
 	return guid;
 }
-YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid)
+YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertToUint64PairFromGuid(GUID guid)
 {
 	uint64_t low = 
 		((uint64_t)guid.Data4[0]) << 56 |
@@ -110,7 +114,7 @@ YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertFromGuid(GUID guid)
 	YINYUE200_PAIR_OF_uint64_t_uint64_t ret = {
 		(((uint64_t)guid.Data1)<<32)|
 		(((uint64_t)guid.Data2)<<16)| guid.Data3,
-
+		low
 	};
 	return ret;
 }
