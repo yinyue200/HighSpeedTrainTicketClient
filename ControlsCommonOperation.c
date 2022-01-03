@@ -72,12 +72,13 @@ HWND Yinyue200_FastCreateLabelControl(HWND parent, HMENU id, LPCTSTR content)
     SendMessage(hwnd, WM_SETTEXT, 0, content);
     return hwnd;
 }
+//快速创建静态文本控件
 HWND Yinyue200_FastCreateLabelControlWithoutContent(HWND parent, HMENU id)
 {
     HWND hwnd = Yinyue200_FastCreateControl(L"STATIC", parent, id, WS_CHILD | WS_VISIBLE, NULL);
     return hwnd;
 }
-
+//快速创建复选框控件
 HWND Yinyue200_FastCreateCheckBoxControl(HWND parent, HMENU id, LPCTSTR title)
 {
     return Yinyue200_FastCreateControl(L"BUTTON", parent, id, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, title);
