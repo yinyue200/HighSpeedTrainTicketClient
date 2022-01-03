@@ -35,6 +35,11 @@
 #define ID_LABEL_TYPE 21
 #define ID_EDIT_STARTTIME 22 //首次发车时间编辑控件（时间选择控件）
 #define ID_LABEL_STARTTIME 23
+#define ID_LABEL_ROUTEEDITNOTICE 24 //路段信息编辑控件上方提示
+#define ID_LISTVIEW_ROUTE 25
+#define ID_BUTTON_ROUTEADD 26
+#define ID_BUTTON_ROUTEDELETE 27
+#define ID_BUTTON_ROUTEEDIT 28
 typedef struct Yinyue200_EditItemWindowData
 {
     YINYUE200_TRAINPLANRECORD_PTR TrainPlanRecord;
@@ -80,7 +85,7 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
     if (hwnd == NULL)
     {
         int a = GetLastError();
-        return 0;
+        return;
     }
 
 
@@ -172,6 +177,15 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(REPEAT);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STARTDATE);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STARTTIME);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_ROUTEEDITNOTICE, 10, lasty, 100, 25);
+        lasty += 25;
+        //路线编辑列表在此
+        YINYUE200_SETCONTROLPOSANDFONT(ID_LISTVIEW_ROUTE, 10, lasty, 500, 200);
+        lasty += 200;
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEADD, 10, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEEDIT, 20 + 100, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEDELETE, 10 + 200 + 20, lasty, 100, 25);
+        lasty += 25;
         lasty += 10;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVEANDNEXT, 20 + 100, lasty, 100, 50);
@@ -226,7 +240,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_CREATE:
     {
         AddWindowCount();
-        int lasty = 10;
 
         {
             CREATESTRUCT* cs = lParam;
@@ -245,13 +258,17 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         HWND hwnd_STARTDATE_Edit = Yinyue200_FastCreateDatePickControl(hwnd, ID_EDIT_STARTDATE);
         HWND hwnd_STARTTIME_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTTIME, L"首次发车时间");
         HWND hwnd_STARTTIME_Edit = Yinyue200_FastCreateTimePickControl(hwnd, ID_EDIT_STARTTIME);
+        HWND hwnd_ROUTEEDITNOTICE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_ROUTEEDITNOTICE, L"路线编辑");
 
+        HWND hwnd_ROUTE_Edit = Yinyue200_FastCreateListViewControl(hwnd, ID_LISTVIEW_ROUTE);
+        HWND hwnd_ROUTE_ADDBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEADD, L"添加路径点");
+        HWND hwnd_ROUTE_EDITBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEEDIT, L"编辑路径点");
+        HWND hwnd_ROUTE_DELBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEDELETE, L"删除路径点");
 
-        lasty += 10;
         HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"保存");
         HWND hwndButton_SaveAndNext = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVEANDNEXT, L"保存并添加下一个");
         HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
-        lasty += 50;
+
         YINYUE200_TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
         
         edititemwindow_initctrl(hwnd, productrecord);
@@ -264,6 +281,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         Yinyue200_SetWindowSize(hwnd, 700, 770, dpi);
 
+        SIZE winsize = Yinyue200_GetWindowClientAreaSize(hwnd);
         LayoutControls_EditItemWindow(hwnd, dpi, windowdata);
         
     }

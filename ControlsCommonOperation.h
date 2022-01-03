@@ -26,6 +26,8 @@ HWND Yinyue200_GetChildControlById(HWND hwnd, int id);
 LRESULT Yinyue200_SetControlPos(HWND hwnd, double x, double y, double cx, double cy, UINT DPI);
 //结合当前DPI信息设置窗口位置
 LRESULT Yinyue200_SetWindowSize(HWND hwnd, double cx, double cy, UINT DPI);
+//获取窗口客户区域大小
+SIZE Yinyue200_GetWindowClientAreaSize(HWND window);
 HWND Yinyue200_FastCreateControl(LPCTSTR type, HWND parent, HMENU id, DWORD style, LPCTSTR title);
 //快速创建文本输入框控件
 HWND Yinyue200_FastCreateEditControl(HWND parent, HMENU id);
@@ -43,3 +45,5 @@ HWND Yinyue200_FastCreateLabelControlWithoutContent(HWND parent, HMENU id);
 // 
 //    hwnd - The handle to the window.
 HWND Yinyue200_FastCreateDatePickControl(HWND hwnd, HMENU id);
+HWND Yinyue200_FastCreateTimePickControl(HWND hwnd, HMENU id);
+HWND Yinyue200_FastCreateListViewControl(HWND hwnd, HMENU id);

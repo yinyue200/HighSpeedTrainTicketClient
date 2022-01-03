@@ -44,6 +44,14 @@ LRESULT Yinyue200_SetWindowSize(HWND hwnd, double cx, double cy, UINT DPI)
         YINYUE200_LOGICTOPHYBYDPI_DOUBLE(cy, DPI),
         SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 }
+//获取窗口客户区域大小
+SIZE Yinyue200_GetWindowClientAreaSize(HWND window)
+{
+    RECT rect;
+    GetClientRect(window, &rect);
+    SIZE size = { rect.right - rect.left, rect.bottom - rect.top };
+    return size;
+}
 HWND Yinyue200_FastCreateControl(LPCTSTR type, HWND parent, HMENU id, DWORD style, LPCTSTR title)
 {
     return CreateWindow(
@@ -118,4 +126,31 @@ HWND Yinyue200_FastCreateTimePickControl(HWND hwnd, HMENU id)
 
     return (hwndDP);
 }
+HWND Yinyue200_FastCreateListViewControl(HWND hwnd, HMENU id)
+{
+    DWORD       dwStyle;
+    HWND        hwndListView;
 
+    dwStyle = WS_TABSTOP |
+        WS_CHILD |
+        WS_BORDER |
+        WS_VISIBLE |
+        LVS_AUTOARRANGE |
+        LVS_REPORT |
+        LVS_OWNERDATA;
+
+    hwndListView = CreateWindowEx(WS_EX_CLIENTEDGE,          // ex style
+        WC_LISTVIEW,               // class name - defined in commctrl.h
+        TEXT(""),                        // dummy text
+        dwStyle,                   // style
+        0,                         // x position
+        0,                         // y position
+        0,                         // width
+        0,                         // height
+        hwnd,                // parent
+        id,        // ID
+        (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),  // instance
+        NULL);                     // no extra data
+
+    return hwndListView;
+}

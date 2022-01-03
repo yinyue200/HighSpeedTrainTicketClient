@@ -238,7 +238,6 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                 switch (lpdi->item.iSubItem)
                 {
                     LISTVIEWNOTIFTLOADCOLWSTR(0, Name)
-                    LISTVIEWNOTIFTLOADCOLINT(1,ID)
                     LISTVIEWNOTIFTLOADCOLWSTR(2, Type)
                     LISTVIEWNOTIFTLOADCOLWSTR(3, State)
 
@@ -318,7 +317,6 @@ HWND Yinyue200_Main_CreateListView(HWND hwndParent,UINT dpi)
 {
     DWORD       dwStyle;
     HWND        hwndListView;
-    BOOL        bSuccess = TRUE;
 
     dwStyle = WS_TABSTOP |
         WS_CHILD |
@@ -340,9 +338,6 @@ HWND Yinyue200_Main_CreateListView(HWND hwndParent,UINT dpi)
         (HMENU)ID_LISTVIEW_MAIN,        // ID
         (HINSTANCE)GetWindowLongPtr(hwndParent, GWLP_HINSTANCE),  // instance
         NULL);                     // no extra data
-
-    if (!hwndListView)
-        return NULL;
 
     return hwndListView;
 }
@@ -1019,9 +1014,8 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
         UpdateCheckBoxInfo(hwnd, windata);
 
-        RECT rect;
-        GetClientRect(hwnd, &rect);
-        LayoutControls_MainWindow(hwnd,dpi , windata, rect.right - rect.left, rect.bottom - rect.top);
+        SIZE winsize = Yinyue200_GetWindowClientAreaSize(hwnd);
+        LayoutControls_MainWindow(hwnd,dpi , windata, winsize.cx, winsize.cy);
     }
     return 0;
     case WM_NOTIFY:
