@@ -88,21 +88,9 @@ wchar_t* Yinyue200_TsvDecode(wchar_t* str)
 			if (innret == 1)
 			{
 				vector_add_wchar_t(&ret, c);
-				i += 2;
-				if (c > 0xF)
+				while (str[i]!=L';')
 				{
-					//两位数
-					i += 1;
-					if (c > 0xFF)
-					{
-						i += 1;
-						//三位数
-						if (c > 0xFFF)
-						{
-							i += 1;
-							//四位数
-						}
-					}
+					i++;
 				}
 			}
 			else
