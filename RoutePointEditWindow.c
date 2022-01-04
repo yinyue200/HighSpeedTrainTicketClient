@@ -119,7 +119,7 @@ void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_ROUTEPOI
         WCHAR buffer = yinyue200_safemalloc(1000 * sizeof(WCHAR));
 
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_STATION), WM_SETTEXT, 0, productrecord->Station.DisplayName);
-        swprintf(buffer, 1000, L"%lf", productrecord->Distance);
+        swprintf(buffer, 1000, L"%lf", productrecord->Distance / 1000.0);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_DISTANCE), WM_SETTEXT, 0, buffer);
         swprintf(buffer, 1000, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(productrecord->RouteRunTimeSpan) / 60.0);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN), WM_SETTEXT, 0, buffer);
@@ -135,13 +135,6 @@ lasty+=25;\
 YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 20);\
 lasty+=25;\
 }while (0)
-#define SAVEPRODUCTINFOMEMBERPRICEDATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
-int _temp_ret=Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str,&(ptr->##member));\
-if(_temp_ret<0)\
-{\
-    MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
-}\
-}while(0)
 //路径点编辑窗口消息处理函数
 LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -238,12 +231,27 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 #endif
 
                 ptr->Station.DisplayName = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_STATION));
-                SAVEPRODUCTINFOMEMBERPRICEDATA(ID_EDIT_DISTANCE, Distance);
-                LPWSTR timespan_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN));
+                PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd, ID_EDIT_DISTANCE)); 
+                double disdouble;
+                int _temp_ret = Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &disdouble);
+                if (_temp_ret < 0)
+                {
+                    MessageBox(hwnd, L"距离格式错误", NULL, 0);
+                }
+                else
+                {
+                    ptr->Distance = disdouble / 1000.0;
+                }
+                _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN));
                 double timespan_double;
-                Yinyue200_EditWindowParseFromStringAndFree(timespan_str, &timespan_double);
-                ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double * 60.0);
-
+                if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &timespan_double) >= 0)
+                {
+                    ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double * 60.0);
+                }
+                else
+                {
+                    MessageBox(hwnd, L"运行时间格式错误", NULL, 0);
+                }
                 windowdata->callback(ptr, windowdata->callbackcontext);
 
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);

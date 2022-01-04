@@ -48,7 +48,7 @@
 } YINYUE200_PAIR_OF_##type1##_##type2;
 YINYUE200_DEFINE_PAIR(uint64_t, uint64_t)
 YINYUE200_DEFINE_PAIR(wchar_t, double)
-YINYUE200_DEFINE_PAIR(wchar_t, int32_t)
+YINYUE200_DEFINE_PAIR(int32_t, int32_t)
 
 extern HINSTANCE yinyue200_hInstance;//global handle to the program instance.
 extern int yinyue200_nCmdShow;//specifies how the application windows should be display
@@ -65,6 +65,8 @@ bool CheckIfNoWindow();
 wchar_t* CreateWSTR(size_t length);
 wchar_t* CreateWstrForWindowText(HWND hwnd);
 wchar_t* CreateWstrFromWstr(wchar_t *hwnd);
+wchar_t* Yinyue200_TsvEncode(wchar_t* str);
+wchar_t* Yinyue200_TsvDecode(wchar_t* str);
 //无法恢复的错误，直接退出程序
 void UnrecoveryableFailed();
 //检查当前是否没有打卡的窗口，如果没有则退出程序
@@ -83,3 +85,7 @@ FILETIME Yinyue200_ConvertToFileTimeFromUINT64(uint64_t time);
 uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time);
 double Yinyue200_ConvertToTotalSecondFromUINT64(uint64_t time);
 uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time);
+//将vector中的内容序列化到字符串
+//func: 将 vector 的每一项序列化的函数
+PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr));
+vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str));

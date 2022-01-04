@@ -43,6 +43,65 @@ wchar_t* CreateWstrFromWstr(wchar_t* str)
 	memcpy(ptr, str, size);
 	return ptr;
 }
+//一种原创的转义算法
+wchar_t* Yinyue200_TsvEncode(wchar_t* str)
+{
+	vector ret = { 0 };
+	int len = wcslen(str);
+	vector_initwithcap_wchar_t(str, len * 2);
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		wchar_t one = str[i];
+		if (iswcntrl(one) || one == L'&' || iswspace(one))
+		{
+			vector_add_wchar_t(&ret, L'&');
+			wchar_t buffer[6];
+			swprintf(buffer, L"%04X;", one);
+			for (int i = 0; i < 5; i++)
+			{
+				vector_add_wchar_t(&ret, buffer[i]);
+			}
+		}
+		else
+		{
+			vector_add_wchar_t(&ret, one);
+		}
+	}
+	((wchar_t*)ret.items)[i] = 0;
+	return (wchar_t*)ret.items;
+}
+wchar_t* Yinyue200_TsvDecode(wchar_t* str)
+{
+	vector ret;
+	int len = wcslen(str);
+	vector_initwithcap_wchar_t(str, len + 1);
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		wchar_t one = str[i];
+		if (one == L'&')
+		{
+			int c;
+			int innret = swscanf(one + i + 1, L"%04X", &c);
+			if (innret == 1)
+			{
+				vector_add_wchar_t(&ret, innret);
+				i += 4;
+			}
+			else
+			{
+				UnrecoveryableFailed();
+			}
+		}
+		else
+		{
+			vector_add_wchar_t(&ret, one);
+		}
+	}
+	((wchar_t*)ret.items)[i] = 0;
+	return (wchar_t*)ret.items;
+}
 __declspec(noreturn) void UnrecoveryableFailed()
 {
 	MessageBox(NULL, L"不可恢复的错误", NULL, 0);
@@ -149,5 +208,57 @@ uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time)
 {
 	uint64_t ret = time;
 	ret *= 10000000;
+	return ret;
+}
+PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr))
+{
+	int total = vector_total(vec);
+	bool init = false;
+	vector ret;
+	for (int i = 0; i < total; i++)
+	{
+		void* one = vector_get(vec, i);
+		PWSTR oonestr = func(one);
+		PWSTR onestr = Yinyue200_TsvEncode(oonestr);
+		free(oonestr);
+		size_t onelen = wcslen(onestr);
+		if (i == 0)
+		{
+			vector_initwithcap_wchar_t(&ret, onelen * total);
+			init = true;
+		}
+		for (int j = 0; j < onelen; j++)
+		{
+			vector_add_wchar_t(vec, onestr[j]);
+		}
+		free(onestr);
+		vector_add_wchar_t(&ret, L" ");
+	}
+	if (init == false)
+	{
+		vector_init_wchar_t(&ret);
+		vector_add_wchar_t(&ret, L" ");
+	}
+	vector_set_wchar_t(&ret, vector_total_wchar_t(&ret), 0);
+	return ret.items;
+}
+vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str))
+{
+	size_t len = wcslen(str);
+	PWSTR buffer = yinyue200_safemalloc(len * sizeof(wchar_t));
+	vector ret;
+	vector_init(&ret);
+	while (1)
+	{
+		int ret = swscanf(str, L"%s", buffer);
+		if (ret < 1)
+		{
+			break;
+		}
+		PWSTR decodeline = Yinyue200_TsvDecode(ret);
+		vector_add(ret, func(decodeline));
+		free(decodeline);
+	}
+	free(buffer);
 	return ret;
 }

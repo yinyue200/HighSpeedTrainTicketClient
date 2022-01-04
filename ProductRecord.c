@@ -76,6 +76,17 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
 	break;\
 }
 //caseid是信息列数（0开始） member是成员名称
+#define LOADUINTDATATOVECTOR(member,caseid) case caseid:\
+{\
+	uint64_t id;\
+	if (swscanf(info, L"%llu", &id) == 1)\
+	{\
+		p->##member = id;\
+	}\
+	free(info);\
+	break;\
+}
+//caseid是信息列数（0开始） member是成员名称
 #define LOADPRICEDATATOVECTOR(member,caseid) case caseid:\
 {\
 	double id;\
@@ -92,6 +103,14 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
 	p->##member = info;\
 	break;\
 }
+//caseid是信息列数（0开始） member是成员名称
+#define LOADVECTORDATATOVECTOR(member,caseid,func) case caseid:\
+{\
+	PWSTR decodeinfo = Yinyue200_TsvDecode(info);\
+	p->##member = Yinyue200_ConvertStringToVector(decodeinfo, ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint);\
+	free(decodeinfo);\
+	break;\
+}
 //member是成员名称
 #define SAVEWSTRDATATOVECTOR(member) \
 do{\
@@ -103,6 +122,13 @@ do{\
 do{\
 	wchar_t idbuffer[30];\
 	swprintf_s(idbuffer, 30, L"%lld", record->##member);\
+	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
+	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}while(0)
+#define SAVEUINTDATATOVECTOR(member) \
+do{\
+	wchar_t idbuffer[30];\
+	swprintf_s(idbuffer, 30, L"%llu", record->##member);\
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
 }while(0)
@@ -120,6 +146,15 @@ do{\
 	swprintf_s(idbuffer, 30, L"%lf", record->##member);\
 	FailedIfFalse(WritePWSTR(idbuffer, hFile));\
 	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}while(0)
+#define SAVEVECTORDATATOVECTOR(member,func) \
+do{\
+PWSTR str = Yinyue200_ConvertVectorToString(&record->##member, (func));\
+PWSTR str1 = Yinyue200_TsvEncode(str);\
+FailedIfFalse(WritePWSTR(str1, hFile));\
+FailedIfFalse(WritePWSTR(L"\t", hFile));\
+free(str1);\
+free(str);\
 }while(0)
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 {
@@ -144,8 +179,9 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 		SAVEPAIROFUINT64DATATOVECTOR(ID);
 		SAVEWSTRDATATOVECTOR(Type);
 		SAVEWSTRDATATOVECTOR(State);
-
-
+		SAVEVECTORDATATOVECTOR(RoutePoints, ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint);//写入路线信息
+		SAVEVECTORDATATOVECTOR(TicketCount, ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t);//写入座位信息
+		SAVEUINTDATATOVECTOR(StartTimePoint);
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
 	}
 	CloseHandle(hFile);
@@ -226,8 +262,12 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 									free(info);
 									break;
 								}
-									LOADWSTRDATATOVECTOR(Type, 2)
-									LOADWSTRDATATOVECTOR(State, 3)
+								LOADWSTRDATATOVECTOR(Type, 2)
+								LOADWSTRDATATOVECTOR(State, 3)
+								LOADINTDATATOVECTOR(Repeat, 4)
+								LOADVECTORDATATOVECTOR(RoutePoints, 5, ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint);
+								LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t);
+								LOADUINTDATATOVECTOR(StartTimePoint, 7)
 								default:
 									break;
 								}
@@ -285,3 +325,44 @@ DEFINE_GETMEMBERMETHOD(Name);
 DEFINE_GETMEMBERADDRMETHOD(ID);
 DEFINE_GETMEMBERMETHOD(Type)
 DEFINE_GETMEMBERMETHOD(State)
+
+PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint)
+{
+	size_t stationnamelen = wcslen(routepoint->Station.DisplayName);
+	size_t len = stationnamelen + 100;
+	PWSTR newstr = yinyue200_safemalloc(len * sizeof(WCHAR));
+	swprintf(newstr, len, L"%s\t%lld\t%lld", routepoint->Station.DisplayName, routepoint->Distance, routepoint->RouteRunTimeSpan);
+	return newstr;
+}
+PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint)
+{
+	size_t len = 100;
+	PWSTR newstr = yinyue200_safemalloc(len * sizeof(WCHAR));
+	swprintf(newstr, len, L"%d\t%d", routepoint->Item1, routepoint->Item2);
+	return newstr;
+}
+YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecord_RoutePoint(PWSTR str)
+{
+	size_t len = wcslen(str);
+	PWSTR buf = yinyue200_safemalloc(len * sizeof(size_t));
+	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemallocandchear(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
+	int ret = swscanf(str, L"%s\t%lld\t%lld", buf, &ptr->Distance, &ptr->RouteRunTimeSpan);
+	if (ret < 3)
+	{
+		UnrecoveryableFailed();
+	}
+	ptr->Station.DisplayName = buf;
+	return ptr;
+}
+YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t(PWSTR str)
+{
+	size_t len = wcslen(str);
+	PWSTR buf = yinyue200_safemalloc(len * sizeof(size_t));
+	YINYUE200_PAIR_OF_int32_t_int32_t *ptr = yinyue200_safemallocandchear(sizeof(YINYUE200_PAIR_OF_int32_t_int32_t));
+	int ret = swscanf(str, L"%d\t%d", &ptr->Item1, &ptr->Item2);
+	if (ret < 3)
+	{
+		UnrecoveryableFailed();
+	}
+	return ptr;
+}

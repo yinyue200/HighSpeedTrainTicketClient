@@ -277,7 +277,7 @@ int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
                         wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, record->Station.DisplayName, _TRUNCATE);//站点信息显示
                         break;
                     case 1:
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", record->Distance);//里程信息显示
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", record->Distance / 1000.0);//里程信息显示
                         break;
                     case 2:
                         swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->RouteRunTimeSpan) / 60.0);//运行时间信息显示
@@ -477,6 +477,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(ID_EDIT_ID, ID);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
+                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_REPEAT, Repeat);
 
                 {
                     SYSTEMTIME date;
@@ -535,30 +536,30 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 else
                 {
                     vector* vec = yinyue200_safemalloc(sizeof(vector));
-                    vector_init(vec);
+                    vector_init_int(vec);
 
                     while (iPos != -1) {
                         // iPos is the index of a selected item
                         // do whatever you want with it
-                        vector_add(vec, iPos);
+                        vector_add_int(vec, iPos);
 
                         // Get the next selected item
                         iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
                     }
                     wchar_t warningmsg[50];
-                    swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total(vec));
+                    swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total_int(vec));
                     if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
                     {
                         for (int i = vector_total(vec) - 1; i >= 0; i--)
                         {
-                            int tobedelindex = vector_get(vec, i);
+                            int tobedelindex = vector_get_int(vec, i);
                             YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR tobedel = vector_get(&windata->Route, tobedelindex);
                             free(tobedel->Station.DisplayName);
                             free(tobedel);
-                            vector_delete(&windata->Route, tobedelindex);
+                            vector_delete_int(&windata->Route, tobedelindex);
                         }
                     }
-                    vector_free(vec);
+                    vector_free_int(vec);
                     free(vec);
                 }
 

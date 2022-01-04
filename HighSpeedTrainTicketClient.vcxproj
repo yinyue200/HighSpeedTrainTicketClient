@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="chromiumbase64.c" />
     <ClCompile Include="common.c" />
     <ClCompile Include="ControlsCommonOperation.c" />
     <ClCompile Include="DpiHelper.c" />
@@ -170,6 +171,7 @@
     <ClCompile Include="vector.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="chromiumbase64.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ControlsCommonOperation.h" />
     <ClInclude Include="RoutePointEditWindow.h" />
