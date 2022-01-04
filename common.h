@@ -37,6 +37,7 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <stdio.h>
 #define YINYUE200_SKIP_LOGINCHECK 1 //调试时是否跳过登录
+#define YINYUE200_ROUTEPOINTEDITWINDOW_ALWAYS_PERFORMCHANGES_ON_NEWOBJECT 0
 #include "UserManage.h"
 #define YINYUE200_WINDOW_DATA L"YINYUE200_WINDOW_DATA"
 //C 语言下利用宏实现的类泛型元组结构体定义
@@ -79,3 +80,5 @@ GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low);
 YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertToUint64PairFromGuid(GUID guid);
 FILETIME Yinyue200_ConvertToFileTimeFromUINT64(uint64_t time);
 uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time);
+double Yinyue200_ConvertToTotalSecondFromUINT64(uint64_t time);
+uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time);

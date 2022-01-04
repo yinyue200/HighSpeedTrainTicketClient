@@ -19,15 +19,15 @@
     <Filter Include="Source Files\ControlHelpers">
       <UniqueIdentifier>{0417f14a-9be5-4a8b-8648-bee88ad5f568}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Windows">
+      <UniqueIdentifier>{376e5de1-fef8-4a3e-a69f-f954ba3516d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Windows">
+      <UniqueIdentifier>{32d77956-1a8f-41b6-a467-0e42628b8bd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimpleStoreErp.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MainWindow.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="EditItemWindow.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdatomic.c">
@@ -45,19 +45,10 @@
     <ClCompile Include="UserSetting.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LoadDataFilterWindow.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UserManage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LoginWindow.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sha256.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputBoxWindow.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DpiHelper.c">
@@ -66,18 +57,30 @@
     <ClCompile Include="ControlsCommonOperation.c">
       <Filter>Source Files\ControlHelpers</Filter>
     </ClCompile>
+    <ClCompile Include="EditItemWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="InputBoxWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadDataFilterWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="RoutePointEditWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MainWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ProductRecord.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EditItemWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdatomic.h">
@@ -89,19 +92,10 @@
     <ClInclude Include="UserSetting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LoadDataFilterWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UserManage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LoginWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sha256.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputBoxWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DpiHelper.h">
@@ -109,6 +103,24 @@
     </ClInclude>
     <ClInclude Include="ControlsCommonOperation.h">
       <Filter>Header Files\ControlHelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="EditItemWindow.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="InputBoxWindow.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginWindow.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWindow.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadDataFilterWindow.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="CreateRoutePointEditWindow.h">
+      <Filter>Header Files\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 //  SimpleStoreErp
 //	Copyright(C) 2021 “Û‘Ω
 //
-//	This program is free software : you can redistribute it and /or modify
+//	This program is free software : you can redistribute it and/or modify
 //	it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or
 //	(at your option) any later version.
@@ -131,4 +131,16 @@ uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time)
 	integer.LowPart = time.dwLowDateTime;
 	integer.HighPart = time.dwHighDateTime;
 	return integer.QuadPart;
+}
+double Yinyue200_ConvertToTotalSecondFromUINT64(uint64_t time)
+{
+	double ret = time;
+	ret /= 10000000;
+	return ret;
+}
+uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time)
+{
+	uint64_t ret = time;
+	ret *= 10000000;
+	return ret;
 }

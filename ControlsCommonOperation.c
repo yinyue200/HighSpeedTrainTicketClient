@@ -112,6 +112,11 @@ HWND Yinyue200_FastCreateDatePickControl(HWND hwnd, HMENU id)
 
     return (hwndDP);
 }
+//  Yinyue200_FastCreateDatePickControl creates a DTP control
+//  Returns the handle to the new DTP control if successful, or NULL 
+//  otherwise.
+// 
+//    hwnd - The handle to the window.
 HWND Yinyue200_FastCreateTimePickControl(HWND hwnd, HMENU id)
 {
     HWND hwndDP = CreateWindowEx(0,
@@ -153,4 +158,25 @@ HWND Yinyue200_FastCreateListViewControl(HWND hwnd, HMENU id)
         NULL);                     // no extra data
 
     return hwndListView;
+}
+//将字符串 str 转换为 double 并赋值给 setto
+int Yinyue200_EditWindowParseFromString(LPWSTR str,double *setto)
+{
+    double ddata;
+    if (swscanf(str, L"%lf", &ddata) == 1)
+    {
+        *setto = ddata;//只有成功读取才进行赋值
+        return 1;
+    }
+    else  if (str[0] != 0)//如果str不是空字符串
+    {
+        return -1;
+    }
+    return 0;
+}
+int Yinyue200_EditWindowParseFromStringAndFree(LPWSTR str, double* setto)
+{
+    int ret = Yinyue200_EditWindowParseFromString(str, setto);
+    free(str);
+    return ret;
 }

@@ -1,7 +1,7 @@
 //  SimpleStoreErp
 //	Copyright(C) 2021 殷越
 //
-//	This program is free software : you can redistribute it and /or modify
+//	This program is free software : you can redistribute it and/or modify
 //	it under the terms of the GNU General Public License as published by
 //	the Free Software Foundation, either version 3 of the License, or
 //	(at your option) any later version.
@@ -43,6 +43,7 @@
 typedef struct Yinyue200_EditItemWindowData
 {
     YINYUE200_TRAINPLANRECORD_PTR TrainPlanRecord;
+    vector Route;
     bool enablesave;
     HFONT lastfont;
 } YINYUE200_EDITITEMWINDOWDATA;
@@ -64,6 +65,25 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
     YINYUE200_EDITITEMWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(YINYUE200_EDITITEMWINDOWDATA));
     windowdata->TrainPlanRecord = productrecord;
     windowdata->enablesave = enablesave;
+    if (productrecord == NULL)
+    {
+        vector_init(&windowdata->Route);
+    }
+    else
+    {
+        //将 productrecord->RoutePoints 的内容深复制到 windowdata->Route
+
+        vector* srcvec = &windowdata->Route;
+        vector* orivec = &productrecord->RoutePoints;
+        vector_initwithcap(srcvec, orivec->capacity);
+        for (int i = 0; i < vector_total(orivec); i++)
+        {
+            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemalloc(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
+            memcpy(ptr, vector_get(orivec, i), sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
+            vector_add(srcvec, ptr);
+        }
+
+    }
 
     // Create the window.
 
@@ -100,7 +120,7 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 #define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
-#define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+#define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64;\
 if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
 {\
@@ -111,8 +131,8 @@ else if(_temp_int64_str[0]!=0)\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
 free(_temp_int64_str);\
-}
-#define SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+}while(0)
+#define SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64_1;int64_t _temp_int64_2;\
 if (swscanf(_temp_int64_str, L"%llu;%llu", &_temp_int64_1, &_temp_int64_2) == 2)\
 {\
@@ -124,8 +144,8 @@ else if(_temp_int64_str[0]!=0)\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
 free(_temp_int64_str);\
-}
-#define SAVEPRODUCTINFOMEMBERDATEDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+}while(0)
+#define SAVEPRODUCTINFOMEMBERDATEDATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64;\
 int _temp_a,_temp_b,_temp_c;\
 if (swscanf(_temp_int64_str, L"%d/%d/%d", &_temp_a,&_temp_b,&_temp_c) == 3)\
@@ -142,20 +162,14 @@ else  if(_temp_int64_str[0]!=0)\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
 free(_temp_int64_str);\
-}
-#define SAVEPRODUCTINFOMEMBERPRICEDATA(memberid,member) {PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
-double _temp_int64;\
-if (swscanf(_temp_int64_str, L"%lf", &_temp_int64) == 1)\
-{\
-    productrecord->##member = _temp_int64;\
-}\
-else  if(_temp_int64_str[0]!=0)\
+}while(0)
+#define SAVEPRODUCTINFOMEMBERPRICEDATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+int _temp_ret=Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str,&(productrecord->##member));\
+if(_temp_ret<0)\
 {\
     MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
 }\
-free(_temp_int64_str);\
-}
-#define FORCESPACE  
+}while(0)
 #define ADDLABELANDEDIT(ctrl_id,displaylabel) HWND Hwnd_##ctrl_id##_Label =  Yinyue200_FastCreateLabelControl(hwnd,ID_LABEL_##ctrl_id,displaylabel);\
 HWND hwnd_##ctrl_id##_Edit = Yinyue200_FastCreateEditControl(hwnd,ID_EDIT_##ctrl_id);
 #define YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(tag) do{\
@@ -349,7 +363,8 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     return 0;
     case WM_DESTROY:
     {
-        HANDLE windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        YINYUE200_EDITITEMWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        yinyue200_DeleteFont(windowdata->lastfont);
         if(windowdata!=NULL)
             free(windowdata);
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);

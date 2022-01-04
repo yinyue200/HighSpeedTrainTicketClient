@@ -44,6 +44,21 @@ HWND Yinyue200_FastCreateLabelControlWithoutContent(HWND parent, HMENU id);
 //  otherwise.
 // 
 //    hwnd - The handle to the window.
+//    id - https://stackoverflow.com/questions/20533217/what-is-winapi-hmenu-and-how-do-i-use-it
 HWND Yinyue200_FastCreateDatePickControl(HWND hwnd, HMENU id);
+//  Yinyue200_FastCreateDatePickControl creates a DTP control
+//  Returns the handle to the new DTP control if successful, or NULL 
+//  otherwise.
+// 
+//    hwnd - The handle to the window.
+//    id - https://stackoverflow.com/questions/20533217/what-is-winapi-hmenu-and-how-do-i-use-it
 HWND Yinyue200_FastCreateTimePickControl(HWND hwnd, HMENU id);
+//  Yinyue200_FastCreateDatePickControl creates a ListView control
+//  Returns the handle to the new ListView control if successful, or NULL 
+//  otherwise.
+// 
+//    hwnd - The handle to the window.
+//    id - https://stackoverflow.com/questions/20533217/what-is-winapi-hmenu-and-how-do-i-use-it
 HWND Yinyue200_FastCreateListViewControl(HWND hwnd, HMENU id);
+int Yinyue200_EditWindowParseFromString(LPWSTR str, double* setto);
+int Yinyue200_EditWindowParseFromStringAndFree(LPWSTR str, double* setto);

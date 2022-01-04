@@ -32,8 +32,7 @@ typedef struct Yinyue200_TrainPlanRecord_RoutePoint
 {
 	YINYUE200_STATIONINFO Station;
 	uint64_t RouteRunTimeSpan;//预计从起点站到本站的时间
-	vector Price;//本段票价 类型 YINYUE200_PAIR_OF_wchar_t_double
-	double Distance;//本段距离，以千米为单位，用于递远递减等特殊票价计算规则的计算
+	double Distance;//上一站至本站里程，以千米为单位，用于递远递减等特殊票价计算规则的计算
 } YINYUE200_TRAINPLANRECORD_ROUTEPOINT;
 typedef YINYUE200_TRAINPLANRECORD_ROUTEPOINT* YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR;
 //车次信息信息
