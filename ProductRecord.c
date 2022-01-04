@@ -255,7 +255,7 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 								{
 									uint64_t id_high;
 									uint64_t id_low;
-									if (swscanf(info, L"%llu;%llu", &id_high,&id_low) == 1)
+									if (swscanf(info, L"%llu;%llu", &id_high,&id_low) == 2)
 									{
 										YINYUE200_PAIR_OF_uint64_t_uint64_t pair = { id_high,id_low };
 										p->ID = pair;
