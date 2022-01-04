@@ -64,6 +64,7 @@ void DecreaseWindowCount();
 bool CheckIfNoWindow();
 wchar_t* CreateWSTR(size_t length);
 wchar_t* CreateWstrForWindowText(HWND hwnd);
+wchar_t* CreateWstrFromWstr(wchar_t *hwnd);
 //无法恢复的错误，直接退出程序
 void UnrecoveryableFailed();
 //检查当前是否没有打卡的窗口，如果没有则退出程序

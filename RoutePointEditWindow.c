@@ -32,11 +32,12 @@ typedef struct Yinyue200_RoutePointEditWindowData
 {
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR RoutePoint;
     RoutePointEditFinishCallback callback;
+    void* callbackcontext;
     bool enablesave;
     HFONT lastfont;
 } YINYUE200_ROUTEPOINTEDITWINDOWDATA;
 LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint, bool enablesave, RoutePointEditFinishCallback callback)
+void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint, bool enablesave, RoutePointEditFinishCallback callback, void *callbackcontext)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.RoutePointEditWindow";
@@ -54,6 +55,7 @@ void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepo
     windowdata->RoutePoint = routepoint;
     windowdata->callback = callback;
     windowdata->enablesave = enablesave;
+    windowdata->callbackcontext = callbackcontext;
 
     // Create the window.
 
@@ -94,6 +96,7 @@ lasty+=25;\
 //确定各控件位置
 void LayoutControls_RoutePointEditWindow(HWND hwnd, UINT dpi, YINYUE200_ROUTEPOINTEDITWINDOWDATA *windata)
 {
+    Yinyue200_SetWindowSize(hwnd, 600, 500, dpi);
     if (windata->lastfont)
     {
         HFONT font = windata->lastfont;
@@ -118,7 +121,7 @@ void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_ROUTEPOI
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_STATION), WM_SETTEXT, 0, productrecord->Station.DisplayName);
         swprintf(buffer, 1000, L"%lf", productrecord->Distance);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_DISTANCE), WM_SETTEXT, 0, buffer);
-        swprintf(buffer, 1000, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(productrecord->RouteRunTimeSpan));
+        swprintf(buffer, 1000, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(productrecord->RouteRunTimeSpan) / 60.0);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN), WM_SETTEXT, 0, buffer);
 
         free(buffer);
@@ -159,8 +162,8 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         int lasty = 10;
 
         ADDLABELANDEDIT(STATION, L"车站");
-        ADDLABELANDEDIT(RUNTIMESPAN, L"预计到达时间（填写从始发站到本站所需的秒数）");
-        ADDLABELANDEDIT(DISTANCE, L"上一站至本站计费里程（单位：千米）");
+        ADDLABELANDEDIT(RUNTIMESPAN, L"预计到达时间（填写从始发站到本站所需的分钟）");
+        ADDLABELANDEDIT(DISTANCE, L"起点站至本站计费里程（单位：千米）");
 
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
         HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
@@ -217,7 +220,7 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
             case ID_BUTTON_CANCEL:
                 YINYUE200_ROUTEPOINTEDITWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
-                windowdata->callback(NULL);//取消修改时返回 NULL 代表操作被取消
+                windowdata->callback(NULL, windowdata->callbackcontext);//取消修改时返回 NULL 代表操作被取消
 
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
                 break;
@@ -239,9 +242,9 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 LPWSTR timespan_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN));
                 double timespan_double;
                 Yinyue200_EditWindowParseFromStringAndFree(timespan_str, &timespan_double);
-                ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double);
+                ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double * 60.0);
 
-                windowdata->callback(ptr);
+                windowdata->callback(ptr, windowdata->callbackcontext);
 
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }

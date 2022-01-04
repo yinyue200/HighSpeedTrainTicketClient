@@ -36,6 +36,13 @@ PWCHAR CreateWstrForWindowText(HWND hwnd)
 	GetWindowText(hwnd, p, size);
 	return p;
 }
+wchar_t* CreateWstrFromWstr(wchar_t* str)
+{
+	size_t size = wcslen(str) * sizeof(wchar_t);//byte size
+	wchar_t* ptr = yinyue200_safemalloc(size);
+	memcpy(ptr, str, size);
+	return ptr;
+}
 __declspec(noreturn) void UnrecoveryableFailed()
 {
 	MessageBox(NULL, L"²»¿É»Ö¸´µÄ´íÎó", NULL, 0);

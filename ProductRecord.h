@@ -32,7 +32,7 @@ typedef struct Yinyue200_TrainPlanRecord_RoutePoint
 {
 	YINYUE200_STATIONINFO Station;
 	uint64_t RouteRunTimeSpan;//预计从起点站到本站的时间
-	double Distance;//上一站至本站里程，以千米为单位，用于递远递减等特殊票价计算规则的计算
+	double Distance;//起点站至本站里程，以千米为单位，用于票价计算
 } YINYUE200_TRAINPLANRECORD_ROUTEPOINT;
 typedef YINYUE200_TRAINPLANRECORD_ROUTEPOINT* YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR;
 //车次信息信息
@@ -50,7 +50,7 @@ typedef struct Yinyue200_TrainPlanRecord
 	uint64_t StartTimePoint;//车次首次开行日期时间
 	wchar_t* PricePolicy;//表示本车次是否应用递远递减等特殊票价计算规则
 						 //实际票价计算相当复杂，见参考资料
-						 //目前的设计是尽最大可能使本程序可以在不修改程序本身的前提下在任何票价计算规则下工作
+						 //目前的设计是一种简化设计
 						 //实际票价计算规则以中国国家铁路集团有限公司及有关单位相关规定为准
 						 //参考资料： 中国铁道出版社 （2021新版）铁路客运运价里程表
 						 //中国铁道出版社 全国铁路客运运价里程接算站示意图 

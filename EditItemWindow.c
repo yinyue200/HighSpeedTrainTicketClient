@@ -14,10 +14,13 @@
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
+#include "EditItemWindow.h"
 #include "ProductRecord.h"
 #include "ControlsCommonOperation.h"
 #include "DpiHelper.h"
+#include "RoutePointEditWindow.h"
 #include <commctrl.h>
+#define EDITITEMWINDOW_COLUMNCOUNT 3
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
@@ -39,7 +42,6 @@
 #define ID_LISTVIEW_ROUTE 25
 #define ID_BUTTON_ROUTEADD 26
 #define ID_BUTTON_ROUTEDELETE 27
-#define ID_BUTTON_ROUTEEDIT 28
 typedef struct Yinyue200_EditItemWindowData
 {
     YINYUE200_TRAINPLANRECORD_PTR TrainPlanRecord;
@@ -47,6 +49,8 @@ typedef struct Yinyue200_EditItemWindowData
     bool enablesave;
     HFONT lastfont;
 } YINYUE200_EDITITEMWINDOWDATA;
+void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context);
+YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enablesave)
 {
@@ -79,7 +83,10 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
         for (int i = 0; i < vector_total(orivec); i++)
         {
             YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemalloc(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
-            memcpy(ptr, vector_get(orivec, i), sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
+            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR oriitem = vector_get(orivec, i);
+            ptr->Distance = oriitem->Distance;
+            ptr->RouteRunTimeSpan = oriitem->RouteRunTimeSpan;
+            ptr->Station.DisplayName = CreateWstrFromWstr(oriitem->Station.DisplayName);
             vector_add(srcvec, ptr);
         }
 
@@ -197,8 +204,7 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         YINYUE200_SETCONTROLPOSANDFONT(ID_LISTVIEW_ROUTE, 10, lasty, 500, 200);
         lasty += 200;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEADD, 10, lasty, 100, 25);
-        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEEDIT, 20 + 100, lasty, 100, 25);
-        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEDELETE, 10 + 200 + 20, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEDELETE, 10 + 100, lasty, 100, 25);
         lasty += 25;
         lasty += 10;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
@@ -231,7 +237,7 @@ void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrec
         {
             GUID guid;
             CheckHResult(CoCreateGuid(&guid));
-            setidtoeditcontrol(hwnd, Yinyue200_ConvertToUint64PairFromGuid(guid));
+            setidtoeditcontrol(hwnd, Yinyue200_ConvertToUint64PairFromGuid(guid));//生成新的 ID
         }
     }
     else
@@ -246,6 +252,138 @@ void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrec
 
         setidtoeditcontrol(hwnd, productrecord->ID);
     }
+}
+int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
+{
+    LPNMHDR lpnmh = (LPNMHDR)lParam;
+    HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
+    YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+    if (windata)
+    {
+        switch (lpnmh->code)
+        {
+        case LVN_GETDISPINFO:
+        {
+            LV_DISPINFO* lpdi = (LV_DISPINFO*)lParam;
+            TCHAR szString[MAX_PATH];
+            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR record = VECTOR_GET(windata->Route, YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR, lpdi->item.iItem);
+            if (record)
+            {
+                if (lpdi->item.mask & LVIF_TEXT)
+                {
+                    switch (lpdi->item.iSubItem)
+                    {
+                    case 0:
+                        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, record->Station.DisplayName, _TRUNCATE);//站点信息显示
+                        break;
+                    case 1:
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", record->Distance);//里程信息显示
+                        break;
+                    case 2:
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->RouteRunTimeSpan) / 60.0);//运行时间信息显示
+                        break;
+                    }
+
+                }
+            }
+        }
+        return 0;
+
+        case LVN_ODCACHEHINT:
+        {
+            LPNMLVCACHEHINT   lpCacheHint = (LPNMLVCACHEHINT)lParam;
+            /*
+            This sample doesn't use this notification, but this is sent when the
+            ListView is about to ask for a range of items. On this notification,
+            you should load the specified items into your local cache. It is still
+            possible to get an LVN_GETDISPINFO for an item that has not been cached,
+            therefore, your application must take into account the chance of this
+            occurring.
+            */
+        }
+        return 0;
+
+        case LVN_ODFINDITEM:
+        {
+            LPNMLVFINDITEM lpFindItem = (LPNMLVFINDITEM)lParam;
+            /*
+            This sample doesn't use this notification, but this is sent when the
+            ListView needs a particular item. Return -1 if the item is not found.
+            */
+        }
+        return 0;
+        case LVN_COLUMNCLICK:
+        {
+            LPNMLISTVIEW info = lParam;
+
+        }
+        case NM_DBLCLK:
+        {
+            LPNMITEMACTIVATE lpnmitem = lParam;
+            if (lpnmitem->iItem >= 0)
+            {
+                YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                EnableWindow(hwnd, false);
+                HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
+                YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr;
+                int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                if (iPos >= 0)
+                {
+                    ptr = vector_get(&windata->Route, iPos);
+
+                    YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
+                    callbackcontext->hwnd = hwnd;
+
+                    CreateRoutePointEditWindow(ptr, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext);
+                }
+
+            }
+            break;
+        }
+        }
+
+        return 0;
+    }
+    else
+    {
+        return 0;
+    }
+}
+YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context()
+{
+    return yinyue200_safemallocandclear(sizeof(YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT));
+}
+BOOL EditItemWindow_InsertListViewItems(HWND hwndListView, size_t count)
+{
+    //empty the list
+    ListView_DeleteAllItems(hwndListView);
+
+    //set the number of items in the list
+    ListView_SetItemCount(hwndListView, count);
+
+    return TRUE;
+}
+void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context)
+{
+    YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = context;
+    HWND hwnd = callbackcontext->hwnd;
+    EnableWindow(hwnd, true);
+
+    YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+    if (windowdata)
+    {
+        if (callbackcontext->add)
+        {
+            vector_add(&windowdata->Route, data);
+        }
+
+        EditItemWindow_InsertListViewItems(Yinyue200_GetChildControlById(hwnd, ID_LISTVIEW_ROUTE), vector_total(&windowdata->Route));
+    }
+    else
+    {
+        free(data);
+    }
+    free(context);
 }
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -275,8 +413,28 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         HWND hwnd_ROUTEEDITNOTICE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_ROUTEEDITNOTICE, L"路线编辑");
 
         HWND hwnd_ROUTE_Edit = Yinyue200_FastCreateListViewControl(hwnd, ID_LISTVIEW_ROUTE);
+
+        {
+            LV_COLUMN   lvColumn;
+            //initialize the columns
+            lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+            lvColumn.fmt = LVCFMT_LEFT;
+            lvColumn.cx = 120;
+            LPWSTR szString[EDITITEMWINDOW_COLUMNCOUNT] = {
+                L"车站",
+                L"里程（千米）",
+                L"时间（分钟）"
+            };
+            for (int i = 0; i < EDITITEMWINDOW_COLUMNCOUNT; i++)
+            {
+                lvColumn.pszText = szString[i];
+                ListView_InsertColumn(hwnd_ROUTE_Edit, i, &lvColumn);
+            }
+        }
+
+        EditItemWindow_InsertListViewItems(hwnd_ROUTE_Edit, vector_total(&windowdata->Route));
+
         HWND hwnd_ROUTE_ADDBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEADD, L"添加路径点");
-        HWND hwnd_ROUTE_EDITBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEEDIT, L"编辑路径点");
         HWND hwnd_ROUTE_DELBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEDELETE, L"删除路径点");
 
         HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"保存");
@@ -353,6 +511,61 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             case ID_BUTTON_CANCEL:
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
                 break;
+            case ID_BUTTON_ROUTEADD:
+            {
+                YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                EnableWindow(hwnd, false);
+
+                YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
+                callbackcontext->hwnd = hwnd;
+                callbackcontext->add = true;
+
+                CreateRoutePointEditWindow(NULL, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext);
+            }
+                break;
+            case ID_BUTTON_ROUTEDELETE:
+            {
+                YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
+                int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                if (iPos == -1)
+                {
+                    MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                }
+                else
+                {
+                    vector* vec = yinyue200_safemalloc(sizeof(vector));
+                    vector_init(vec);
+
+                    while (iPos != -1) {
+                        // iPos is the index of a selected item
+                        // do whatever you want with it
+                        vector_add(vec, iPos);
+
+                        // Get the next selected item
+                        iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                    }
+                    wchar_t warningmsg[50];
+                    swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total(vec));
+                    if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
+                    {
+                        for (int i = vector_total(vec) - 1; i >= 0; i--)
+                        {
+                            int tobedelindex = vector_get(vec, i);
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR tobedel = vector_get(&windata->Route, tobedelindex);
+                            free(tobedel->Station.DisplayName);
+                            free(tobedel);
+                            vector_delete(&windata->Route, tobedelindex);
+                        }
+                    }
+                    vector_free(vec);
+                    free(vec);
+                }
+
+                EditItemWindow_InsertListViewItems(hListView, vector_total(&windata->Route));
+
+            }
+            break;
             default:
                 break;
             }
@@ -364,6 +577,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_DESTROY:
     {
         YINYUE200_EDITITEMWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        for (int i = 0; i < vector_total(&windowdata->Route); i++)
+        {
+            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(&windowdata->Route, i);
+            free(one->Station.DisplayName);
+            free(one);
+        }
+        vector_free(&windowdata->Route);
+
         yinyue200_DeleteFont(windowdata->lastfont);
         if(windowdata!=NULL)
             free(windowdata);
@@ -382,6 +603,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             LayoutControls_EditItemWindow(hwnd, HIWORD(wParam), windowdata);
         }
         break;
+    }
+    case WM_NOTIFY:
+    {
+        if (LOWORD(wParam) == ID_LISTVIEW_ROUTE)
+        {
+            return EditItemWindow_RouteListViewNotify(hwnd, lParam);
+        }
+        return 0;
     }
     case WM_PAINT:
     {
