@@ -127,9 +127,10 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 #define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
-#define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+#define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member,defaultdata) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64;\
-if (swscanf(_temp_int64_str, L"%lld", &_temp_int64) == 1)\
+int _temp_ret = swscanf(_temp_int64_str, L"%lld", &_temp_int64);\
+if (_temp_ret == 1)\
 {\
     productrecord->##member = _temp_int64;\
 }\
@@ -137,6 +138,7 @@ else if(_temp_int64_str[0]!=0)\
 {\
     MessageBox(hwnd, TEXT(#member) L"∏Ò Ω¥ÌŒÛ", NULL, 0);\
 }\
+if(_temp_ret < 1) productrecord->##member = defaultdata;\
 free(_temp_int64_str);\
 }while(0)
 #define SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(memberid,member) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
@@ -477,7 +479,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 SAVEPRODUCTINFOMEMBERPAIROFUINT64DATA(ID_EDIT_ID, ID);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
-                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_REPEAT, Repeat);
+                SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_REPEAT, Repeat, 1);
 
                 {
                     SYSTEMTIME date;

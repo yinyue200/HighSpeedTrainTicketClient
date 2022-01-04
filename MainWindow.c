@@ -238,9 +238,48 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                 switch (lpdi->item.iSubItem)
                 {
                     LISTVIEWNOTIFTLOADCOLWSTR(0, Name)
-                    LISTVIEWNOTIFTLOADCOLWSTR(2, Type)
-                    LISTVIEWNOTIFTLOADCOLWSTR(3, State)
-
+                    LISTVIEWNOTIFTLOADCOLWSTR(1, Type)
+                    LISTVIEWNOTIFTLOADCOLWSTR(2, State)
+                case 3://始发站
+                    {
+                        vector* vec = &record->RoutePoints;
+                        int total = vector_total(vec);
+                        if (total > 1)
+                        {
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, 0);
+                            swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%s", routepoint->Station.DisplayName);
+                        }
+                        else
+                        {
+                            swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"NULL");
+                        }
+                        break;
+                    }
+                case 4://终到站
+                {
+                    vector* vec = &record->RoutePoints;
+                    int total = vector_total(vec);
+                    if (total > 1)
+                    {
+                        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, total - 1);
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%s", routepoint->Station.DisplayName);
+                    }
+                    else
+                    {
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"NULL");
+                    }
+                    break;
+                }
+                case 5://发车时间
+                {
+                    FILETIME utcstarttime = Yinyue200_ConvertToFileTimeFromUINT64(record->StartTimePoint);
+                    FILETIME localstarttime;
+                    FileTimeToLocalFileTime(&utcstarttime, &localstarttime);
+                    SYSTEMTIME systime;
+                    FileTimeToSystemTime(&localstarttime, &systime);
+                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%02d:%02d", systime.wHour, systime.wMinute);
+                    break;
+                }
                 default:
                 {
                     swprintf_s(szString, _countof(szString),
@@ -352,24 +391,17 @@ BOOL InsertListViewItems(HWND hwndListView,size_t count)
     return TRUE;
 }
 #define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ↑",TEXT(name) L" ↓" }
-#define MAINWINDOW_COLUMNCOUNT 13
+#define MAINWINDOW_COLUMNCOUNT 6
 void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
 {
     HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
     LPWSTR       szString_o[MAINWINDOW_COLUMNCOUNT][3] = {
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("名称"), 
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("ID"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("车次"), 
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("类型"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("状态"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("日期"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("供货商"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("收货商"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("退货商"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("数量"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("进价"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("销售价"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("退货价"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("经手人"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("始发站"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("终点站"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("发车时间"),
     };//二维数组，存储不同列在不同排序状态下的列头字符串
     LV_COLUMN   lvColumn;
     int         i;
