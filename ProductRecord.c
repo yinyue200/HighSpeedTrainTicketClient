@@ -37,6 +37,30 @@ YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 	memset(PT, 0, sizeof(YINYUE200_TRAINPLANRECORD));
 	return PT;
 }
+void freeTrainPlanRecord_RoutePoints(vector *vec)
+{
+	for (int i = 0; i < vector_total(vec); i++)
+	{
+		YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(vec, i);
+		free(one->Station.DisplayName);
+		free(one);
+	}
+	vector_free(vec);
+}
+// 假定 srcvec 是未初始化的 vector
+void deepcopy_TrainPlanRecord_RoutePoints(vector *srcvec,vector *orivec)
+{
+	vector_initwithcap(srcvec, orivec->capacity);
+	for (int i = 0; i < vector_total(orivec); i++)
+	{
+		YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemalloc(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
+		YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR oriitem = vector_get(orivec, i);
+		ptr->Distance = oriitem->Distance;
+		ptr->RouteRunTimeSpan = oriitem->RouteRunTimeSpan;
+		ptr->Station.DisplayName = CreateWstrFromWstr(oriitem->Station.DisplayName);
+		vector_add(srcvec, ptr);
+	}
+}
 bool WritePWSTR(PCWSTR str, HANDLE hFile)
 {
 	if (str == NULL)
@@ -107,7 +131,7 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
 #define LOADVECTORDATATOVECTOR(member,caseid,func) case caseid:\
 {\
 	PWSTR decodeinfo = Yinyue200_TsvDecode(info);\
-	p->##member = Yinyue200_ConvertStringToVector(decodeinfo, ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint);\
+	p->##member = Yinyue200_ConvertStringToVector(decodeinfo, (func));\
 	free(decodeinfo);\
 	break;\
 }
@@ -266,8 +290,8 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 								LOADWSTRDATATOVECTOR(Type, 2)
 								LOADWSTRDATATOVECTOR(State, 3)
 								LOADINTDATATOVECTOR(Repeat, 4)
-								LOADVECTORDATATOVECTOR(RoutePoints, 5, ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint);
-								LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t);
+								LOADVECTORDATATOVECTOR(RoutePoints, 5, ConvertStringToYinyue200_TrainPlanRecord_RoutePoint);
+								LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t);
 								LOADUINTDATATOVECTOR(StartTimePoint, 7)
 								default:
 									break;

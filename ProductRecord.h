@@ -65,6 +65,9 @@ typedef struct Yinyue200_TrainPlanRecord
 typedef YINYUE200_TRAINPLANRECORD* YINYUE200_TRAINPLANRECORD_PTR;
 //创建记录，并传递所有权（调用者负责free）
 YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord();
+void freeTrainPlanRecord_RoutePoints(vector* vec);
+// 假定 srcvec 是未初始化的 vector
+void deepcopy_TrainPlanRecord_RoutePoints(vector* srcvec, vector* orivec);
 //读取记录信息
 vector* ProductRecordLoadToVector(LPWSTR path);
 //写入记录到文件
@@ -75,6 +78,7 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile);
 PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint);
 PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint);
 YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecord_RoutePoint(PWSTR str);
+YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t(PWSTR str);
 
 //=======构造获取 TrainPlanRecord 成员的函数声明=======
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Name)

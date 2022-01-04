@@ -25,7 +25,7 @@ void vector_init(vector* v)
 
 void vector_initwithcap(vector* v,size_t capacity)
 {
-    v->capacity = capacity;
+    v->capacity = max(capacity, 2);
     v->total = 0;
     v->items = malloc(sizeof(void*) * v->capacity);
 }
@@ -125,7 +125,7 @@ void vector_init_##type(vector* v)\
 \
 void vector_initwithcap_##type(vector* v, size_t capacity)\
 {\
-    v->capacity = capacity;\
+    v->capacity = max(capacity, 2);\
     v->total = 0;\
     v->items = malloc(sizeof(type) * v->capacity);\
 }\

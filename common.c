@@ -38,9 +38,11 @@ PWCHAR CreateWstrForWindowText(HWND hwnd)
 }
 wchar_t* CreateWstrFromWstr(wchar_t* str)
 {
-	size_t size = wcslen(str) * sizeof(wchar_t);//byte size
-	wchar_t* ptr = yinyue200_safemalloc(size);
+	size_t strlen = wcslen(str);
+	size_t size = strlen * sizeof(wchar_t);//byte size
+	wchar_t* ptr = yinyue200_safemalloc(size + sizeof(wchar_t));//需要加一个 sizeof(wchar_t) 因为需要放末尾的 0
 	memcpy(ptr, str, size);
+	ptr[strlen] = 0;
 	return ptr;
 }
 //一种原创的转义算法
@@ -55,10 +57,9 @@ wchar_t* Yinyue200_TsvEncode(wchar_t* str)
 		wchar_t one = str[i];
 		if (iswcntrl(one) || one == L'&' || iswspace(one))
 		{
-			vector_add_wchar_t(&ret, L'&');
-			wchar_t buffer[6];
-			swprintf(buffer, 6, L"%04X;", one);
-			for (int j = 0; j < 5; j++)
+			wchar_t buffer[10];
+			swprintf(buffer, 10, L"&%X;", one);
+			for (int j = 0; buffer[j] != 0; j++)
 			{
 				vector_add_wchar_t(&ret, buffer[j]);
 			}
@@ -68,7 +69,7 @@ wchar_t* Yinyue200_TsvEncode(wchar_t* str)
 			vector_add_wchar_t(&ret, one);
 		}
 	}
-	((wchar_t*)ret.items)[i] = 0;
+	vector_add_wchar_t(&ret, 0);
 	return (wchar_t*)ret.items;
 }
 wchar_t* Yinyue200_TsvDecode(wchar_t* str)
@@ -83,11 +84,26 @@ wchar_t* Yinyue200_TsvDecode(wchar_t* str)
 		if (one == L'&')
 		{
 			int c;
-			int innret = swscanf(one + i + 1, L"%04X", &c);
+			int innret = swscanf(str + i + 1, L"%X;", &c);
 			if (innret == 1)
 			{
-				vector_add_wchar_t(&ret, innret);
-				i += 4;
+				vector_add_wchar_t(&ret, c);
+				i += 2;
+				if (c > 0xF)
+				{
+					//两位数
+					i += 1;
+					if (c > 0xFF)
+					{
+						i += 1;
+						//三位数
+						if (c > 0xFFF)
+						{
+							i += 1;
+							//四位数
+						}
+					}
+				}
 			}
 			else
 			{
@@ -99,7 +115,7 @@ wchar_t* Yinyue200_TsvDecode(wchar_t* str)
 			vector_add_wchar_t(&ret, one);
 		}
 	}
-	((wchar_t*)ret.items)[i] = 0;
+	((wchar_t*)ret.items)[vector_total_wchar_t(&ret)] = 0;
 	return (wchar_t*)ret.items;
 }
 __declspec(noreturn) void UnrecoveryableFailed()
@@ -229,15 +245,15 @@ PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr))
 		}
 		for (int j = 0; j < onelen; j++)
 		{
-			vector_add_wchar_t(vec, onestr[j]);
+			vector_add_wchar_t(&ret, onestr[j]);
 		}
 		free(onestr);
-		vector_add_wchar_t(&ret, L" ");
+		vector_add_wchar_t(&ret, L' ');
 	}
 	if (init == false)
 	{
 		vector_init_wchar_t(&ret);
-		vector_add_wchar_t(&ret, L" ");
+		vector_add_wchar_t(&ret, L' ');
 	}
 	vector_set_wchar_t(&ret, vector_total_wchar_t(&ret)-1, 0);
 	return ret.items;
@@ -248,16 +264,15 @@ vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str))
 	PWSTR buffer = yinyue200_safemalloc(len * sizeof(wchar_t));
 	vector ret;
 	vector_init(&ret);
-	while (1)
+	int i = 0;
+	wchar_t* tokencontext = NULL;
+	wchar_t* p = wcstok(str, L" ", &tokencontext);
+	while (p)
 	{
-		int ret = swscanf(str, L"%s", buffer);
-		if (ret < 1)
-		{
-			break;
-		}
-		PWSTR decodeline = Yinyue200_TsvDecode(ret);
-		vector_add(ret, func(decodeline));
+		PWSTR decodeline = Yinyue200_TsvDecode(p);
+		vector_add(&ret, func(decodeline));
 		free(decodeline);
+		p = wcstok(NULL, L" ", &tokencontext);
 	}
 	free(buffer);
 	return ret;

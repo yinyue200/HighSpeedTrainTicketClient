@@ -102,8 +102,8 @@ void LayoutControls_RoutePointEditWindow(HWND hwnd, UINT dpi, YINYUE200_ROUTEPOI
         HFONT font = windata->lastfont;
         int lasty = 10;
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STATION);
-        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(RUNTIMESPAN);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(DISTANCE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(RUNTIMESPAN);
         
         lasty += 10;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
@@ -116,7 +116,7 @@ void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_ROUTEPOI
 {
     if (productrecord != NULL)
     {
-        WCHAR buffer = yinyue200_safemalloc(1000 * sizeof(WCHAR));
+        PWSTR buffer = yinyue200_safemalloc(1000 * sizeof(WCHAR));
 
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_STATION), WM_SETTEXT, 0, productrecord->Station.DisplayName);
         swprintf(buffer, 1000, L"%lf", productrecord->Distance / 1000.0);
@@ -155,8 +155,8 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         int lasty = 10;
 
         ADDLABELANDEDIT(STATION, L"车站");
-        ADDLABELANDEDIT(RUNTIMESPAN, L"预计到达时间（填写从始发站到本站所需的分钟）");
         ADDLABELANDEDIT(DISTANCE, L"起点站至本站计费里程（单位：千米）");
+        ADDLABELANDEDIT(RUNTIMESPAN, L"预计到达时间（填写从始发站到本站所需的分钟）");
 
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
         HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
@@ -229,10 +229,10 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                     ptr = yinyue200_safemallocandclear(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));//创建一个新的 YINYUE200_TRAINPLANRECORD_ROUTEPOINT
                 }
 #endif
-
+                free(ptr->Station.DisplayName);
                 ptr->Station.DisplayName = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_STATION));
                 PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd, ID_EDIT_DISTANCE)); 
-                double disdouble;
+                double disdouble = 0.0;
                 int _temp_ret = Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &disdouble);
                 if (_temp_ret < 0)
                 {
@@ -240,10 +240,10 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 }
                 else
                 {
-                    ptr->Distance = disdouble / 1000.0;
+                    ptr->Distance = disdouble * 1000.0;
                 }
                 _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN));
-                double timespan_double;
+                double timespan_double = 0.0;
                 if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &timespan_double) >= 0)
                 {
                     ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double * 60.0);

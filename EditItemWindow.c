@@ -79,17 +79,7 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 
         vector* srcvec = &windowdata->Route;
         vector* orivec = &productrecord->RoutePoints;
-        vector_initwithcap(srcvec, orivec->capacity);
-        for (int i = 0; i < vector_total(orivec); i++)
-        {
-            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemalloc(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
-            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR oriitem = vector_get(orivec, i);
-            ptr->Distance = oriitem->Distance;
-            ptr->RouteRunTimeSpan = oriitem->RouteRunTimeSpan;
-            ptr->Station.DisplayName = CreateWstrFromWstr(oriitem->Station.DisplayName);
-            vector_add(srcvec, ptr);
-        }
-
+        deepcopy_TrainPlanRecord_RoutePoints(srcvec, orivec);
     }
 
     // Create the window.
@@ -497,6 +487,9 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     productrecord->StartTimePoint = Yinyue200_ConvertToUINT64FromFileTime(utcfiletime);
                 }
 
+                freeTrainPlanRecord_RoutePoints(&productrecord->RoutePoints);
+                deepcopy_TrainPlanRecord_RoutePoints(&productrecord->RoutePoints, &windowdata->Route);
+
                 if (windowdata->TrainPlanRecord == NULL)
                     VECTOR_ADD(yinyue200_ProductList, productrecord);
 
@@ -580,13 +573,8 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_DESTROY:
     {
         YINYUE200_EDITITEMWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-        for (int i = 0; i < vector_total(&windowdata->Route); i++)
-        {
-            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(&windowdata->Route, i);
-            free(one->Station.DisplayName);
-            free(one);
-        }
-        vector_free(&windowdata->Route);
+
+        freeTrainPlanRecord_RoutePoints(&windowdata->Route);
 
         yinyue200_DeleteFont(windowdata->lastfont);
         if(windowdata!=NULL)
