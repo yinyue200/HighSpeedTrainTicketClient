@@ -179,6 +179,7 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 		SAVEPAIROFUINT64DATATOVECTOR(ID);
 		SAVEWSTRDATATOVECTOR(Type);
 		SAVEWSTRDATATOVECTOR(State);
+		SAVEUINTDATATOVECTOR(Repeat);
 		SAVEVECTORDATATOVECTOR(RoutePoints, ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint);//写入路线信息
 		SAVEVECTORDATATOVECTOR(TicketCount, ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t);//写入座位信息
 		SAVEUINTDATATOVECTOR(StartTimePoint);
@@ -345,7 +346,7 @@ YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecor
 {
 	size_t len = wcslen(str);
 	PWSTR buf = yinyue200_safemalloc(len * sizeof(size_t));
-	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemallocandchear(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
+	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemallocandclear(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
 	int ret = swscanf(str, L"%s\t%lld\t%lld", buf, &ptr->Distance, &ptr->RouteRunTimeSpan);
 	if (ret < 3)
 	{
@@ -358,7 +359,7 @@ YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int3
 {
 	size_t len = wcslen(str);
 	PWSTR buf = yinyue200_safemalloc(len * sizeof(size_t));
-	YINYUE200_PAIR_OF_int32_t_int32_t *ptr = yinyue200_safemallocandchear(sizeof(YINYUE200_PAIR_OF_int32_t_int32_t));
+	YINYUE200_PAIR_OF_int32_t_int32_t *ptr = yinyue200_safemallocandclear(sizeof(YINYUE200_PAIR_OF_int32_t_int32_t));
 	int ret = swscanf(str, L"%d\t%d", &ptr->Item1, &ptr->Item2);
 	if (ret < 3)
 	{

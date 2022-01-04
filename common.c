@@ -48,7 +48,7 @@ wchar_t* Yinyue200_TsvEncode(wchar_t* str)
 {
 	vector ret = { 0 };
 	int len = wcslen(str);
-	vector_initwithcap_wchar_t(str, len * 2);
+	vector_initwithcap_wchar_t(&ret, max(4, len * 2));
 	int i;
 	for (i = 0; i < len; i++)
 	{
@@ -57,10 +57,10 @@ wchar_t* Yinyue200_TsvEncode(wchar_t* str)
 		{
 			vector_add_wchar_t(&ret, L'&');
 			wchar_t buffer[6];
-			swprintf(buffer, L"%04X;", one);
-			for (int i = 0; i < 5; i++)
+			swprintf(buffer, 6, L"%04X;", one);
+			for (int j = 0; j < 5; j++)
 			{
-				vector_add_wchar_t(&ret, buffer[i]);
+				vector_add_wchar_t(&ret, buffer[j]);
 			}
 		}
 		else
@@ -75,7 +75,7 @@ wchar_t* Yinyue200_TsvDecode(wchar_t* str)
 {
 	vector ret;
 	int len = wcslen(str);
-	vector_initwithcap_wchar_t(str, len + 1);
+	vector_initwithcap_wchar_t(&ret, len + 1);
 	int i;
 	for (i = 0; i < len; i++)
 	{
@@ -239,9 +239,9 @@ PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr))
 		vector_init_wchar_t(&ret);
 		vector_add_wchar_t(&ret, L" ");
 	}
-	vector_set_wchar_t(&ret, vector_total_wchar_t(&ret), 0);
+	vector_set_wchar_t(&ret, vector_total_wchar_t(&ret)-1, 0);
 	return ret.items;
-}
+ }
 vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str))
 {
 	size_t len = wcslen(str);
