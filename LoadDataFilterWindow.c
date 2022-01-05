@@ -14,10 +14,12 @@
 //	You should have received a copy of the GNU General Public License
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
+#include "ControlsCommonOperation.h"
 #include "MainWindow.h"
 #include "EditItemWindow.h"
 #include "ProductRecord.h"
 #include "UserSetting.h"
+#include "DpiHelper.h"
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
@@ -46,10 +48,12 @@
 #define ID_CHK_RUNTIME 26
 #define ID_EDIT_STATE 27
 #define ID_CHK_STATE 28
+#define ID_LABEL_WINDOWNOTICE 29
 
 typedef struct Yinyue200_LoadDataFilterWindowData
 {
     YINYUE200_MAINWINDOWDATA* mainwindowdata;
+    HFONT lastfont;
 } YINYUE200_LOADDATAFILTERWINDOWDATA;
 LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
@@ -68,6 +72,10 @@ void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
 
     // Create the window.
 
+    YINYUE200_LOADDATAFILTERWINDOWDATA* windata = yinyue200_safemallocandclear(sizeof(YINYUE200_LOADDATAFILTERWINDOWDATA));
+    memset(windata, 0, sizeof(YINYUE200_LOADDATAFILTERWINDOWDATA));
+    windata->mainwindowdata = mainwindowdata;
+
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
         CLASS_NAME,                     // Window class
@@ -80,13 +88,8 @@ void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
         NULL,       // Parent window    
         NULL,       // Menu
         yinyue200_hInstance,  // Instance handle
-        NULL        // Additional application data
+        windata        // Additional application data
     );
-
-    YINYUE200_LOADDATAFILTERWINDOWDATA* windata = yinyue200_safemalloc(sizeof(YINYUE200_LOADDATAFILTERWINDOWDATA));
-    memset(windata, 0, sizeof(YINYUE200_LOADDATAFILTERWINDOWDATA));
-    windata->mainwindowdata = mainwindowdata;
-    SetProp(hwnd, YINYUE200_WINDOW_DATA, windata);
 
     if (hwnd == NULL)
     {
@@ -294,10 +297,40 @@ free(Field##name##Text);
     }\
 }}while(0)
 #define FREE_LOADDATAFILTERPROC_FLITER_WSTR(name) free(Field##name##Text)
-#define CREATECTRL(name,label)  HWND Hwnd_##name##_Label = CreateWindow(L"BUTTON", label, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, lasty, 500, 25, hwnd, ID_CHK_##name, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);\
-lasty += 25;\
-HWND hwnd_##name##_Edit = CreateWindow(L"EDIT",NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | ES_LEFT,10, lasty, 500, 25,hwnd,ID_EDIT_##name,(HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),NULL);\
-lasty += 25;
+#define CREATECTRL(name,label)  HWND Hwnd_##name##_Label = Yinyue200_FastCreateCheckBoxControl(hwnd,ID_CHK_##name,label);\
+HWND hwnd_##name##_Edit = Yinyue200_FastCreateEditControl(hwnd,ID_EDIT_##name);
+#define YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(tag) do{\
+YINYUE200_SETCONTROLPOSANDFONT(ID_CHK_##tag, 10, lasty, 500, 20);\
+lasty+=25;\
+YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 20);\
+lasty+=25;\
+}while (0)
+void LayoutControls_LoadDataFilterWindow(HWND hwnd, UINT dpi, YINYUE200_LOADDATAFILTERWINDOWDATA *windata)
+{
+    int lasty = 10;
+    HFONT font = windata->lastfont;
+    if (font)
+    {
+
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(NAME);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(ID);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(TYPE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STATE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(DATE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STARTTIME);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STARTSTATION);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(ENDSTATION);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STATIONS);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(REPEAT);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(FIRSTDATE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(DISTANCE);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(RUNTIME);
+        lasty += 10;
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_CANCEL, 20 + 100, lasty, 100, 50);
+
+    }
+}
 LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -306,11 +339,13 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     {
 
         AddWindowCount();
+
+        {
+            CREATESTRUCT* cs = lParam;
+            SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
+        }
        
-        int lasty = 10;
-        HWND WindowLabel = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
+        HWND WindowLabel = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_WINDOWNOTICE, L"填写筛选条件，部分字段可用“-”表示范围");
         CREATECTRL(NAME,L"名称")
         CREATECTRL(ID, L"ID")
         CREATECTRL(TYPE, L"类型")
@@ -324,29 +359,34 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         CREATECTRL(FIRSTDATE, L"首次开车日期")
         CREATECTRL(DISTANCE, L"总里程（千米）")
         CREATECTRL(RUNTIME, L"总运行时间（分钟）")
-        lasty += 5;
-        HWND hwndButton_Save = CreateWindow(
-            L"BUTTON",
-            L"确定",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10, lasty, 100, 50,
-            hwnd, ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        HWND hwndButton_Cancel = CreateWindow(
-            L"BUTTON",
-            L"取消",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10 + 100 + 10, lasty, 100, 50,
-            hwnd, ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 50;
-        SendMessage(WindowLabel, WM_SETTEXT, 0, L"填写筛选条件，部分字段可用“-”表示范围");
+        HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
+        HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
+        
+        YINYUE200_LOADDATAFILTERWINDOWDATA* ldfwindow = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        ldfwindow->lastfont = yinyue200_CreateDefaultFont(hwnd);
 
+        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
+        Yinyue200_SetWindowSize(hwnd, 700, 770, dpi);
+
+        LayoutControls_LoadDataFilterWindow(hwnd, dpi, ldfwindow);
     }
     return 0;
     case WM_NOTIFY:
     {
 
         return 0;
+    }
+    case WM_DPICHANGED:
+    {
+        YINYUE200_LOADDATAFILTERWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (windowdata && windowdata->lastfont)
+        {
+            yinyue200_DeleteFont(windowdata->lastfont);
+            windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
+            LayoutControls_LoadDataFilterWindow(hwnd, HIWORD(wParam), windowdata);
+        }
+        break;
     }
     case WM_COMMAND:
     {
@@ -557,6 +597,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         YINYUE200_LOADDATAFILTERWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         if (windata)
         {
+            yinyue200_DeleteFont(windata->lastfont);
             free(windata);
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
