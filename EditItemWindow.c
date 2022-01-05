@@ -487,6 +487,12 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         {
             EnableWindow(hwndButton_Save, false);
         }
+
+        if (productrecord)
+        {
+            EnableWindow(hwnd_NAME_Edit, false);
+        }
+
         UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
         Yinyue200_SetWindowSize(hwnd, 700, 780, dpi);
