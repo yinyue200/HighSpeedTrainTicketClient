@@ -42,6 +42,13 @@
 #define ID_LISTVIEW_ROUTE 25
 #define ID_BUTTON_ROUTEADD 26
 #define ID_BUTTON_ROUTEDELETE 27
+#define ID_EDIT_FIRSTCLASSSEATCOUNT 28
+#define ID_LABEL_FIRSTCLASSSEATCOUNT 29
+#define ID_EDIT_SECONDCLASSSEATCOUNT 30
+#define ID_LABEL_SECONDCLASSSEATCOUNT 31
+#define ID_EDIT_BUSINESSCLASSSEATCOUNT 32
+#define ID_LABEL_BUSINESSCLASSSEATCOUNT 33
+
 typedef struct Yinyue200_EditItemWindowData
 {
     YINYUE200_TRAINPLANRECORD_PTR TrainPlanRecord;
@@ -102,9 +109,25 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 }
 
 #define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
-#define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERINT32DATA_EXPR(chwnd,expr) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%d", (expr)); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERINTDATA_EXPR(chwnd,expr) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", (expr)); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
+#define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) SETNULLORPRODUCTINFOMEMBERINTDATA_EXPR(chwnd,productrecord->##member)
 #define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
+#define SAVEPRODUCTINFOMEMBERINT32DATA(memberid,member,expr,defaultdata) do{PWCHAR _temp_int32_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+int32_t _temp_int32;\
+int _temp_ret = swscanf(_temp_int32_str, L"%d", &_temp_int32);\
+if (_temp_ret == 1)\
+{\
+    (expr) = _temp_int32;\
+}\
+else if(_temp_int32_str[0]!=0)\
+{\
+    MessageBox(hwnd, TEXT(#member) L"格式错误", NULL, 0);\
+}\
+if(_temp_ret < 1) (expr) = defaultdata;\
+free(_temp_int32_str);\
+}while(0)
 #define SAVEPRODUCTINFOMEMBERINTDATA(memberid,member,defaultdata) do{PWCHAR _temp_int64_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int64_t _temp_int64;\
 int _temp_ret = swscanf(_temp_int64_str, L"%lld", &_temp_int64);\
@@ -185,6 +208,16 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         lasty += 200;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEADD, 10, lasty, 100, 25);
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEDELETE, 10 + 100, lasty, 100, 25);
+        lasty += 35;      
+        //座位label
+        YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_BUSINESSCLASSSEATCOUNT, 10, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_FIRSTCLASSSEATCOUNT, 20 + 100, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_SECONDCLASSSEATCOUNT, 10 + 200 + 20, lasty, 100, 25);
+        lasty += 25;
+        //座位EDIT
+        YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_BUSINESSCLASSSEATCOUNT, 10, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_FIRSTCLASSSEATCOUNT, 20 + 100, lasty, 100, 25);
+        YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_SECONDCLASSSEATCOUNT, 10 + 200 + 20, lasty, 100, 25);
         lasty += 25;
         lasty += 10;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
@@ -222,6 +255,10 @@ void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrec
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
     SETNULLORPRODUCTINFOMEMBERINTDATA(ID_EDIT_REPEAT, Repeat);
+    SETNULLORPRODUCTINFOMEMBERINT32DATA_EXPR(ID_EDIT_BUSINESSCLASSSEATCOUNT, Yinyue200_GetTrainPlanRecordSeatCount(productrecord, TRAINTICKETTYPE_BUSINESSCLASS));
+    SETNULLORPRODUCTINFOMEMBERINT32DATA_EXPR(ID_EDIT_FIRSTCLASSSEATCOUNT, Yinyue200_GetTrainPlanRecordSeatCount(productrecord, TRAINTICKETTYPE_FIRSTCLASS));
+    SETNULLORPRODUCTINFOMEMBERINT32DATA_EXPR(ID_EDIT_SECONDCLASSSEATCOUNT, Yinyue200_GetTrainPlanRecordSeatCount(productrecord, TRAINTICKETTYPE_SECONDCLASS));
+
     if (productrecord == NULL)
     {
         SYSTEMTIME time;
@@ -405,6 +442,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         ADDLABELANDEDIT(TYPE,L"类型");
         ADDLABELANDEDIT(STATE, L"状态");
         ADDLABELANDEDIT(REPEAT, L"该车次发出的频率（单位：天）");
+        ADDLABELANDEDIT(BUSINESSCLASSSEATCOUNT, L"商务座数量");
+        ADDLABELANDEDIT(FIRSTCLASSSEATCOUNT, L"一等座数量");
+        ADDLABELANDEDIT(SECONDCLASSSEATCOUNT, L"二等座数量");
+
         HWND hwnd_STARTDATE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTDATE, L"首次发车日期");
         HWND hwnd_STARTDATE_Edit = Yinyue200_FastCreateDatePickControl(hwnd, ID_EDIT_STARTDATE);
         HWND hwnd_STARTTIME_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTTIME, L"首次发车时间");
@@ -448,7 +489,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         }
         UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
-        Yinyue200_SetWindowSize(hwnd, 700, 770, dpi);
+        Yinyue200_SetWindowSize(hwnd, 700, 780, dpi);
 
         SIZE winsize = Yinyue200_GetWindowClientAreaSize(hwnd);
         LayoutControls_EditItemWindow(hwnd, dpi, windowdata);
@@ -475,6 +516,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
                 SAVEPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
                 SAVEPRODUCTINFOMEMBERINTDATA(ID_EDIT_REPEAT, Repeat, 1);
+                SAVEPRODUCTINFOMEMBERINT32DATA(ID_EDIT_BUSINESSCLASSSEATCOUNT, BUSINESSCLASSSEATCOUNT, *Yinyue200_GetTrainPlanRecordSeatCountPointer(productrecord, TRAINTICKETTYPE_BUSINESSCLASS), 0);
+                SAVEPRODUCTINFOMEMBERINT32DATA(ID_EDIT_FIRSTCLASSSEATCOUNT, FIRSTCLASSSEATCOUNT, *Yinyue200_GetTrainPlanRecordSeatCountPointer(productrecord, TRAINTICKETTYPE_FIRSTCLASS), 0);
+                SAVEPRODUCTINFOMEMBERINT32DATA(ID_EDIT_SECONDCLASSSEATCOUNT, SECONDCLASSSEATCOUNT, *Yinyue200_GetTrainPlanRecordSeatCountPointer(productrecord, TRAINTICKETTYPE_SECONDCLASS), 0);
+
 
                 {
                     SYSTEMTIME date;

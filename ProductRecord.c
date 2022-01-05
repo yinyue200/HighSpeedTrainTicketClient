@@ -385,7 +385,7 @@ YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int3
 	PWSTR buf = yinyue200_safemalloc(len * sizeof(size_t));
 	YINYUE200_PAIR_OF_int32_t_int32_t *ptr = yinyue200_safemallocandclear(sizeof(YINYUE200_PAIR_OF_int32_t_int32_t));
 	int ret = swscanf(str, L"%d\t%d", &ptr->Item1, &ptr->Item2);
-	if (ret < 3)
+	if (ret < 2)
 	{
 		UnrecoveryableFailed();
 	}
@@ -448,4 +448,35 @@ bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, in
 	{
 		return false;
 	}
+}
+int32_t* Yinyue200_GetTrainPlanRecordSeatCountPointer(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type)
+{
+	for (int i = 0; i < vector_total(&record->TicketCount); i++)
+	{
+		YINYUE200_PAIR_OF_int32_t_int32_t* pair = vector_get(&record->TicketCount, i);
+		if (pair->Item1 == type)
+		{
+			return &pair->Item2;
+		}
+	}
+	YINYUE200_PAIR_OF_int32_t_int32_t* nn = yinyue200_safemallocandclear(sizeof(YINYUE200_PAIR_OF_int32_t_int32_t));
+	nn->Item1 = type;
+	vector_add(&record->TicketCount, nn);
+	return &nn->Item2;
+}
+int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type)
+{
+	for (int i = 0; i < vector_total(&record->TicketCount); i++)
+	{
+		YINYUE200_PAIR_OF_int32_t_int32_t* pair = vector_get(&record->TicketCount, i);
+		if (pair->Item1 == type)
+		{
+			return pair->Item2;
+		}
+	}
+	return 0;
+}
+void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type, int32_t value)
+{
+	*Yinyue200_GetTrainPlanRecordSeatCountPointer(record, type) = value;
 }

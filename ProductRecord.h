@@ -24,7 +24,7 @@ enum TrainPlanState
 {
 	TRAINPLANSTATE_UNKNOWN=0,
 };
-enum TrainTicketType
+enum TrainSeatType
 {
 	TRAINTICKETTYPE_UNKNOWN = 0,
 	TRAINTICKETTYPE_FIRSTCLASS = 1,
@@ -92,6 +92,10 @@ int Yinyue200_GetTrainPlanRecordCreatedTotalDate(YINYUE200_TRAINPLANRECORD_PTR r
 //该函数检查指定日期是否开行指定车次
 //传入的时间是本地时间
 bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day);
+
+int32_t* Yinyue200_GetTrainPlanRecordSeatCountPointer(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type);
+int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type);
+void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type, int32_t value);
 
 //=======构造获取 TrainPlanRecord 成员的函数声明=======
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Name)
