@@ -28,6 +28,8 @@
 #define ID_EDIT_DISTANCE 8
 #define ID_BUTTON_SAVE 9
 #define ID_BUTTON_CANCEL 10
+#define ID_EDIT_RESIDENCETIME 11
+#define ID_LABEL_RESIDENCETIME 12
 typedef struct Yinyue200_RoutePointEditWindowData
 {
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR RoutePoint;
@@ -35,6 +37,7 @@ typedef struct Yinyue200_RoutePointEditWindowData
     void* callbackcontext;
     bool enablesave;
     HFONT lastfont;
+    bool callbacksent;
 } YINYUE200_ROUTEPOINTEDITWINDOWDATA;
 LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint, bool enablesave, RoutePointEditFinishCallback callback, void *callbackcontext)
@@ -104,6 +107,7 @@ void LayoutControls_RoutePointEditWindow(HWND hwnd, UINT dpi, YINYUE200_ROUTEPOI
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(STATION);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(DISTANCE);
         YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(RUNTIMESPAN);
+        YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(RESIDENCETIME);
         
         lasty += 10;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
@@ -123,7 +127,8 @@ void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_ROUTEPOI
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_DISTANCE), WM_SETTEXT, 0, buffer);
         swprintf(buffer, 1000, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(productrecord->RouteRunTimeSpan) / 60.0);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN), WM_SETTEXT, 0, buffer);
-
+        swprintf(buffer, 1000, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(productrecord->ResidenceTime) / 60.0);
+        SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RESIDENCETIME), WM_SETTEXT, 0, buffer);
         free(buffer);
     }
 }
@@ -157,6 +162,7 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         ADDLABELANDEDIT(STATION, L"车站");
         ADDLABELANDEDIT(DISTANCE, L"起点站至本站计费里程（单位：千米）");
         ADDLABELANDEDIT(RUNTIMESPAN, L"预计到达时间（填写从始发站到本站所需的分钟）");
+        ADDLABELANDEDIT(RESIDENCETIME, L"停留时间（分钟）");
 
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
         HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
@@ -171,6 +177,10 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     case WM_DESTROY:
     {
         YINYUE200_ROUTEPOINTEDITWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (!windowdata->callbacksent)
+        {
+            windowdata->callback(NULL, windowdata->callbackcontext);
+        }
         yinyue200_DeleteFont(windowdata->lastfont);
         if (windowdata != NULL)
             free(windowdata);
@@ -214,6 +224,7 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 YINYUE200_ROUTEPOINTEDITWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
                 windowdata->callback(NULL, windowdata->callbackcontext);//取消修改时返回 NULL 代表操作被取消
+                windowdata->callbacksent = true;
 
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
                 break;
@@ -252,7 +263,18 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 {
                     MessageBox(hwnd, L"运行时间格式错误", NULL, 0);
                 }
+                _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RESIDENCETIME));
+                double restime_double = 0.0;
+                if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &restime_double) >= 0)
+                {
+                    ptr->ResidenceTime = Yinyue200_ConvertToUINT64FromTotalSecond(restime_double * 60.0);
+                }
+                else
+                {
+                    MessageBox(hwnd, L"停留时间格式错误", NULL, 0);
+                }
                 windowdata->callback(ptr, windowdata->callbackcontext);
+                windowdata->callbacksent = true;
 
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
