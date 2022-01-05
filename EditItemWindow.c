@@ -69,18 +69,6 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
     YINYUE200_EDITITEMWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(YINYUE200_EDITITEMWINDOWDATA));
     windowdata->TrainPlanRecord = productrecord;
     windowdata->enablesave = enablesave;
-    if (productrecord == NULL)
-    {
-        vector_init(&windowdata->Route);
-    }
-    else
-    {
-        //将 productrecord->RoutePoints 的内容深复制到 windowdata->Route
-
-        vector* srcvec = &windowdata->Route;
-        vector* orivec = &productrecord->RoutePoints;
-        deepcopy_TrainPlanRecord_RoutePoints(srcvec, orivec);
-    }
 
     // Create the window.
 
@@ -213,8 +201,23 @@ void setidtoeditcontrol(HWND hwnd, YINYUE200_PAIR_OF_uint64_t_uint64_t pair)
     SendMessage(GetDlgItem(hwnd, ID_EDIT_ID), WM_SETTEXT, 0, _temp_buffer);
 }
 //设置编辑控件初值
-void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrecord)
+void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrecord, YINYUE200_EDITITEMWINDOWDATA *windata)
 {
+    freeTrainPlanRecord_RoutePoints(&windata->Route);
+
+    if (productrecord == NULL)
+    {
+        vector_init(&windata->Route);
+    }
+    else
+    {
+        //将 productrecord->RoutePoints 的内容深复制到 windowdata->Route
+
+        vector* srcvec = &windata->Route;
+        vector* orivec = &productrecord->RoutePoints;
+        deepcopy_TrainPlanRecord_RoutePoints(srcvec, orivec);
+    }
+
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_NAME, Name);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_TYPE, Type);
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_STATE, State);
@@ -426,8 +429,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             }
         }
 
-        EditItemWindow_InsertListViewItems(hwnd_ROUTE_Edit, vector_total(&windowdata->Route));
-
         HWND hwnd_ROUTE_ADDBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEADD, L"添加路径点");
         HWND hwnd_ROUTE_DELBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEDELETE, L"删除路径点");
 
@@ -437,7 +438,9 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         YINYUE200_TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
         
-        edititemwindow_initctrl(hwnd, productrecord);
+        edititemwindow_initctrl(hwnd, productrecord, windowdata);
+
+        EditItemWindow_InsertListViewItems(hwnd_ROUTE_Edit, vector_total(&windowdata->Route));
 
         if (!windowdata->enablesave)
         {
@@ -498,7 +501,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 if (LOWORD(wParam) == ID_BUTTON_SAVEANDNEXT)
                 {
                     windowdata->TrainPlanRecord = NULL;
-                    edititemwindow_initctrl(hwnd, NULL);
+                    edititemwindow_initctrl(hwnd, NULL, windowdata);
                 }
                 else
                 {
