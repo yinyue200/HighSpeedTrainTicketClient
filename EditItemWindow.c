@@ -360,20 +360,22 @@ void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_
     YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = context;
     HWND hwnd = callbackcontext->hwnd;
     EnableWindow(hwnd, true);
-
-    YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-    if (windowdata)
+    if (data != NULL)
     {
-        if (callbackcontext->add)
+        YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (windowdata)
         {
-            vector_add(&windowdata->Route, data);
-        }
+            if (callbackcontext->add)
+            {
+                vector_add(&windowdata->Route, data);
+            }
 
-        EditItemWindow_InsertListViewItems(Yinyue200_GetChildControlById(hwnd, ID_LISTVIEW_ROUTE), vector_total(&windowdata->Route));
-    }
-    else
-    {
-        free(data);
+            EditItemWindow_InsertListViewItems(Yinyue200_GetChildControlById(hwnd, ID_LISTVIEW_ROUTE), vector_total(&windowdata->Route));
+        }
+        else
+        {
+            free(data);
+        }
     }
     free(context);
 }
