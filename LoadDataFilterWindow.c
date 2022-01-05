@@ -242,15 +242,15 @@ free(Field##name##Text);
 #define PREDEFINELOADDATAFILTERPROC_DOUBLE(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
 BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
 PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
-double Field##name##Int_Top;double Field##name##Int_Bottom;\
+double Field##name##Double_Top=0.0;double Field##name##Double_Bottom=0.0;\
 if(Is##name##FieldChk){\
-int _temp_ret_sscanf= swscanf(Field##name##Text, L"%lf-%lf", &Field##name##Int_Bottom,&Field##name##Int_Top);\
-if(Field##name##Int_Bottom>Field##name##Int_Top){\
-double _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Int_Bottom;Field##name##Int_Bottom=Field##name##Int_Top;\
-Field##name##Int_Top=_temp_PREDEFINELOADDATAFILTERPROC_INT_swap;}\
+int _temp_ret_sscanf= swscanf(Field##name##Text, L"%lf-%lf", &Field##name##Double_Bottom,&Field##name##Double_Top);\
+if(Field##name##Double_Bottom>Field##name##Double_Top){\
+double _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Double_Bottom;Field##name##Double_Bottom=Field##name##Double_Top;\
+Field##name##Double_Top=_temp_PREDEFINELOADDATAFILTERPROC_INT_swap;}\
 if (_temp_ret_sscanf==1)\
 {\
-    Field##name##Int_Bottom=Field##name##Int_Top;\
+    Field##name##Double_Bottom=Field##name##Double_Top;\
 }\
 else if(_temp_ret_sscanf==2){}\
 else\
@@ -319,11 +319,11 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         CREATECTRL(STARTTIME, L"发车时间")
         CREATECTRL(STARTSTATION, L"始发站")
         CREATECTRL(ENDSTATION, L"终到站")
-        CREATECTRL(STATIONS, L"途径站")
+        CREATECTRL(STATIONS, L"途径站（多个途径站用分号分隔）")
         CREATECTRL(REPEAT, L"发车间隔天数")
         CREATECTRL(FIRSTDATE, L"首次开车日期")
-        CREATECTRL(DISTANCE, L"总里程")
-        CREATECTRL(RUNTIME, L"总运行时间")
+        CREATECTRL(DISTANCE, L"总里程（千米）")
+        CREATECTRL(RUNTIME, L"总运行时间（分钟）")
         lasty += 5;
         HWND hwndButton_Save = CreateWindow(
             L"BUTTON",
@@ -359,13 +359,25 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 YINYUE200_LOADDATAFILTERWINDOWDATA *ldfwindow = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                 YINYUE200_MAINWINDOWDATA* mainwindow = ldfwindow->mainwindowdata;
 
-                PREDEFINELOADDATAFILTERPROC(Name,NAME)
-                PREDEFINELOADDATAFILTERPROC_PAIRINT(ID,ID, L"ID")
-                PREDEFINELOADDATAFILTERPROC(Type,TYPE)
-                PREDEFINELOADDATAFILTERPROC(State, STATE)
-                PREDEFINELOADDATAFILTERPROC_LOCALDATE(Date, DATE, L"日期")
-                PREDEFINELOADDATAFILTERPROC_TIME(Time, STARTTIME, L"发车时间")
-                PREDEFINELOADDATAFILTERPROC_DATE(StartTimePoint, FIRSTDATE, L"首次开车日期")
+                PREDEFINELOADDATAFILTERPROC(Name, NAME);
+                PREDEFINELOADDATAFILTERPROC_PAIRINT(ID, ID, L"ID");
+                PREDEFINELOADDATAFILTERPROC(Type, TYPE);
+                PREDEFINELOADDATAFILTERPROC(State, STATE);
+                PREDEFINELOADDATAFILTERPROC_LOCALDATE(Date, DATE, L"日期");
+                PREDEFINELOADDATAFILTERPROC_TIME(Time, STARTTIME, L"发车时间");
+                PREDEFINELOADDATAFILTERPROC(StartStation, STARTSTATION);//始发站
+                PREDEFINELOADDATAFILTERPROC(EndStation, ENDSTATION);//终到站
+                PREDEFINELOADDATAFILTERPROC(Stations, STATIONS);
+                vector StationsVec = SplitStringToVectorOfString(FieldStationsText, L";");
+                PREDEFINELOADDATAFILTERPROC_DATE(StartTimePoint, FIRSTDATE, L"首次开车日期");
+                PREDEFINELOADDATAFILTERPROC_INT(Repeat, REPEAT, L"发车间隔天数");
+                PREDEFINELOADDATAFILTERPROC_DOUBLE(Distance, DISTANCE, L"总里程（千米）（只支持区间形式）");
+                uint64_t FieldDistanceInt_Bottom = FieldDistanceDouble_Bottom * 1000;
+                uint64_t FieldDistanceInt_Top = FieldDistanceDouble_Bottom * 1000;
+                PREDEFINELOADDATAFILTERPROC_DOUBLE(Runtime, RUNTIME, L"总运行时间（分钟）（只支持区间形式）");
+                uint64_t FieldRuntimeInt_Bottom = Yinyue200_ConvertToUINT64FromTotalSecond(FieldRuntimeDouble_Bottom * 60);
+                uint64_t FieldRuntimeInt_Top = Yinyue200_ConvertToUINT64FromTotalSecond(FieldRuntimeDouble_Bottom * 60);
+
                 //PREDEFINELOADDATAFILTERPROC(ProvideBy,PROVIDEBY)
                 //PREDEFINELOADDATAFILTERPROC(RecievedBy,RECIEVEDBY)
                 //PREDEFINELOADDATAFILTERPROC(ResentBy,RESENTBY)
@@ -375,10 +387,13 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 //PREDEFINELOADDATAFILTERPROC_DOUBLE(ResentPrice,RESENTPRICE, L"退货价")
                 //PREDEFINELOADDATAFILTERPROC(Signer,SIGNER)
 
-                for (size_t i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
+                vector nnowlist;
+                vector_initwithcap(&nnowlist,mainwindow->UnsortedNowList.total);
+
+                for (int i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
                 {
                     YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(mainwindow->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
-                    BOOL SHOULDREV = TRUE;
+                    bool SHOULDREV = true;
                     LOADDATAFILTERPROC_FLITER_WSTR(Name);
                     LOADDATAFILTERPROC_FLITER_PAIRINT(ID);
                     LOADDATAFILTERPROC_FLITER_WSTR(Type);
@@ -413,28 +428,113 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                             SHOULDREV &= ret;
                         }
                     } while (0);
-                    //时间筛选
+                    //发车时间筛选
                     do
                     {
                         if (IsTimeFieldChk)
                         {
-
+                            uint64_t timepart = GetTimePartUINT64OFUINT64(record->StartTimePoint);
+                            SHOULDREV &= (timepart >= FieldTimeInt_Bottom && timepart <= FieldDateInt_Top);
                         }
                     } while (0);
-
-
+                    //起点站筛选
+                    if (IsStartStationFieldChk)
+                    {
+                        if (vector_total(&record->RoutePoints) > 0)
+                        {
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(&record->RoutePoints, 0);
+                            SHOULDREV &= wcscmp(FieldStartStationText, one->Station.DisplayName) == 0;
+                        }
+                        else
+                        {
+                            SHOULDREV &= false;
+                        }
+                    }
+                    //终点站筛选
+                    if (IsEndStationFieldChk)
+                    {
+                        if (vector_total(&record->RoutePoints) > 0)
+                        {
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(&record->RoutePoints, vector_total(&record->RoutePoints) - 1);
+                            SHOULDREV &= wcscmp(FieldStartStationText, one->Station.DisplayName) == 0;
+                        }
+                        else
+                        {
+                            SHOULDREV &= false;
+                        }
+                    }
+                    //途径点筛选
+                    if (IsStationsFieldChk)
+                    {
+                        for (int i = 0; i < vector_total(&StationsVec); i++)
+                        {
+                            PWSTR tobecmp = vector_get(&StationsVec, i);
+                            bool chk = false;
+                            vector* vecpoints = &record->RoutePoints;
+                            for (int j = 0; j < vector_total(vecpoints); j++)
+                            {
+                                YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(vecpoints, j);
+                                if (wcscmp(one->Station.DisplayName, tobecmp) == 0)
+                                {
+                                    chk = true;
+                                    break;
+                                }
+                            }
+                            if (chk == false)
+                            {
+                                SHOULDREV &= false;
+                                goto skipforend;
+                            }
+                        }
+                        SHOULDREV &= true;
+                    skipforend:
+                        ;
+                    }
+                    LOADDATAFILTERPROC_FLITER_INT(StartTimePoint);
+                    LOADDATAFILTERPROC_FLITER_INT(Repeat);
+                    if (IsDistanceFieldChk)
+                    {
+                        uint64_t distance = 0;
+                        if (vector_total(&record->RoutePoints) > 1)
+                        {
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR first = vector_get(&record->RoutePoints, 0);
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR last = vector_get(&record->RoutePoints, vector_total(&record->RoutePoints) - 1);
+                            distance = last->Distance - first->Distance;
+                        }
+                        SHOULDREV &= (distance >= FieldDistanceInt_Bottom && distance <= FieldDistanceInt_Top);
+                    }
+                    if (IsRuntimeFieldChk)
+                    {
+                        uint64_t distance = 0;
+                        if (vector_total(&record->RoutePoints) > 1)
+                        {
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR first = vector_get(&record->RoutePoints, 0);
+                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR last = vector_get(&record->RoutePoints, vector_total(&record->RoutePoints) - 1);
+                            distance = last->RouteRunTimeSpan - first->RouteRunTimeSpan;
+                        }
+                        SHOULDREV &= (distance >= FieldRuntimeInt_Bottom && distance <= FieldRuntimeInt_Top);
+                    }
 
                     if (!SHOULDREV)
                     {
-                        VECTOR_DELETE(mainwindow->UnsortedNowList, i);
-                        i--;
+                        //VECTOR_DELETE(mainwindow->UnsortedNowList, i);
+                        //i--;
+                    }
+                    else
+                    {
+                        vector_add(&nnowlist, record);
                     }
                 }
-
-
+                vector_free(&mainwindow->UnsortedNowList);
+                mainwindow->UnsortedNowList = nnowlist;
+                FreeVectorOfString(&StationsVec);
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(Name);
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(Type);
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(State);
+                FREE_LOADDATAFILTERPROC_FLITER_WSTR(StartStation);
+                FREE_LOADDATAFILTERPROC_FLITER_WSTR(EndStation);
+                FREE_LOADDATAFILTERPROC_FLITER_WSTR(Stations);
+
                 //FREE_LOADDATAFILTERPROC_FLITER_WSTR(ProvideBy);
                 //FREE_LOADDATAFILTERPROC_FLITER_WSTR(RecievedBy);
                 //FREE_LOADDATAFILTERPROC_FLITER_WSTR(ResentBy);

@@ -64,7 +64,7 @@ void DecreaseWindowCount();
 //返回当前是否仍有打开的窗体
 bool CheckIfNoWindow();
 //创建一个字符串
-//length: 要创建的字符串长度
+//length: 要创建的字符串长度，包括末尾0
 wchar_t* CreateWSTR(size_t length);
 wchar_t* CreateWstrForWindowText(HWND hwnd);
 //将传入的字符串复制一次
@@ -101,3 +101,6 @@ FILETIME ConvertDateToUTCFILETIME(int year, int month, int day);
 //输入的是本地时间
 FILETIME ConvertDateToLocalFILETIME(int year, int month, int day);
 uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second);
+uint64_t GetTimePartUINT64OFUINT64(uint64_t time);
+vector SplitStringToVectorOfString(PWSTR str, PWSTR spl);
+void FreeVectorOfString(vector* vec);

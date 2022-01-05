@@ -26,7 +26,7 @@ LPWORD lpwAlign(LPWORD lpIn)
 	return (ULONG)ul;
 }
 //创建一个字符串
-//length: 要创建的字符串长度
+//length: 要创建的字符串长度，包括末尾0
 PWCHAR CreateWSTR(size_t length)
 {
 	return malloc(length * sizeof(wchar_t));
@@ -302,4 +302,32 @@ FILETIME ConvertDateToUTCFILETIME(int year, int month, int day)
 uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second)
 {
 	return Yinyue200_ConvertToTotalSecondFromUINT64(hour * 3600llu + minute * 60llu + second);
+}
+uint64_t GetTimePartUINT64OFUINT64(uint64_t time)
+{
+	FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
+	SYSTEMTIME systime;
+	FileTimeToSystemTime(&filetime, &systime);
+	return ConvertTimeToUINT64(systime.wHour, systime.wMinute, systime.wSecond) + systime.wMilliseconds * 10000;
+}
+vector SplitStringToVectorOfString(PWSTR str, PWSTR spl)
+{
+	VECTOR_INIT(vec);
+	wchar_t* context = NULL;
+	PWSTR p = wcstok(str, spl, &context);
+	while (p)
+	{
+		vector_add(&vec, CreateWstrFromWstr(p));
+		p = wcstok(NULL, spl, &context);
+	}
+	return vec;
+}
+void FreeVectorOfString(vector *vec)
+{
+	for (int i = 0; i < vector_total(vec); i++)
+	{
+		PWSTR one = vector_get(vec, i);
+		free(one);
+	}
+	vector_free(vec);
 }
