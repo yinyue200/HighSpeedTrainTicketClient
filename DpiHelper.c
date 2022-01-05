@@ -21,6 +21,7 @@ GetDpiForWindowFuncType hGetDpiForWindow = NULL;
 typedef BOOL (* WINAPI SystemParametersInfoForDpiFuncType)
     (UINT uiAction,UINT uiParam,PVOID pvParam,UINT fWinIni,UINT dpi);
 SystemParametersInfoForDpiFuncType hSystemParametersInfoForDpi = NULL;
+//初始化DpiHelper
 void yinyue200_InitDpiHelper()
 {
     huser32 = GetModuleHandleW(L"user32.dll");
@@ -34,6 +35,7 @@ void yinyue200_InitDpiHelper()
         UnrecoveryableFailed();
     }
 }
+//获取窗口的DPI
 UINT yinyue200_GetDpiForWindow(HWND hWnd)
 {
     if (hGetDpiForWindow)
@@ -46,7 +48,7 @@ UINT yinyue200_GetDpiForWindow(HWND hWnd)
         return dpi;
     }
 }
-
+//Retrieves the value of one of the system-wide parameters, taking into account the provided DPI value.
 UINT yinyue200_SystemParametersInfoForDpi(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni, UINT dpi)
 {
     if (hSystemParametersInfoForDpi)
@@ -54,7 +56,7 @@ UINT yinyue200_SystemParametersInfoForDpi(UINT uiAction, UINT uiParam, PVOID pvP
     else
         return SystemParametersInfoW(uiAction, uiParam, pvParam, fWinIni);
 }
-
+//创建默认的字体
 HFONT yinyue200_CreateDefaultFont(HWND winhwnd)
 {
     UINT dpi = yinyue200_GetDpiForWindow(winhwnd);
@@ -64,6 +66,7 @@ HFONT yinyue200_CreateDefaultFont(HWND winhwnd)
     HFONT font = CreateFontIndirect(&ncm.lfMessageFont);
     return font;
 }
+//删除字体
 BOOL yinyue200_DeleteFont(HFONT font)
 {
     if (font)
