@@ -20,7 +20,7 @@
 #include "DpiHelper.h"
 #include "RoutePointEditWindow.h"
 #include <commctrl.h>
-#define EDITITEMWINDOW_COLUMNCOUNT 3
+#define EDITITEMWINDOW_COLUMNCOUNT 4
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
@@ -316,8 +316,10 @@ int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
                     case 2:
                         swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->RouteRunTimeSpan) / 60.0);//运行时间信息显示
                         break;
+                    case 3:
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->ResidenceTime) / 60.0);//停留时间信息显示
+                        break;
                     }
-
                 }
             }
         }
@@ -483,7 +485,8 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             LPWSTR szString[EDITITEMWINDOW_COLUMNCOUNT] = {
                 L"车站",
                 L"里程（千米）",
-                L"时间（分钟）"
+                L"时间（分钟）",
+                L"停留时间（分钟）"
             };
             for (int i = 0; i < EDITITEMWINDOW_COLUMNCOUNT; i++)
             {
