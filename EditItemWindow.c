@@ -440,7 +440,27 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         ADDLABELANDEDIT(NAME, L"车次");
         ADDLABELANDEDIT(ID, L"ID");
         ADDLABELANDEDIT(TYPE,L"类型");
-        ADDLABELANDEDIT(STATE, L"状态");
+        HWND Hwnd_STATE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STATE, L"状态");
+        HWND hwnd_STATE_Edit = Yinyue200_FastCreateComboBoxControl(hwnd, ID_EDIT_STATE);
+        do{
+            TCHAR States[2][10] =
+            {
+                TRAUBPLANSTATEWSTR_NORMAL, TRAUBPLANSTATEWSTR_STOP
+            };
+
+            TCHAR A[16];
+            int  k = 0;
+
+            memset(&A, 0, sizeof(A));
+            for (k = 0; k < 2; k += 1)
+            {
+                wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)States[k]);
+
+                // Add string to combobox.
+                SendMessage(hwnd_STATE_Edit, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)A);
+            }
+        } while (0);
+
         ADDLABELANDEDIT(REPEAT, L"该车次发出的频率（单位：天）");
         ADDLABELANDEDIT(BUSINESSCLASSSEATCOUNT, L"商务座数量");
         ADDLABELANDEDIT(FIRSTCLASSSEATCOUNT, L"一等座数量");

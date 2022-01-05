@@ -24,6 +24,8 @@ enum TrainPlanState
 {
 	TRAINPLANSTATE_UNKNOWN=0,
 };
+#define TRAUBPLANSTATEWSTR_NORMAL TEXT("正常")
+#define TRAUBPLANSTATEWSTR_STOP TEXT("停运")
 enum TrainSeatType
 {
 	TRAINTICKETTYPE_UNKNOWN = 0,
@@ -66,6 +68,7 @@ typedef struct Yinyue200_TrainPlanRecord
 typedef YINYUE200_TRAINPLANRECORD* YINYUE200_TRAINPLANRECORD_PTR;
 //创建记录，并传递所有权（调用者负责free）
 YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord();
+void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record);
 void freeTrainPlanRecord_RoutePoints(vector* vec);
 // 假定 srcvec 是未初始化的 vector
 void deepcopy_TrainPlanRecord_RoutePoints(vector* srcvec, vector* orivec);

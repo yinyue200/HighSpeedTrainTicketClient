@@ -418,15 +418,6 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 uint64_t FieldRuntimeInt_Bottom = Yinyue200_ConvertToUINT64FromTotalSecond(FieldRuntimeDouble_Bottom * 60);
                 uint64_t FieldRuntimeInt_Top = Yinyue200_ConvertToUINT64FromTotalSecond(FieldRuntimeDouble_Bottom * 60);
 
-                //PREDEFINELOADDATAFILTERPROC(ProvideBy,PROVIDEBY)
-                //PREDEFINELOADDATAFILTERPROC(RecievedBy,RECIEVEDBY)
-                //PREDEFINELOADDATAFILTERPROC(ResentBy,RESENTBY)
-                //PREDEFINELOADDATAFILTERPROC_INT(Count,COUNT, L"数量")
-                //PREDEFINELOADDATAFILTERPROC_DOUBLE(Cost,COST, L"进价")
-                //PREDEFINELOADDATAFILTERPROC_DOUBLE(Price,PRICE, L"销售价")
-                //PREDEFINELOADDATAFILTERPROC_DOUBLE(ResentPrice,RESENTPRICE, L"退货价")
-                //PREDEFINELOADDATAFILTERPROC(Signer,SIGNER)
-
                 vector nnowlist;
                 vector_initwithcap(&nnowlist,mainwindow->UnsortedNowList.total);
 

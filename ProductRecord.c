@@ -35,7 +35,27 @@ YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 	if (PT == NULL)
 		return PT;
 	memset(PT, 0, sizeof(YINYUE200_TRAINPLANRECORD));
+	vector_init(&PT->TicketCount);
 	return PT;
+}
+void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
+{
+	free(record->Name);
+	free(record->Type);
+	free(record->State);
+
+	for (int i = 0; i < vector_total(&record->TicketCount); i++) 
+	{
+		free(vector_get(&record->TicketCount, i));
+	}
+	vector_free(&record->TicketCount);
+
+	if (record->RoutePoints.capacity > 0)
+	{
+		freeTrainPlanRecord_RoutePoints(&record->RoutePoints);
+	}
+
+	free(record);
 }
 void freeTrainPlanRecord_RoutePoints(vector *vec)
 {

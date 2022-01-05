@@ -939,10 +939,7 @@ void logincheckmsg(void* context)
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
                         YINYUE200_TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
-                        free(productrecord->Name);
-                        free(productrecord->Type);
-                        free(productrecord->State);
-                        free(productrecord);
+                        freeTrainPlanRecord(productrecord);
                     }
                     vector_free(ycontext->vec);
                     free(ycontext->vec);
