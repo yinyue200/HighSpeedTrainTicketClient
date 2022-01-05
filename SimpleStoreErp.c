@@ -30,14 +30,17 @@ int yinyue200_nCmdShow;
 atomic_int yinyue200_windowCount = 0;
 USERDATAINFO_PTR yinyue200_LoganUserInfo = NULL;
 uint64_t yinyue200_ADay = 10000000llu * 3600llu * 24llu;
+//增加当前的窗体计数
 void AddWindowCount()
 {
     atomic_fetch_add(&yinyue200_windowCount,1);
 }
+//减少当前的窗体计数
 void DecreaseWindowCount()
 {
     atomic_fetch_sub(&yinyue200_windowCount, 1);
 }
+//返回当前是否仍有打开的窗体
 bool CheckIfNoWindow()
 {
     if (atomic_load(&yinyue200_windowCount) == 0)

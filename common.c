@@ -25,6 +25,8 @@ LPWORD lpwAlign(LPWORD lpIn)
 	ul <<= 1;
 	return (ULONG)ul;
 }
+//创建一个字符串
+//length: 要创建的字符串长度
 PWCHAR CreateWSTR(size_t length)
 {
 	return malloc(length * sizeof(wchar_t));
@@ -36,9 +38,11 @@ PWCHAR CreateWstrForWindowText(HWND hwnd)
 	GetWindowText(hwnd, p, size);
 	return p;
 }
+//将传入的字符串复制一次
+//str：要复制的字符串
 wchar_t* CreateWstrFromWstr(wchar_t* str)
 {
-	size_t strlen = wcslen(str);
+	size_t strlen = wcslen(str);//要创建的字符串长度
 	size_t size = strlen * sizeof(wchar_t);//byte size
 	wchar_t* ptr = yinyue200_safemalloc(size + sizeof(wchar_t));//需要加一个 sizeof(wchar_t) 因为需要放末尾的 0
 	memcpy(ptr, str, size);
@@ -106,20 +110,24 @@ wchar_t* Yinyue200_TsvDecode(wchar_t* str)
 	((wchar_t*)ret.items)[vector_total_wchar_t(&ret)] = 0;
 	return (wchar_t*)ret.items;
 }
+//无法恢复的错误，直接退出程序
 __declspec(noreturn) void UnrecoveryableFailed()
 {
 	MessageBox(NULL, L"不可恢复的错误", NULL, 0);
 	exit(1234);//检测到不可恢复的错误后直接退出程序
 }
+//检查当前是否没有打开的窗口，如果没有则退出程序
 void CheckIfNoWindowAndQuit()
 {
 	if (CheckIfNoWindow())
 		PostQuitMessage(0);
 }
+//检查 hresult,当 hresult 值代表失败时退出程序
 void CheckHResult(HRESULT hresult)
 {
 	FailedIfFalse(SUCCEEDED(hresult));
 }
+//当 state 为 false 时调用 UnrecoveryableFailed()
 void FailedIfFalse(bool state)
 {
 	if (state)
@@ -131,6 +139,7 @@ void FailedIfFalse(bool state)
 		UnrecoveryableFailed();
 	}
 }
+//当 malloc 失败时调用 UnrecoveryableFailed()
 void* yinyue200_safemalloc(size_t size)
 {
 	void* p = malloc(size);
@@ -144,12 +153,14 @@ void* yinyue200_safemalloc(size_t size)
 		return NULL;
 	}
 }
+//调用yinyue200_safemalloc并将内存区域清0
 void* yinyue200_safemallocandclear(size_t size)
 {
 	void* p = yinyue200_safemalloc(size);
 	memset(p, 0, size);
 	return p;
 }
+
 GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low)
 {
 	unsigned char low64[8] = {
@@ -202,18 +213,22 @@ uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time)
 	integer.HighPart = time.dwHighDateTime;
 	return integer.QuadPart;
 }
+//将百纳秒转换成秒
 double Yinyue200_ConvertToTotalSecondFromUINT64(uint64_t time)
 {
 	double ret = time;
 	ret /= 10000000;
 	return ret;
 }
+//将秒转换成百纳秒
 uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time)
 {
 	uint64_t ret = time;
 	ret *= 10000000;
 	return ret;
 }
+//将vector中的内容序列化到字符串
+//func: 将 vector 的每一项序列化的函数
 PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr))
 {
 	int total = vector_total(vec);
@@ -265,6 +280,7 @@ vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str))
 	free(buffer);
 	return ret;
 }
+//输入的是本地时间
 FILETIME ConvertDateToLocalFILETIME(int year, int month, int day)
 {
 	FILETIME localfiletime;
@@ -275,6 +291,7 @@ FILETIME ConvertDateToLocalFILETIME(int year, int month, int day)
 	SystemTimeToFileTime(&systime, &localfiletime);
 	return localfiletime;
 }
+//输入的是本地时间
 FILETIME ConvertDateToUTCFILETIME(int year, int month, int day)
 {
 	FILETIME localfiletime = ConvertDateToLocalFILETIME(year, month, day);

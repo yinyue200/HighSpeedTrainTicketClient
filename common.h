@@ -63,14 +63,18 @@ void AddWindowCount();
 void DecreaseWindowCount();
 //返回当前是否仍有打开的窗体
 bool CheckIfNoWindow();
+//创建一个字符串
+//length: 要创建的字符串长度
 wchar_t* CreateWSTR(size_t length);
 wchar_t* CreateWstrForWindowText(HWND hwnd);
+//将传入的字符串复制一次
+//str：要复制的字符串
 wchar_t* CreateWstrFromWstr(wchar_t *hwnd);
 wchar_t* Yinyue200_TsvEncode(wchar_t* str);
 wchar_t* Yinyue200_TsvDecode(wchar_t* str);
 //无法恢复的错误，直接退出程序
 void UnrecoveryableFailed();
-//检查当前是否没有打卡的窗口，如果没有则退出程序
+//检查当前是否没有打开的窗口，如果没有则退出程序
 void CheckIfNoWindowAndQuit();
 //检查 hresult,当 hresult 值代表失败时退出程序
 void CheckHResult(HRESULT hresult);
@@ -84,7 +88,9 @@ GUID Yinyue200_ConvertToGuid(uint64_t high, uint64_t low);
 YINYUE200_PAIR_OF_uint64_t_uint64_t Yinyue200_ConvertToUint64PairFromGuid(GUID guid);
 FILETIME Yinyue200_ConvertToFileTimeFromUINT64(uint64_t time);
 uint64_t Yinyue200_ConvertToUINT64FromFileTime(FILETIME time);
+//将百纳秒转换成秒
 double Yinyue200_ConvertToTotalSecondFromUINT64(uint64_t time);
+//将秒转换成百纳秒
 uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time);
 //将vector中的内容序列化到字符串
 //func: 将 vector 的每一项序列化的函数
