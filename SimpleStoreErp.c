@@ -29,6 +29,7 @@ HINSTANCE yinyue200_hInstance;//global handle to the program instance.
 int yinyue200_nCmdShow;
 atomic_int yinyue200_windowCount = 0;
 USERDATAINFO_PTR yinyue200_LoganUserInfo = NULL;
+uint64_t yinyue200_ADay = 10000000llu * 3600llu * 24llu;
 void AddWindowCount()
 {
     atomic_fetch_add(&yinyue200_windowCount,1);

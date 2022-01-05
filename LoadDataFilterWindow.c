@@ -22,30 +22,31 @@
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
 #define ID_EDIT_ID 4
-#define ID_EDIT_TYPE 5
-#define ID_CHK_ID 6
-#define ID_CHK_NAME 7
+#define ID_CHK_ID 5
+#define ID_CHK_NAME 6
+#define ID_EDIT_TYPE 7
 #define ID_CHK_TYPE 8
-#define ID_EDIT_STATE 9
-#define ID_EDIT_DATE 10
-#define ID_EDIT_PROVIDEBY 11
-#define ID_EDIT_RECIEVEDBY 12
-#define ID_EDIT_RESENTBY 13
-#define ID_EDIT_COUNT 14
-#define ID_EDIT_COST 15
-#define ID_EDIT_PRICE 16
-#define ID_EDIT_RESENTPRICE 17
-#define ID_EDIT_SIGNER 18
-#define ID_CHK_STATE 19
-#define ID_CHK_DATE 20
-#define ID_CHK_PROVIDEBY 21
-#define ID_CHK_RECIEVEDBY 22
-#define ID_CHK_RESENTBY 23
-#define ID_CHK_COUNT 24
-#define ID_CHK_COST 25
-#define ID_CHK_PRICE 26
-#define ID_CHK_RESENTPRICE 27
-#define ID_CHK_SIGNER 28
+#define ID_EDIT_DATE 9
+#define ID_CHK_DATE 10
+#define ID_EDIT_STARTTIME 11
+#define ID_CHK_STARTTIME 12
+#define ID_EDIT_STARTSTATION 13
+#define ID_CHK_STARTSTATION 14
+#define ID_EDIT_ENDSTATION 15
+#define ID_CHK_ENDSTATION 16
+#define ID_EDIT_STATIONS 17
+#define ID_CHK_STATIONS 18
+#define ID_EDIT_REPEAT 19
+#define ID_CHK_REPEAT 20
+#define ID_EDIT_FIRSTDATE 21
+#define ID_CHK_FIRSTDATE 22
+#define ID_EDIT_DISTANCE 23
+#define ID_CHK_DISTANCE 24
+#define ID_EDIT_RUNTIME 25
+#define ID_CHK_RUNTIME 26
+#define ID_EDIT_STATE 27
+#define ID_CHK_STATE 28
+
 typedef struct Yinyue200_LoadDataFilterWindowData
 {
     YINYUE200_MAINWINDOWDATA* mainwindowdata;
@@ -74,7 +75,7 @@ void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 850, 800,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -122,20 +123,102 @@ else\
 }\
 }\
 free(Field##name##Text);
-#define PREDEFINELOADDATAFILTERPROC_DATE(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
+#define PREDEFINELOADDATAFILTERPROC_PAIRINT(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
 BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
 PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
-int64_t Field##name##Int_Top;int64_t Field##name##Int_Bottom;\
+int64_t Field##name##Int_High;int64_t Field##name##Int_Low;\
+if(Is##name##FieldChk){\
+int _temp_ret_sscanf= swscanf(Field##name##Text, L"%llu;%llu", &Field##name##Int_High,&Field##name##Int_Low);\
+if(_temp_ret_sscanf==2){}\
+else\
+{\
+    MessageBox(hwnd, displayname L" 格式错误", NULL, 0);\
+    Is##name##FieldChk = false;\
+}\
+}\
+free(Field##name##Text);
+#define PREDEFINELOADDATAFILTERPROC_LOCALDATE(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
+BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
+PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
+uint64_t Field##name##Int_Top;uint64_t Field##name##Int_Bottom;\
 if(Is##name##FieldChk){\
 int _temp_a1,_temp_b1,_temp_c1,_temp_a2,_temp_b2,_temp_c2;int _temp_ret_sscanf=2;\
 int _temp_ret_sscanf_date= swscanf(Field##name##Text, L"%d/%d/%d-%d/%d/%d", &_temp_a1,&_temp_b1,&_temp_c1, &_temp_a2,&_temp_b2,&_temp_c2);\
 if(_temp_ret_sscanf_date==3)\
 {\
-    Field##name##Int_Bottom=_temp_a1*10000+_temp_b1*100+_temp_c1;Field##name##Int_Top=Field##name##Int_Bottom;\
+    Field##name##Int_Bottom=Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(_temp_a1,_temp_b1,_temp_c1));Field##name##Int_Top=Field##name##Int_Bottom+yinyue200_ADay-1;\
 }\
 else if(_temp_ret_sscanf_date==6)\
 {\
-    Field##name##Int_Bottom=_temp_a1*10000+_temp_b1*100+_temp_c1;Field##name##Int_Top=_temp_a2*10000+_temp_b2*100+_temp_c2;\
+    Field##name##Int_Bottom=Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(_temp_a1,_temp_b1,_temp_c1));Field##name##Int_Top=Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(_temp_a2,_temp_b2,_temp_c2));\
+}\
+else\
+{\
+    _temp_ret_sscanf = swscanf(Field##name##Text, L"%lld-%lld", &Field##name##Int_Bottom,&Field##name##Int_Top);\
+}\
+if(Field##name##Int_Bottom>Field##name##Int_Top){\
+int64_t _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Int_Bottom;Field##name##Int_Bottom=Field##name##Int_Top;\
+Field##name##Int_Top=_temp_PREDEFINELOADDATAFILTERPROC_INT_swap;}\
+if (_temp_ret_sscanf==1)\
+{\
+    Field##name##Int_Bottom=Field##name##Int_Top;\
+}\
+else if(_temp_ret_sscanf==2){}\
+else\
+{\
+    MessageBox(hwnd, displayname L" 格式错误", NULL, 0);\
+    Is##name##FieldChk = false;\
+}\
+}\
+free(Field##name##Text);
+#define PREDEFINELOADDATAFILTERPROC_DATE(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
+BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
+PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
+uint64_t Field##name##Int_Top;uint64_t Field##name##Int_Bottom;\
+if(Is##name##FieldChk){\
+int _temp_a1,_temp_b1,_temp_c1,_temp_a2,_temp_b2,_temp_c2;int _temp_ret_sscanf=2;\
+int _temp_ret_sscanf_date= swscanf(Field##name##Text, L"%d/%d/%d-%d/%d/%d", &_temp_a1,&_temp_b1,&_temp_c1, &_temp_a2,&_temp_b2,&_temp_c2);\
+if(_temp_ret_sscanf_date==3)\
+{\
+    Field##name##Int_Bottom=Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToUTCFILETIME(_temp_a1,_temp_b1,_temp_c1));Field##name##Int_Top=Field##name##Int_Bottom+yinyue200_ADay;\
+}\
+else if(_temp_ret_sscanf_date==6)\
+{\
+    Field##name##Int_Bottom=Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToUTCFILETIME(_temp_a1,_temp_b1,_temp_c1));Field##name##Int_Top=Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToUTCFILETIME(_temp_a2,_temp_b2,_temp_c2));\
+}\
+else\
+{\
+    _temp_ret_sscanf = swscanf(Field##name##Text, L"%lld-%lld", &Field##name##Int_Bottom,&Field##name##Int_Top);\
+}\
+if(Field##name##Int_Bottom>Field##name##Int_Top){\
+int64_t _temp_PREDEFINELOADDATAFILTERPROC_INT_swap=Field##name##Int_Bottom;Field##name##Int_Bottom=Field##name##Int_Top;\
+Field##name##Int_Top=_temp_PREDEFINELOADDATAFILTERPROC_INT_swap;}\
+if (_temp_ret_sscanf==1)\
+{\
+    Field##name##Int_Bottom=Field##name##Int_Top;\
+}\
+else if(_temp_ret_sscanf==2){}\
+else\
+{\
+    MessageBox(hwnd, displayname L" 格式错误", NULL, 0);\
+    Is##name##FieldChk = false;\
+}\
+}\
+free(Field##name##Text);
+#define PREDEFINELOADDATAFILTERPROC_TIME(name,uppid,displayname)  HWND Field##name##Ctrl = GetDlgItem(hwnd, ID_EDIT_##uppid);\
+BOOL Is##name##FieldChk = IsDlgButtonChecked(hwnd, ID_CHK_##uppid);\
+PWCHAR Field##name##Text = CreateWstrForWindowText(Field##name##Ctrl);\
+uint64_t Field##name##Int_Top;uint64_t Field##name##Int_Bottom;\
+if(Is##name##FieldChk){\
+int _temp_a1,_temp_b1,_temp_a2,_temp_b2;int _temp_ret_sscanf=2;\
+int _temp_ret_sscanf_date= swscanf(Field##name##Text, L"%d:%d-%d:%d", &_temp_a1,&_temp_b1, &_temp_a2,&_temp_b2);\
+if(_temp_ret_sscanf_date==2)\
+{\
+    Field##name##Int_Bottom=ConvertTimeToUINT64(_temp_a1,_temp_b1,0);Field##name##Int_Top=Field##name##Int_Bottom+Yinyue200_ConvertToUINT64FromTotalSecond(60);\
+}\
+else if(_temp_ret_sscanf_date==4)\
+{\
+    Field##name##Int_Bottom=ConvertTimeToUINT64(_temp_a1,_temp_b1,0);Field##name##Int_Top=ConvertTimeToUINT64(_temp_a2,_temp_b2,0);\
 }\
 else\
 {\
@@ -177,7 +260,7 @@ else\
 }\
 }\
 free(Field##name##Text);
-#define LOADDATAFILTERPROC_FLITER_WSTR(name) if (Is##name##FieldChk)\
+#define LOADDATAFILTERPROC_FLITER_WSTR(name)do{ if (Is##name##FieldChk)\
 {\
     if (wcscmp(record->name, Field##name##Text)==0)\
     {\
@@ -187,8 +270,8 @@ free(Field##name##Text);
     {\
         SHOULDREV &= FALSE;\
     }\
-}
-#define LOADDATAFILTERPROC_FLITER_INT(name) if (Is##name##FieldChk)\
+}}while(0)
+#define LOADDATAFILTERPROC_FLITER_INT(name)do{  if (Is##name##FieldChk)\
 {\
     if (record->name >= Field##name##Int_Bottom&&record->name <= Field##name##Int_Top)\
     {\
@@ -198,7 +281,18 @@ free(Field##name##Text);
     {\
         SHOULDREV &= FALSE;\
     }\
-}
+}}while(0)
+#define LOADDATAFILTERPROC_FLITER_PAIRINT(name)do{ if (Is##name##FieldChk)\
+{\
+    if (record->name.Item1 == Field##name##Int_High&&record->name.Item2 == Field##name##Int_Low)\
+    {\
+        SHOULDREV &= TRUE;\
+    }\
+    else\
+    {\
+        SHOULDREV &= FALSE;\
+    }\
+}}while(0)
 #define FREE_LOADDATAFILTERPROC_FLITER_WSTR(name) free(Field##name##Text)
 #define CREATECTRL(name,label)  HWND Hwnd_##name##_Label = CreateWindow(L"BUTTON", label, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, lasty, 500, 25, hwnd, ID_CHK_##name, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);\
 lasty += 25;\
@@ -222,14 +316,14 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         CREATECTRL(TYPE, L"类型")
         CREATECTRL(STATE, L"状态")
         CREATECTRL(DATE, L"日期")
-        CREATECTRL(PROVIDEBY, L"供货商")
-        CREATECTRL(RECIEVEDBY, L"收货商")
-        CREATECTRL(RESENTBY, L"退货商")
-        CREATECTRL(COUNT, L"数量")
-        CREATECTRL(COST, L"进价")
-        CREATECTRL(PRICE, L"销售价")
-        CREATECTRL(RESENTPRICE, L"退货价")
-        CREATECTRL(SIGNER, L"经手人")
+        CREATECTRL(STARTTIME, L"发车时间")
+        CREATECTRL(STARTSTATION, L"始发站")
+        CREATECTRL(ENDSTATION, L"终到站")
+        CREATECTRL(STATIONS, L"途径站")
+        CREATECTRL(REPEAT, L"发车间隔天数")
+        CREATECTRL(FIRSTDATE, L"首次开车日期")
+        CREATECTRL(DISTANCE, L"总里程")
+        CREATECTRL(RUNTIME, L"总运行时间")
         lasty += 5;
         HWND hwndButton_Save = CreateWindow(
             L"BUTTON",
@@ -266,27 +360,69 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 YINYUE200_MAINWINDOWDATA* mainwindow = ldfwindow->mainwindowdata;
 
                 PREDEFINELOADDATAFILTERPROC(Name,NAME)
-                PREDEFINELOADDATAFILTERPROC_INT(ID,ID, L"ID")
+                PREDEFINELOADDATAFILTERPROC_PAIRINT(ID,ID, L"ID")
                 PREDEFINELOADDATAFILTERPROC(Type,TYPE)
                 PREDEFINELOADDATAFILTERPROC(State, STATE)
-                PREDEFINELOADDATAFILTERPROC_DATE(Date,DATE, L"日期")
-                PREDEFINELOADDATAFILTERPROC(ProvideBy,PROVIDEBY)
-                PREDEFINELOADDATAFILTERPROC(RecievedBy,RECIEVEDBY)
-                PREDEFINELOADDATAFILTERPROC(ResentBy,RESENTBY)
-                PREDEFINELOADDATAFILTERPROC_INT(Count,COUNT, L"数量")
-                PREDEFINELOADDATAFILTERPROC_DOUBLE(Cost,COST, L"进价")
-                PREDEFINELOADDATAFILTERPROC_DOUBLE(Price,PRICE, L"销售价")
-                PREDEFINELOADDATAFILTERPROC_DOUBLE(ResentPrice,RESENTPRICE, L"退货价")
-                PREDEFINELOADDATAFILTERPROC(Signer,SIGNER)
+                PREDEFINELOADDATAFILTERPROC_LOCALDATE(Date, DATE, L"日期")
+                PREDEFINELOADDATAFILTERPROC_TIME(Time, STARTTIME, L"发车时间")
+                PREDEFINELOADDATAFILTERPROC_DATE(StartTimePoint, FIRSTDATE, L"首次开车日期")
+                //PREDEFINELOADDATAFILTERPROC(ProvideBy,PROVIDEBY)
+                //PREDEFINELOADDATAFILTERPROC(RecievedBy,RECIEVEDBY)
+                //PREDEFINELOADDATAFILTERPROC(ResentBy,RESENTBY)
+                //PREDEFINELOADDATAFILTERPROC_INT(Count,COUNT, L"数量")
+                //PREDEFINELOADDATAFILTERPROC_DOUBLE(Cost,COST, L"进价")
+                //PREDEFINELOADDATAFILTERPROC_DOUBLE(Price,PRICE, L"销售价")
+                //PREDEFINELOADDATAFILTERPROC_DOUBLE(ResentPrice,RESENTPRICE, L"退货价")
+                //PREDEFINELOADDATAFILTERPROC(Signer,SIGNER)
 
                 for (size_t i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
                 {
                     YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(mainwindow->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
                     BOOL SHOULDREV = TRUE;
-                    LOADDATAFILTERPROC_FLITER_WSTR(Name)
-                    LOADDATAFILTERPROC_FLITER_WSTR(Type)
-                    LOADDATAFILTERPROC_FLITER_WSTR(State)
-                    
+                    LOADDATAFILTERPROC_FLITER_WSTR(Name);
+                    LOADDATAFILTERPROC_FLITER_PAIRINT(ID);
+                    LOADDATAFILTERPROC_FLITER_WSTR(Type);
+                    LOADDATAFILTERPROC_FLITER_WSTR(State);
+                    //日期筛选
+                    do
+                    {
+                        if (IsDateFieldChk)
+                        {
+                            bool ret = false;
+                            int date = Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, FieldDateInt_Bottom);
+                            if (date >= 0)
+                            {
+                                int modrev = date % record->Repeat;
+                                if (modrev == 0)
+                                {
+                                    ret = true;
+                                }
+                                else
+                                {
+                                    int spanday = (FieldDateInt_Top - FieldDateInt_Bottom) / yinyue200_ADay;
+                                    if (modrev <= spanday)
+                                    {
+                                        ret = true;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                ret = false;
+                            }
+                            SHOULDREV &= ret;
+                        }
+                    } while (0);
+                    //时间筛选
+                    do
+                    {
+                        if (IsTimeFieldChk)
+                        {
+
+                        }
+                    } while (0);
+
+
 
                     if (!SHOULDREV)
                     {
@@ -299,10 +435,10 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(Name);
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(Type);
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(State);
-                FREE_LOADDATAFILTERPROC_FLITER_WSTR(ProvideBy);
-                FREE_LOADDATAFILTERPROC_FLITER_WSTR(RecievedBy);
-                FREE_LOADDATAFILTERPROC_FLITER_WSTR(ResentBy);
-                FREE_LOADDATAFILTERPROC_FLITER_WSTR(Signer);
+                //FREE_LOADDATAFILTERPROC_FLITER_WSTR(ProvideBy);
+                //FREE_LOADDATAFILTERPROC_FLITER_WSTR(RecievedBy);
+                //FREE_LOADDATAFILTERPROC_FLITER_WSTR(ResentBy);
+                //FREE_LOADDATAFILTERPROC_FLITER_WSTR(Signer);
                 mainwindow->sortstate = 0;
                 Yinyue200_Main_UpdateListViewData(mainwindow->WindowHwnd);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);

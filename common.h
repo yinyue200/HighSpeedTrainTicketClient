@@ -54,6 +54,7 @@ extern HINSTANCE yinyue200_hInstance;//global handle to the program instance.
 extern int yinyue200_nCmdShow;//specifies how the application windows should be display
 extern vector yinyue200_ProductList;//全局记录信息
 extern USERDATAINFO_PTR yinyue200_LoganUserInfo;//当前登录用户信息
+extern uint64_t yinyue200_ADay;
 
 LPWORD lpwAlign(LPWORD lpIn);
 //增加当前的窗体计数
@@ -89,3 +90,8 @@ uint64_t Yinyue200_ConvertToUINT64FromTotalSecond(double time);
 //func: 将 vector 的每一项序列化的函数
 PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr));
 vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str));
+//输入的是本地时间
+FILETIME ConvertDateToUTCFILETIME(int year, int month, int day);
+//输入的是本地时间
+FILETIME ConvertDateToLocalFILETIME(int year, int month, int day);
+uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second);

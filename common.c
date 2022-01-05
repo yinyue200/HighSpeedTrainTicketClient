@@ -265,3 +265,24 @@ vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str))
 	free(buffer);
 	return ret;
 }
+FILETIME ConvertDateToLocalFILETIME(int year, int month, int day)
+{
+	FILETIME localfiletime;
+	SYSTEMTIME systime = { 0 };
+	systime.wYear = year;
+	systime.wMonth = month;
+	systime.wDay = day;
+	SystemTimeToFileTime(&systime, &localfiletime);
+	return localfiletime;
+}
+FILETIME ConvertDateToUTCFILETIME(int year, int month, int day)
+{
+	FILETIME localfiletime = ConvertDateToLocalFILETIME(year, month, day);
+	FILETIME utcfiletime;
+	LocalFileTimeToFileTime(&localfiletime, &utcfiletime);
+	return utcfiletime;
+}
+uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second)
+{
+	return Yinyue200_ConvertToTotalSecondFromUINT64(hour * 3600llu + minute * 60llu + second);
+}

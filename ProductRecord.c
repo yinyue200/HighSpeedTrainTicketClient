@@ -356,7 +356,7 @@ PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPL
 	size_t stationnamelen = wcslen(routepoint->Station.DisplayName);
 	size_t len = stationnamelen + 100;
 	PWSTR newstr = yinyue200_safemalloc(len * sizeof(WCHAR));
-	swprintf(newstr, len, L"%s\t%lld\t%lld", routepoint->Station.DisplayName, routepoint->Distance, routepoint->RouteRunTimeSpan);
+	swprintf(newstr, len, L"%s\t%llu\t%llu\t%llu", routepoint->Station.DisplayName, routepoint->Distance, routepoint->RouteRunTimeSpan, routepoint->ResidenceTime);
 	return newstr;
 }
 PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint)
@@ -371,8 +371,8 @@ YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecor
 	size_t len = wcslen(str);
 	PWSTR buf = yinyue200_safemalloc(len * sizeof(size_t));
 	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ptr = yinyue200_safemallocandclear(sizeof(YINYUE200_TRAINPLANRECORD_ROUTEPOINT));
-	int ret = swscanf(str, L"%s\t%lld\t%lld", buf, &ptr->Distance, &ptr->RouteRunTimeSpan);
-	if (ret < 3)
+	int ret = swscanf(str, L"%s\t%llu\t%llu\t%llu", buf, &ptr->Distance, &ptr->RouteRunTimeSpan, &ptr->ResidenceTime);
+	if (ret < 4)
 	{
 		UnrecoveryableFailed();
 	}
@@ -390,4 +390,62 @@ YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int3
 		UnrecoveryableFailed();
 	}
 	return ptr;
+}
+//该函数获取车次开行至指定日期所经过的天数
+//传入的时间是本地时间
+int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t filetime)
+{
+	SYSTEMTIME systime;
+	FILETIME utcfiletime = Yinyue200_ConvertToFileTimeFromUINT64(record->StartTimePoint);
+	FILETIME localfiletime;
+	FileTimeToLocalFileTime(&utcfiletime, &localfiletime);
+	FileTimeToSystemTime(&localfiletime, &systime);
+	systime.wHour = 0;
+	systime.wMinute = 0;
+	systime.wSecond = 0;
+	systime.wMilliseconds = 0;
+	FILETIME datetime;
+	SystemTimeToFileTime(&systime, &datetime);
+	uint64_t datetime_int64 = Yinyue200_ConvertToUINT64FromFileTime(datetime);//首次发车时间
+
+	uint64_t inputdate = filetime;//待检查的时间
+
+	if (inputdate > datetime_int64)
+	{
+		uint64_t timespan = inputdate - datetime_int64;
+
+		uint64_t divresult = timespan / yinyue200_ADay;//自首次开通本次列车以来至今天数
+
+		return divresult;
+	}
+	else
+	{
+		return -1;
+	}
+}
+//该函数获取车次开行至指定日期所经过的天数
+//传入的时间是本地时间
+int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalFileTime(YINYUE200_TRAINPLANRECORD_PTR record, FILETIME filetime)
+{
+	return Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, Yinyue200_ConvertToUINT64FromFileTime(filetime));
+}
+//该函数获取车次开行至指定日期所经过的天数
+//传入的时间是本地时间
+int Yinyue200_GetTrainPlanRecordCreatedTotalDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day)
+{
+	return Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalFileTime(record, ConvertDateToLocalFILETIME(year, month, day));
+}
+//该函数检查指定日期是否开行指定车次
+//传入的时间是本地时间
+bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day)
+{
+	int days = Yinyue200_GetTrainPlanRecordCreatedTotalDate(record, year, month, day);
+	if (days % record->Repeat == 0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

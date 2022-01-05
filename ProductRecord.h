@@ -40,6 +40,7 @@ typedef struct Yinyue200_TrainPlanRecord_RoutePoint
 	YINYUE200_STATIONINFO Station;
 	uint64_t RouteRunTimeSpan;//预计从起点站到本站的时间
 	uint64_t Distance;//起点站至本站里程，以米为单位，用于票价计算
+	uint64_t ResidenceTime;//在该路径点的停留时间
 } YINYUE200_TRAINPLANRECORD_ROUTEPOINT;
 typedef YINYUE200_TRAINPLANRECORD_ROUTEPOINT* YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR;
 //车次信息信息
@@ -79,6 +80,18 @@ PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPL
 PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint);
 YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecord_RoutePoint(PWSTR str);
 YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t(PWSTR str);
+//该函数获取车次开行至指定日期所经过的天数
+//filetime 是本地时间
+int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t filetime);
+//该函数获取车次开行至指定日期所经过的天数
+//filetime 是本地时间
+int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalFileTime(YINYUE200_TRAINPLANRECORD_PTR record, FILETIME filetime);
+//该函数获取车次开行至指定日期所经过的天数
+//传入的时间是本地时间
+int Yinyue200_GetTrainPlanRecordCreatedTotalDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day);
+//该函数检查指定日期是否开行指定车次
+//传入的时间是本地时间
+bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day);
 
 //=======构造获取 TrainPlanRecord 成员的函数声明=======
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Name)
@@ -88,7 +101,6 @@ YINYUE200_DEFINESIG_GETMEMBERMETHOD(State)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(RoutePoints)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(TicketCount)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(StartTimePoint)
-YINYUE200_DEFINESIG_GETMEMBERMETHOD(PricePolicy)
 YINYUE200_DEFINESIG_GETMEMBERMETHOD(Repeat)
 
 //========
