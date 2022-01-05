@@ -247,6 +247,8 @@ void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrec
 
         setidtoeditcontrol(hwnd, productrecord->ID);
     }
+
+    EditItemWindow_InsertListViewItems(Yinyue200_GetChildControlById(hwnd, ID_LISTVIEW_ROUTE), vector_total(&windata->Route));
 }
 int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
 {
@@ -439,8 +441,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         YINYUE200_TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
         
         edititemwindow_initctrl(hwnd, productrecord, windowdata);
-
-        EditItemWindow_InsertListViewItems(hwnd_ROUTE_Edit, vector_total(&windowdata->Route));
 
         if (!windowdata->enablesave)
         {
