@@ -193,6 +193,7 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
 	}
 	CloseHandle(hFile);
+	return true;
 }
 //读取记录信息
 vector* ProductRecordLoadToVector(LPWSTR path)

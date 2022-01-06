@@ -102,7 +102,7 @@ vector* LoadPassengerInfoFromFile(PWSTR path)
 					if (!lastisbl)
 					{
 						VECTOR_ADD(*vec, p);
-						p = CreateTrainPlanRecord();
+						p = CreatePassengerInfo();
 						if (p == NULL)
 						{
 							UnrecoveryableFailed();
@@ -115,12 +115,12 @@ vector* LoadPassengerInfoFromFile(PWSTR path)
 					lastisbl = false;
 				}
 			}
+			free(p);
 		}
 		else
 		{
 			UnrecoveryableFailed();
 		}
-		free(p);
 	}
 	else
 	{
@@ -129,6 +129,58 @@ vector* LoadPassengerInfoFromFile(PWSTR path)
 	free(data);
 	CloseHandle(hFile);
 	return vec;
+}
+//member是成员名称
+#define SAVEWSTRDATATOVECTOR(member) \
+do{\
+	FailedIfFalse(WritePWSTR(record->##member, hFile));\
+	FailedIfFalse(WritePWSTR(L"\t", hFile));\
+}while(0)
+//写入记录到文件
+bool yinyue200_PassengerInfoSaveToFile(LPWSTR path, vector* vec)
+{
+	HANDLE hFile = CreateFile(path,               // file to open
+		GENERIC_READ | GENERIC_WRITE,          // open for reading
+		0,       // share for reading
+		NULL,                  // default security
+		CREATE_ALWAYS, //create file always
+		FILE_ATTRIBUTE_NORMAL, // normal file
+		NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		int errcod = GetLastError();
+		MessageBox(NULL, L"Save Failed!", NULL, 0);
+		return false;
+	}
+	size_t length = VECTOR_TOTAL(*vec);
+	for (size_t i = 0; i < length; i++)
+	{
+		YINYUE200_PASSENGERINFO_PTR record = VECTOR_GET(*vec, YINYUE200_PASSENGERINFO_PTR, i);
+		if (record->deled == false)
+		{
+			SAVEWSTRDATATOVECTOR(IDType);
+			SAVEWSTRDATATOVECTOR(IDNumber);
+			SAVEWSTRDATATOVECTOR(FullName);
+			SAVEWSTRDATATOVECTOR(Owner);
+			SAVEWSTRDATATOVECTOR(PhoneNum);
+			SAVEWSTRDATATOVECTOR(EmergencyContactPersonFullName);
+			SAVEWSTRDATATOVECTOR(EmergencyContactPhoneNumber);
+			FailedIfFalse(WritePWSTR(L"\n", hFile));
+		}
+	}
+	CloseHandle(hFile);
+	return true;
+}
+bool yinyue200_MemoryPassengerInfoSaveToFile()
+{
+	if (yinyue200_FullListOfPassengers != NULL)
+	{
+		return yinyue200_PassengerInfoSaveToFile(yinyue200_GetPassengerInfoConfigFilePath(), yinyue200_FullListOfPassengers);
+	}
+	else
+	{
+		return true;
+	}
 }
 PWSTR yinyue200_GetOwnerFromIndex(void* index)
 {

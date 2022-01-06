@@ -136,7 +136,7 @@ void PassengersManageWindow_addoreditcallback(YINYUE200_PASSENGERINFO_PTR data, 
     }
     free(context);
 }
-#define YINYUE200_SEARCH_IMPL(id,name) case id:rev = wcscmp(record->name, searchtext);break
+#define YINYUE200_SEARCH_IMPL(id,name) case id:rev = wcscmp(record->name, searchtext)==0;break
 #define YINYUE200_COMBOBOXITEMSCOUNT 7
 LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -263,44 +263,48 @@ LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                     tobefree = CreateFullListOfPassengerInfoRefWithOwner(GetNowLoginedUserName());
                     tobesearch = &tobefree;
                 }
-                if (searchtextlen == 0)
+                if (windata->UnsortedNowList.capacity == 0)
                 {
-                    vector_free(&windata->UnsortedNowList);//vector 中的指针可能为 NULL，但 NULL 可以被安全 free
-                    windata->UnsortedNowList = vector_clone(tobesearch);
+                    vector_init(&windata->UnsortedNowList);
                 }
-                else
+                vector_clear(&windata->UnsortedNowList);
+
+                int ItemIndex = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_COMBOBOX_SEARCH), (UINT)CB_GETCURSEL,
+                    (WPARAM)0, (LPARAM)0);
+
+                for (int i = 0; i < vector_total(tobesearch); i++)
                 {
-                    if (windata->UnsortedNowList.capacity == 0)
+                    YINYUE200_PASSENGERINFO_PTR record = vector_get(tobesearch, i);
+                    if (record->deled == false)
                     {
-                        vector_init(&windata->UnsortedNowList);
-                    }
-                    vector_clear(&windata->UnsortedNowList);
-
-                    int ItemIndex = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_COMBOBOX_SEARCH), (UINT)CB_GETCURSEL,
-                        (WPARAM)0, (LPARAM)0);
-
-                    for (int i = 0; i < vector_total(tobesearch); i++)
-                    {
-                        YINYUE200_PASSENGERINFO_PTR record = vector_get(tobesearch, i);
                         bool rev = false;
-                        switch (ItemIndex)
+                        if (searchtextlen == 0)
                         {
-                        case -1:
                             rev = true;
-                            break;
-                            YINYUE200_SEARCH_IMPL(0, IDType);
-                            YINYUE200_SEARCH_IMPL(1, IDNumber);
-                            YINYUE200_SEARCH_IMPL(2, FullName);
-                            YINYUE200_SEARCH_IMPL(3, Owner);
-                            YINYUE200_SEARCH_IMPL(4, PhoneNum);
-                            YINYUE200_SEARCH_IMPL(5, EmergencyContactPersonFullName);
-                            YINYUE200_SEARCH_IMPL(6, EmergencyContactPhoneNumber);
-                        default:
-                            break;
                         }
-                        vector_add(&windata->UnsortedNowList, record);
+                        else
+                        {
+                            switch (ItemIndex)
+                            {
+                            case -1:
+                                rev = true;
+                                break;
+                                YINYUE200_SEARCH_IMPL(0, IDType);
+                                YINYUE200_SEARCH_IMPL(1, IDNumber);
+                                YINYUE200_SEARCH_IMPL(2, FullName);
+                                YINYUE200_SEARCH_IMPL(3, Owner);
+                                YINYUE200_SEARCH_IMPL(4, PhoneNum);
+                                YINYUE200_SEARCH_IMPL(5, EmergencyContactPersonFullName);
+                                YINYUE200_SEARCH_IMPL(6, EmergencyContactPhoneNumber);
+                            default:
+                                break;
+                            }
+                        }
+                        if (rev)
+                        {
+                            vector_add(&windata->UnsortedNowList, record);
+                        }
                     }
-
                 }
 
                 if (tobefree.capacity > 0)
@@ -309,6 +313,7 @@ LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                     vector_free(&tobefree);
                 }
 
+                windata->sortstate = 0;
                 Yinyue200_PassengersManageWindow_UpdateListViewData(hwnd);
 
                 free(searchtext);
@@ -599,7 +604,7 @@ void Yinyue200_PassengersManageWindow_UpdateListViewData(HWND hwnd)
         }
 
         Yinyue200_PassengersManageWindow_SetListViewColumn(hwnd, false);
-        InsertListViewItems(listview, VECTOR_TOTAL(windata->NowList));
+        Yinyue200_PassengersManageWindow_InsertListViewItems(listview, VECTOR_TOTAL(windata->NowList));
 
 
     }
