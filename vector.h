@@ -17,6 +17,8 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <stdlib.h>
+
 #define VECTOR_INIT_CAPACITY 4
 
 #define VECTOR_INIT(vec) vector vec; vector_init(&(vec))
