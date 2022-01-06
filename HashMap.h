@@ -28,8 +28,12 @@ typedef struct HashMapNode
 	void* value;
 	int64_t hashvalue;
 	struct HashMapNode* next;
-	bool used;
 } HASHMAPNODE;
+typedef struct HashMapNodeBasic
+{
+	HASHMAPNODE node;
+	size_t used;
+} HASHMAPNODEBASIC;
 typedef struct HashMap
 {
 	HASHMAPNODE* item;

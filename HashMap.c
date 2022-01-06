@@ -19,16 +19,18 @@
 
 void HashMap_PlaceItem(HASHMAP* map, HASHMAPNODE* node, size_t placeto)
 {
-	HASHMAPNODE* item = &map->item[placeto];
+	HASHMAPNODEBASIC* item = &map->item[placeto];
 	if (item->used)
 	{
 		//哈希表有冲突，做头插法
 		HASHMAPNODE* nnode = malloc(sizeof(HASHMAPNODE));
 		if (nnode)
 		{
-			memcpy(nnode, item, sizeof(HASHMAPNODE));
+			memcpy(nnode, &item->node, sizeof(HASHMAPNODE));
 			map->item[placeto] = *node;
 			node->next = nnode;
+
+			item->used++;
 		}
 		else
 		{
@@ -39,6 +41,7 @@ void HashMap_PlaceItem(HASHMAP* map, HASHMAPNODE* node, size_t placeto)
 	{
 		//无冲突
 		map->item[placeto] = *node;
+		item->used = 1;
 	}
 }
 
@@ -61,18 +64,35 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
 {
 	for (size_t i = 0; i < size; i++)
 	{
-		HASHMAPNODE *firstnode = &map->item[i];
+		HASHMAPNODEBASIC* firstnode = &map->item[i];
 		if (firstnode->used)
 		{
 			while (HashMap_RePlaceItem(map, firstnode, i))
 			{
 				HASHMAPNODE *next = map->item[i].next;
-				*firstnode = *next;
-				free(next);
+				if (next == NULL)
+				{			
+#if _DEBUG
+					if (firstnode->used != 1)//此时firstnode->used应该为1
+					{
+						UnrecoveryableFailed();
+					}
+#endif
+					firstnode->used = 0;
+					break;
+				}
+				else
+				{
+					firstnode->node = *next;
+					free(next);
+				}
+
+
+				firstnode->used--;
 			}
 			//此时 firstnode 已不可能发生 replace
-			HASHMAPNODE* onode = firstnode;
-			HASHMAPNODE* node = firstnode->next;
+			HASHMAPNODE* onode = &firstnode->node;
+			HASHMAPNODE* node = firstnode->node.next;
 			while (node)
 			{
 				if (HashMap_RePlaceItem(map, node, i))
@@ -80,6 +100,8 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
 					onode->next = node->next;
 					free(node);
 					node = onode->next;
+
+					firstnode->used--;
 				}
 				else
 				{
@@ -116,11 +138,11 @@ void HashMap_Free(HASHMAP* map)
 
 	for (int i = 0; i < map->listsize; i++)
 	{
-		HASHMAPNODE* firstnode = &map->item[i];
+		HASHMAPNODEBASIC* firstnode = &map->item[i];
 		if (firstnode->used)
 		{
-			map->delKeyFunc(firstnode->value);
-			HASHMAPNODE* node = firstnode->next;
+			map->delKeyFunc(firstnode->node.value);
+			HASHMAPNODE* node = firstnode->node.next;
 			while (node)
 			{
 				HASHMAPNODE* nnode = node->next;
@@ -147,26 +169,26 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
 {
 	int64_t hash = map->hashKeyFunc(key);
 	size_t place = hash % map->listsize;
-	HASHMAPNODE* tobefind = &map->item[place];
-	if (tobefind->used)
+	HASHMAPNODEBASIC* firstnode = &map->item[place];
+	if (firstnode->used)
 	{
 		HASHMAPNODE* onode;
-		HASHMAPNODE* node = tobefind;
+		HASHMAPNODE* node = &firstnode->node;
 		do
 		{
 			onode = node;
 			if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key))
 			{
 				//node is the node to be del
-				if (node == tobefind)
+				if (node == &firstnode->node)
 				{
-					if (tobefind->next == NULL)
+					if (firstnode->node.next == NULL)
 					{
-						tobefind->used = false;
+						firstnode->used = 0;
 					}
 					else
 					{
-						memcpy(tobefind, tobefind->next, sizeof(HASHMAPNODE));
+						memcpy(firstnode, firstnode->node.next, sizeof(HASHMAPNODE));
 					}
 				}
 				else
@@ -176,6 +198,9 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
 					node = node->next;
 					map->delKeyFunc(tobedel->value);
 					free(tobedel);
+
+					firstnode->used--;
+
 					goto skipround;
 				}
 			}
@@ -192,7 +217,6 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
 void HashMap_SetNode(HASHMAPNODE* node, int64_t hash)
 {
 	node->hashvalue = hash;
-	node->used = true;
 }
 void HashMap_CheckAndResize(HASHMAP* map)
 {
@@ -221,11 +245,11 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 	}
 	int64_t hash = map->hashKeyFunc(key);
 	size_t place = hash % map->listsize;
-	HASHMAPNODE* tobefind = &map->item[place];
-	if (tobefind->used)
+	HASHMAPNODEBASIC* firstnode = &map->item[place];
+	if (firstnode->used)
 	{
 		HASHMAPNODE* onode;
-		HASHMAPNODE* node = tobefind;
+		HASHMAPNODE* node = &firstnode->node;
 		do
 		{
 			onode = node;
@@ -244,8 +268,11 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 				//做尾插法
 				onode->next = nnode;
 				nnode->next = NULL;
-				HashMap_SetNode(tobefind, hash);
-				return &tobefind->value;
+				HashMap_SetNode(&firstnode->node, hash);
+
+				firstnode->used++;
+
+				return &firstnode->node.value;
 			}
 			else
 			{
@@ -260,22 +287,23 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 	}
 	else
 	{
-		HashMap_SetNode(tobefind, hash);
-		return &tobefind->value;
+		HashMap_SetNode(firstnode, hash);
+		return &firstnode->node.value;
 	}
 }
 
-HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *lastnode)
+HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *lastnode, size_t *maxposscount)
 {
 	if (lastnode == NULL)
 	{
 		int64_t hash = map->hashKeyFunc(key);
 		size_t place = hash % map->listsize;
-		HASHMAPNODE* tobefind = &map->item[place];
+		HASHMAPNODEBASIC* tobefind = &map->item[place];
+		*maxposscount = tobefind->used;
 		if (tobefind->used)
 		{
 			HASHMAPNODE* onode;
-			HASHMAPNODE* node = tobefind;
+			HASHMAPNODE* node = &tobefind->node;
 			do
 			{
 				onode = node;
@@ -285,12 +313,13 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *last
 				}
 				node = node->next;
 			} while (node);
+			*maxposscount = 0;
 			return NULL;
 		}
 		else
 		{
-			HashMap_SetNode(tobefind, hash);
-			return &tobefind;
+			HashMap_SetNode(&tobefind->node, hash);
+			return &tobefind->node;
 		}
 	}
 	else
@@ -315,11 +344,11 @@ void HashMap_Rehash(HASHMAP* map)
 {
 	for (size_t i = 0; i < map->listsize; i++)
 	{
-		HASHMAPNODE* firstnode = &map->item[i];
+		HASHMAPNODEBASIC* firstnode = &map->item[i];
 		if (firstnode->used)
 		{
-			HashMap_RehashNode(map, firstnode);
-			HASHMAPNODE* node = firstnode->next;
+			HashMap_RehashNode(map, &firstnode->node);
+			HASHMAPNODE* node = firstnode->node.next;
 			while (node)
 			{
 				HashMap_RehashNode(map, node);
@@ -334,7 +363,7 @@ void HashMap_Add(HASHMAP* map, void* item)
 	HashMap_CheckAndResize(map);
 	int64_t hash = map->hashKeyFunc(map->getKeyFunc(item));
 	size_t place = hash % map->listsize;
-	HASHMAPNODE* firstnode = &map->item[hash];
+	HASHMAPNODEBASIC* firstnode = &map->item[hash];
 	if (firstnode->used)
 	{
 		HASHMAPNODE* nnnode = malloc(sizeof(HASHMAPNODE));
@@ -342,8 +371,10 @@ void HashMap_Add(HASHMAP* map, void* item)
 		{
 			HashMap_SetNode(nnnode, hash);
 			nnnode->value = item;
-			nnnode->next = firstnode->next;
-			firstnode->next = nnnode;
+			nnnode->next = firstnode->node.next;
+			firstnode->node.next = nnnode;
+
+			firstnode->used++;
 		}
 		else
 		{
@@ -353,6 +384,7 @@ void HashMap_Add(HASHMAP* map, void* item)
 	else
 	{
 		HashMap_SetNode(firstnode, hash);
-		firstnode->value = item;
+		firstnode->node.value = item;
+		firstnode->used = 1;
 	}
 }
