@@ -47,7 +47,7 @@ typedef struct HashMap
 HASHMAP HashMap_Create(size_t size,HashMap_HashKeyFunc hash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc);
 void HashMap_Free(HASHMAP *map);
 bool HashMap_ContainKey(HASHMAP* map, void* key);
-void* HashMap_GetFromKey(HASHMAP* map, void* key);
+void* HashMap_GetByKey(HASHMAP* map, void* key);
 void* HashMap_RemoveByKey(HASHMAP* map, void* key);
 void HashMap_CheckAndResize(HASHMAP* map);
 void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd);

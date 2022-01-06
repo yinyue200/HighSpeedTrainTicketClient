@@ -161,7 +161,7 @@ bool HashMap_ContainKey(HASHMAP* map, void* key)
 {
 	return HashMap_GetPointerByKey(map, key, false) != NULL;
 }
-void* HashMap_GetFromKey(HASHMAP* map, void* key)
+void* HashMap_GetByKey(HASHMAP* map, void* key)
 {
 	return *HashMap_GetPointerByKey(map, key, false);
 }
