@@ -520,6 +520,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         if (productrecord)
         {
+            EnableWindow(hwnd_ID_Edit, false);
             EnableWindow(hwnd_NAME_Edit, false);
         }
 
