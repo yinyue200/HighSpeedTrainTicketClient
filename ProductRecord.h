@@ -76,8 +76,6 @@ void deepcopy_TrainPlanRecord_RoutePoints(vector* srcvec, vector* orivec);
 vector* ProductRecordLoadToVector(LPWSTR path);
 //写入记录到文件
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec);
-//写入宽字符串到文件
-bool WritePWSTR(PCWSTR str, HANDLE hFile);
 
 PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint);
 PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint);

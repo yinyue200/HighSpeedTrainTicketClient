@@ -161,6 +161,7 @@
     <ClCompile Include="LoadDataFilterWindow.c" />
     <ClCompile Include="LoginWindow.c" />
     <ClCompile Include="MainWindow.c" />
+    <ClCompile Include="PassengersManage.c" />
     <ClCompile Include="ProductRecord.c" />
     <ClCompile Include="RoutePointEditWindow.c" />
     <ClCompile Include="sha256.c" />
@@ -169,11 +170,13 @@
     <ClCompile Include="UserManage.c" />
     <ClCompile Include="UserSetting.c" />
     <ClCompile Include="vector.c" />
+    <ClCompile Include="xxhash.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chromiumbase64.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ControlsCommonOperation.h" />
+    <ClInclude Include="PassengersManage.h" />
     <ClInclude Include="RoutePointEditWindow.h" />
     <ClInclude Include="DpiHelper.h" />
     <ClInclude Include="EditItemWindow.h" />
@@ -187,6 +190,7 @@
     <ClInclude Include="UserManage.h" />
     <ClInclude Include="UserSetting.h" />
     <ClInclude Include="vector.h" />
+    <ClInclude Include="xxhash.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="app.manifest" />

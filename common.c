@@ -331,3 +331,29 @@ void FreeVectorOfString(vector *vec)
 	}
 	vector_free(vec);
 }
+bool WritePWSTR(PCWSTR str, HANDLE hFile)
+{
+	if (str == NULL)
+		return true;
+	size_t len = wcslen(str);
+	size_t utf8len = len * sizeof(wchar_t) * 2;//假定一个 UTF-16 编码单元在 UTF-8 中最多使用四个字节表示
+	char* utf8bytes = malloc(utf8len);
+	if (utf8bytes)
+	{
+		utf8len = WideCharToMultiByte(CP_UTF8, 0, str, len, utf8bytes, utf8len, NULL, NULL);
+
+		DWORD written;
+		if (WriteFile(hFile, utf8bytes, utf8len, &written, NULL))
+		{
+			free(utf8bytes);
+			return true;
+		}
+		int reason = GetLastError();//错误原因，仅供调试
+		free(utf8bytes);
+		return false;
+	}
+	else
+	{
+		return false;
+	}
+}

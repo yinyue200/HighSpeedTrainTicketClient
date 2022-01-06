@@ -104,3 +104,5 @@ uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second);
 uint64_t GetTimePartUINT64OFUINT64(uint64_t time);
 vector SplitStringToVectorOfString(PWSTR str, PWSTR spl);
 void FreeVectorOfString(vector* vec);
+//写入宽字符串到文件
+bool WritePWSTR(PCWSTR str, HANDLE hFile);

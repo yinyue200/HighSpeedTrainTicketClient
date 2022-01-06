@@ -19,3 +19,4 @@
 PWCHAR yinyue200_GetConfigFilePath();
 //获取用户信息配置路径
 PWCHAR yinyue200_GetUserConfigFilePath();
+PWCHAR yinyue200_GetPassengerInfoConfigFilePath();

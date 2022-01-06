@@ -81,33 +81,7 @@ void deepcopy_TrainPlanRecord_RoutePoints(vector *srcvec,vector *orivec)
 		vector_add(srcvec, ptr);
 	}
 }
-bool WritePWSTR(PCWSTR str, HANDLE hFile)
-{
-	if (str == NULL)
-		return true;
-	size_t len = wcslen(str);
-	size_t utf8len = len * sizeof(wchar_t) * 2;//假定一个 UTF-16 编码单元在 UTF-8 中最多使用四个字节表示
-	char* utf8bytes = malloc(utf8len);
-	if (utf8bytes)
-	{
-		utf8len = WideCharToMultiByte(CP_UTF8, 0, str, len, utf8bytes, utf8len, NULL, NULL);
 
-		DWORD written;
-		if (WriteFile(hFile, utf8bytes, utf8len, &written, NULL))
-		{
-			free(utf8bytes);
-			return true;
-		}
-		int reason = GetLastError();//错误原因，仅供调试
-		free(utf8bytes);
-		return false;
-	}
-	else
-	{
-		return false;
-	}
-
-}
 //caseid是信息列数（0开始） member是成员名称
 #define LOADINTDATATOVECTOR(member,caseid) case caseid:\
 {\
@@ -234,135 +208,121 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 vector* ProductRecordLoadToVector(LPWSTR path)
 {
 	//FILE SHOULD BE UTF-8 ENCODED
-	vector* vec = malloc(sizeof(vector));
-	if (vec)
+	vector* vec = yinyue200_safemalloc(sizeof(vector));
+	vector_init(vec);
+
+	HANDLE hFile = CreateFile(path,               // file to open
+		GENERIC_READ,          // open for reading
+		FILE_SHARE_READ,       // share for reading
+		NULL,                  // default security
+		OPEN_EXISTING,         // existing file only
+		FILE_ATTRIBUTE_NORMAL, // normal file
+		NULL);                 // no attr. template
+	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		vector_init(vec);
+		CloseHandle(hFile);
+		return vec;//找不到文件，返回空 vector
+	}
 
-		HANDLE hFile = CreateFile(path,               // file to open
-			GENERIC_READ,          // open for reading
-			FILE_SHARE_READ,       // share for reading
-			NULL,                  // default security
-			OPEN_EXISTING,         // existing file only
-			FILE_ATTRIBUTE_NORMAL, // normal file
-			NULL);                 // no attr. template
-		if (hFile == INVALID_HANDLE_VALUE)
+	LARGE_INTEGER FILESIZEINFO;
+	GetFileSizeEx(hFile, &FILESIZEINFO);
+	if (FILESIZEINFO.QuadPart == 0)
+	{
+		CloseHandle(hFile);
+		return vec;
+	}
+	char* data = yinyue200_safemalloc(FILESIZEINFO.QuadPart);
+	DWORD readsize;
+
+	BOOL readfilesucc = ReadFile(hFile, data, FILESIZEINFO.QuadPart, &readsize, NULL);
+
+	if (readfilesucc)
+	{
+		int laststart = 0;
+		int tindex = 0;
+		BOOL lastisbl = FALSE;
+		YINYUE200_TRAINPLANRECORD_PTR p = CreateTrainPlanRecord();
+		if (p)
 		{
-			CloseHandle(hFile);
-			return vec;//找不到文件，返回空 vector
-		}
-
-		LARGE_INTEGER FILESIZEINFO;
-		GetFileSizeEx(hFile, &FILESIZEINFO);
-		if (FILESIZEINFO.QuadPart == 0)
-		{
-			CloseHandle(hFile);
-			return vec;
-		}
-		char* data = malloc(FILESIZEINFO.QuadPart);
-		if (data)
-		{
-			DWORD readsize;
-
-			BOOL readfilesucc = ReadFile(hFile, data, FILESIZEINFO.QuadPart, &readsize, NULL);
-
-			if (readfilesucc)
+			for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
 			{
-				int laststart = 0;
-				int tindex = 0;
-				BOOL lastisbl = FALSE;
-				YINYUE200_TRAINPLANRECORD_PTR p = CreateTrainPlanRecord();
-				if (p)
+				char one = data[i];
+				size_t size = i - laststart;
+				if (one == '\t' || one == '\r' || one == '\n')
 				{
-					for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
+					if (size > 0)
 					{
-						char one = data[i];
-						size_t size = i - laststart;
-						if (one == '\t' || one == '\r' || one == '\n')
+						PWCHAR info = malloc(size * 2 + 2);
+						if (info == NULL)
 						{
-							if (size > 0)
+							UnrecoveryableFailed();
+							return NULL;
+						}
+						int sizechars = MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+						info[sizechars] = 0;
+						switch (tindex)
+						{
+						case 0:
+							p->Name = info;
+							break;
+						case 1:
+						{
+							uint64_t id_high;
+							uint64_t id_low;
+							if (swscanf(info, L"%llu;%llu", &id_high, &id_low) == 2)
 							{
-								PWCHAR info = malloc(size * 2 + 2);
-								if (info == NULL)
-								{
-									UnrecoveryableFailed();
-									return NULL;
-								}
-								int sizechars = MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
-								info[sizechars] = 0;
-								switch (tindex)
-								{
-								case 0:
-									p->Name = info;
-									break;
-								case 1:
-								{
-									uint64_t id_high;
-									uint64_t id_low;
-									if (swscanf(info, L"%llu;%llu", &id_high,&id_low) == 2)
-									{
-										YINYUE200_PAIR_OF_uint64_t_uint64_t pair = { id_high,id_low };
-										p->ID = pair;
-									}
-									free(info);
-									break;
-								}
-								LOADWSTRDATATOVECTOR(Type, 2)
-								LOADWSTRDATATOVECTOR(State, 3)
-								LOADINTDATATOVECTOR(Repeat, 4)
-								LOADVECTORDATATOVECTOR(RoutePoints, 5, ConvertStringToYinyue200_TrainPlanRecord_RoutePoint);
-								LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t);
-								LOADUINTDATATOVECTOR(StartTimePoint, 7)
-								default:
-									break;
-								}
+								YINYUE200_PAIR_OF_uint64_t_uint64_t pair = { id_high,id_low };
+								p->ID = pair;
 							}
-							tindex++;
-							laststart = i + 1;
+							free(info);
+							break;
 						}
-						if (one == '\r' || one == '\n')
-						{
-							laststart = i + 1;
-							tindex = 0;
-							if (!lastisbl)
-							{			
-								VECTOR_ADD(*vec, p);
-								p = CreateTrainPlanRecord();
-								if (p == NULL)
-								{
-									UnrecoveryableFailed();
-								}
-							}
-							lastisbl = true;
-						}
-						else
-						{
-							lastisbl = false;
+						LOADWSTRDATATOVECTOR(Type, 2)
+							LOADWSTRDATATOVECTOR(State, 3)
+							LOADINTDATATOVECTOR(Repeat, 4)
+							LOADVECTORDATATOVECTOR(RoutePoints, 5, ConvertStringToYinyue200_TrainPlanRecord_RoutePoint);
+						LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t);
+						LOADUINTDATATOVECTOR(StartTimePoint, 7)
+						default:
+							break;
 						}
 					}
+					tindex++;
+					laststart = i + 1;
+				}
+				if (one == '\r' || one == '\n')
+				{
+					laststart = i + 1;
+					tindex = 0;
+					if (!lastisbl)
+					{
+						VECTOR_ADD(*vec, p);
+						p = CreateTrainPlanRecord();
+						if (p == NULL)
+						{
+							UnrecoveryableFailed();
+						}
+					}
+					lastisbl = true;
 				}
 				else
 				{
-					UnrecoveryableFailed();
+					lastisbl = false;
 				}
-				free(p);
 			}
-			else
-			{
-				UnrecoveryableFailed();
-			}
-			free(data);
 		}
 		else
 		{
 			UnrecoveryableFailed();
 		}
-		CloseHandle(hFile);
+		free(p);
 	}
 	else
 	{
 		UnrecoveryableFailed();
 	}
+	free(data);
+	CloseHandle(hFile);
 	return vec;
 }
 
