@@ -150,6 +150,12 @@ LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wPar
         ADDLABELANDEDIT(EMERGENCYCONTCATPERSONFULLNAME, L"紧急联系人姓名");
         ADDLABELANDEDIT(EMERGENCYCONTCATPERSONPHONENUMBER, L"紧急联系人手机号");
 
+        if (windata->PassengerInfo != NULL)
+        {
+            EnableWindow(hwnd_IDTYPE_Edit, false);//不允许证件类型修改
+            EnableWindow(hwnd_IDNUMBER_Edit, false);//不允许证件号修改
+        }
+
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
         HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
 
