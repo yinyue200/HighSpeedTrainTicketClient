@@ -465,7 +465,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                         if (IsTimeFieldChk)
                         {
                             uint64_t timepart = GetTimePartUINT64OFUINT64(record->StartTimePoint);
-                            SHOULDREV &= (timepart >= FieldTimeInt_Bottom && timepart <= FieldDateInt_Top);
+                            SHOULDREV &= (timepart >= FieldTimeInt_Bottom && timepart <= FieldTimeInt_Top);
                         }
                     } while (0);
                     //ÆðµãÕ¾É¸Ñ¡
@@ -487,7 +487,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                         if (vector_total(&record->RoutePoints) > 0)
                         {
                             YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(&record->RoutePoints, vector_total(&record->RoutePoints) - 1);
-                            SHOULDREV &= wcscmp(FieldStartStationText, one->Station.DisplayName) == 0;
+                            SHOULDREV &= wcscmp(FieldEndStationText, one->Station.DisplayName) == 0;
                         }
                         else
                         {
