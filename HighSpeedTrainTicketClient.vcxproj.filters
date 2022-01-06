@@ -87,6 +87,12 @@
     <ClCompile Include="HashMap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PassengersManageWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="PassengerRecordEditWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -145,6 +151,12 @@
     </ClInclude>
     <ClInclude Include="HashMap.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PassengersManageWindow.h">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="PassengerRecordEditWindow.h">
+      <Filter>Header Files\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

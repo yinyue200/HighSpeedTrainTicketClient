@@ -63,3 +63,4 @@ HWND Yinyue200_FastCreateListViewControl(HWND hwnd, HMENU id);
 int Yinyue200_EditWindowParseFromString(LPWSTR str, double* setto);
 int Yinyue200_EditWindowParseFromStringAndFree(LPWSTR str, double* setto);
 HWND Yinyue200_FastCreateComboBoxControl(HWND hwnd, HMENU id);
+HWND Yinyue200_FastCreateComboBoxDropListControl(HWND hwnd, HMENU id);

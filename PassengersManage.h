@@ -28,6 +28,7 @@ typedef struct Yinyue200_PassengerInfo
 	bool deled;//≤ª–Ú¡–ªØ
 } YINYUE200_PASSENGERINFO;
 typedef YINYUE200_PASSENGERINFO* YINYUE200_PASSENGERINFO_PTR;
+void Yinyue200_InitFullListOfPassengersIfNeed();
 YINYUE200_PASSENGERINFO_PTR CreatePassengerInfo();
 vector* GetFullListOfPassengerInfo();
 vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner);

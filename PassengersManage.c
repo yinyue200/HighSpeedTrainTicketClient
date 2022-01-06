@@ -132,6 +132,7 @@ vector* LoadPassengerInfoFromFile(PWSTR path)
 }
 PWSTR yinyue200_GetOwnerFromIndex(void* index)
 {
+	Yinyue200_InitFullListOfPassengersIfNeed();
 	return yinyue200_GetPassengerInfoOwner(vector_get(yinyue200_FullListOfPassengers, index));
 }
 void Yinyue200_InitFullListOfPassengersIfNeed()
@@ -184,11 +185,13 @@ void FreePassengerInfo(YINYUE200_PASSENGERINFO_PTR record)
 }
 vector* GetFullListOfPassengerInfo()
 {
+	Yinyue200_InitFullListOfPassengersIfNeed();
 	return yinyue200_FullListOfPassengers;
 }
 
 vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner)
 {
+	Yinyue200_InitFullListOfPassengersIfNeed();
 	size_t maxposs;
 	HASHMAPNODE* node = HashMap_GetPointersByKey(yinyue200_Passengers_OwnerIndexed, owner, NULL, &maxposs);
 	vector vec;
@@ -207,11 +210,22 @@ vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner)
 
 vector AddPassenger(YINYUE200_PASSENGERINFO_PTR newpassenger)
 {
+	Yinyue200_InitFullListOfPassengersIfNeed();
 	vector_add(&yinyue200_FullListOfPassengers, newpassenger);
 	HashMap_Add(yinyue200_Passengers_OwnerIndexed, vector_total(yinyue200_FullListOfPassengers));
 }
 
-vector DeletePassenger(YINYUE200_PASSENGERINFO_PTR tobedel)
+vector DeletePassenger(YINYUE200_PASSENGERINFO_PTR record)
 {
-	tobedel->deled = true;
+	Yinyue200_InitFullListOfPassengersIfNeed();
+
+	record->deled = true;
+	Yinyue200_FreeAndClear(&record->IDType);
+	Yinyue200_FreeAndClear(&record->IDNumber);
+	Yinyue200_FreeAndClear(&record->FullName);
+	Yinyue200_FreeAndClear(&record->Owner);
+	Yinyue200_FreeAndClear(&record->PhoneNum);
+	Yinyue200_FreeAndClear(&record->EmergencyContactPersonFullName);
+	Yinyue200_FreeAndClear(&record->EmergencyContactPhoneNumber);
+
 }

@@ -28,3 +28,13 @@ typedef struct Yinyue200_MainWindowData
 } YINYUE200_MAINWINDOWDATA;
 void CreateMainWindow();
 void Yinyue200_Main_UpdateListViewData(HWND hwnd);
+typedef struct Yinyue200_Main_ListViewSortContext
+{
+    //获取排序成员
+    void* (*GetCompareObject)(void* obj);
+    //是否反转比较结果
+    BOOL IS_REV_RESULT;
+} YINYUE200_MAINLISTVIEWSORTCONTEXT;
+int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right);
+int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right);
+int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right);

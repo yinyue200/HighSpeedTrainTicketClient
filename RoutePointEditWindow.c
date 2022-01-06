@@ -132,14 +132,6 @@ void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_ROUTEPOI
         free(buffer);
     }
 }
-#define ADDLABELANDEDIT(ctrl_id,displaylabel) HWND Hwnd_##ctrl_id##_Label =  Yinyue200_FastCreateLabelControl(hwnd,ID_LABEL_##ctrl_id,displaylabel);\
-HWND hwnd_##ctrl_id##_Edit = Yinyue200_FastCreateEditControl(hwnd,ID_EDIT_##ctrl_id);
-#define YINYUE200_SETCONTROLPOSANDFONTFORLABELANDEDIT(tag) do{\
-YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_##tag, 10, lasty, 500, 20);\
-lasty+=25;\
-YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 20);\
-lasty+=25;\
-}while (0)
 //路径点编辑窗口消息处理函数
 LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -156,8 +148,6 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
         YINYUE200_ROUTEPOINTEDITWINDOWDATA *windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         windata->lastfont = yinyue200_CreateDefaultFont(hwnd);
-
-        int lasty = 10;
 
         ADDLABELANDEDIT(STATION, L"车站");
         ADDLABELANDEDIT(DISTANCE, L"起点站至本站计费里程（单位：千米）");
