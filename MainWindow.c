@@ -1006,7 +1006,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
         AppendMenu(hHelp, MF_STRING, ID_MENU_VWS, L"GitHub");
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"关于");
-        AppendMenu(hAdd, MF_STRING, ID_MENU_ADDRECORD, L"添加单个条目");
+        AppendMenu(hAdd, MF_STRING, ID_MENU_ADDRECORD, L"添加车次");
         AppendMenu(hFile, MF_STRING, ID_MENU_SAVE, L"保存");
         AppendMenu(hFile, MF_STRING, ID_MENU_IMPORT, L"导入数据");
         AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有");
