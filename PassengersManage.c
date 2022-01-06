@@ -211,8 +211,8 @@ vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner)
 vector AddPassenger(YINYUE200_PASSENGERINFO_PTR newpassenger)
 {
 	Yinyue200_InitFullListOfPassengersIfNeed();
-	vector_add(&yinyue200_FullListOfPassengers, newpassenger);
-	HashMap_Add(yinyue200_Passengers_OwnerIndexed, vector_total(yinyue200_FullListOfPassengers));
+	vector_add(yinyue200_FullListOfPassengers, newpassenger);
+	HashMap_Add(yinyue200_Passengers_OwnerIndexed, vector_total(yinyue200_FullListOfPassengers) - 1);
 }
 
 vector DeletePassenger(YINYUE200_PASSENGERINFO_PTR record)

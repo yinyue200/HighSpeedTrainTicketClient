@@ -19,7 +19,9 @@
 #include "ControlsCommonOperation.h"
 #include <CommCtrl.h>
 #include "PassengersManage.h"
+#include "PassengersManageWindow.h"
 #include "MainWindow.h"
+#include "PassengerRecordEditWindow.h"
 #define ID_LISTVIEW_DATA 1
 #define ID_BUTTON_DEL 2
 #define ID_BUTTON_ADD 3
@@ -108,6 +110,31 @@ void LayoutControls_PassengersManageWindow(HWND hwnd, UINT dpi, YINYUE200_PASSEN
     YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ADD, 10, buttony, 50, 25);
     YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_DEL, 70, buttony, 50, 25);
 
+}
+YINYUE200_PASSENGERSMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_PassengersManageWindow_PassengerAddOrEdit_Callback_Context()
+{
+    return yinyue200_safemallocandclear(sizeof(YINYUE200_PASSENGERSMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT));
+}
+void PassengersManageWindow_addoreditcallback(YINYUE200_PASSENGERINFO_PTR data, void* context)
+{
+    YINYUE200_PASSENGERSMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = context;
+    HWND hwnd = callbackcontext->hwnd;
+    if (data != NULL)
+    {
+        YINYUE200_PASSENGERSMANAGEWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (windowdata)
+        {
+            if (callbackcontext->add)
+            {
+                AddPassenger(data);
+            }
+        }
+        else
+        {
+            FreePassengerInfo(data);
+        }
+    }
+    free(context);
 }
 #define YINYUE200_SEARCH_IMPL(id,name) case id:rev = wcscmp(record->name, searchtext);break
 #define YINYUE200_COMBOBOXITEMSCOUNT 7
@@ -329,7 +356,13 @@ LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             break;
             case ID_BUTTON_ADD:
             {
+                YINYUE200_PASSENGERSMANAGEWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
+                YINYUE200_PASSENGERSMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_PassengersManageWindow_PassengerAddOrEdit_Callback_Context();
+                callbackcontext->hwnd = hwnd;
+                callbackcontext->add = true;
+
+                CreatePassengerRecordEditWindow(NULL, PassengersManageWindow_addoreditcallback, callbackcontext);
                 break;
             }
             }
@@ -440,7 +473,19 @@ LRESULT Yinyue200_PassengersManageWindow_InsertListViewItems_ListViewNotify(HWND
         LPNMITEMACTIVATE lpnmitem = lParam;
         if (lpnmitem->iItem >= 0)
         {
-            //CreateLoginWindow(GetNowLoginedUserName(), edititemlogined, VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, lpnmitem->iItem));
+            HWND hListView = GetDlgItem(hWnd, ID_LISTVIEW_DATA);
+            YINYUE200_PASSENGERINFO_PTR ptr;
+            int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+            if (iPos >= 0)
+            {
+                ptr = vector_get(&windata->NowList, iPos);
+
+                YINYUE200_PASSENGERSMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_PassengersManageWindow_PassengerAddOrEdit_Callback_Context();
+                callbackcontext->hwnd = hWnd;
+
+                CreatePassengerRecordEditWindow(ptr, PassengersManageWindow_addoreditcallback, callbackcontext);
+            }
+
         }
         break;
     }

@@ -26,7 +26,7 @@ typedef void (*HashMap_FreeItemFunc)(void* obj);
 typedef struct HashMapNode
 {
 	void* value;
-	int64_t hashvalue;
+	uint64_t hashvalue;
 	struct HashMapNode* next;
 } HASHMAPNODE;
 typedef struct HashMapNodeBasic
@@ -36,7 +36,7 @@ typedef struct HashMapNodeBasic
 } HASHMAPNODEBASIC;
 typedef struct HashMap
 {
-	HASHMAPNODE* item;
+	HASHMAPNODEBASIC* item;
 	size_t listsize;
 	size_t count;
 	HashMap_HashKeyFunc hashKeyFunc;

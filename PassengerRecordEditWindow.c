@@ -29,7 +29,7 @@ typedef struct Yinyue200_PassengerInfoEditWindowData
     bool callbacksent;
 } YINYUE200_PASSENGERINFOEDITWINDOWDATA;
 LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(YINYUE200_PASSENGERINFO_PTR productrecord, PassengerInfoEditFinishCallback callback, void* callbackcontext)
+void CreatePassengerRecordEditWindow(YINYUE200_PASSENGERINFO_PTR productrecord, PassengerInfoEditFinishCallback callback, void* callbackcontext)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.PassengerRecordEditWindow";
@@ -85,7 +85,7 @@ YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_##tag, 10, lasty, 500, 20);\
 lasty+=25;\
 }while (0)
 //确定各控件位置
-void LayoutControls_RoutePointEditWindow(HWND hwnd, UINT dpi, YINYUE200_PASSENGERINFOEDITWINDOWDATA* windata)
+void LayoutControls_PassengerRecordEditWindow(HWND hwnd, UINT dpi, YINYUE200_PASSENGERINFOEDITWINDOWDATA* windata)
 {
     Yinyue200_SetWindowSize(hwnd, 600, 500, dpi);
     if (windata->lastfont)
@@ -109,7 +109,7 @@ void LayoutControls_RoutePointEditWindow(HWND hwnd, UINT dpi, YINYUE200_PASSENGE
 }
 #define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
 //初始化编辑框初值
-void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_PASSENGERINFO_PTR productrecord)
+void passengerrecordeditwindow_initctrl(HWND hwnd, YINYUE200_PASSENGERINFO_PTR productrecord)
 {
     
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_IDTYPE, IDType);
@@ -153,9 +153,9 @@ LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wPar
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
         HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
 
-        routepointeditwindow_initctrl(hwnd, windata->PassengerInfo);//初始化编辑框初值
+        passengerrecordeditwindow_initctrl(hwnd, windata->PassengerInfo);//初始化编辑框初值
 
-        LayoutControls_RoutePointEditWindow(hwnd, yinyue200_GetDpiForWindow(hwnd), windata);
+        LayoutControls_PassengerRecordEditWindow(hwnd, yinyue200_GetDpiForWindow(hwnd), windata);
     }
     break;
     case WM_DESTROY:
