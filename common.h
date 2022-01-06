@@ -1,18 +1,18 @@
 //  SimpleStoreErp
-//	Copyright(C) 2021 殷越
+//  Copyright(C) 2021 殷越
 //
-//	This program is free software : you can redistribute it and /or modify
-//	it under the terms of the GNU General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
+//  This program is free software : you can redistribute it and /or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//	GNU General Public License for more details.
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//  GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program. If not, see <https://www.gnu.org/licenses/>.
+//  You should have received a copy of the GNU General Public License
+//  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 #include <windows.h>
 #include <windowsx.h>
@@ -20,21 +20,6 @@
 #include "vector.h"
 #include <string.h>
 #include <stdint.h>
-//  SimpleStoreErp
-//	Copyright(C) 2021 殷越
-//
-//	This program is free software : you can redistribute it and /or modify
-//	it under the terms of the GNU General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-//
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//	GNU General Public License for more details.
-//
-//	You should have received a copy of the GNU General Public License
-//	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <stdio.h>
 #define YINYUE200_SKIP_LOGINCHECK 1 //调试时是否跳过登录
 #define YINYUE200_ROUTEPOINTEDITWINDOW_ALWAYS_PERFORMCHANGES_ON_NEWOBJECT 0
@@ -43,8 +28,8 @@
 //C 语言下利用宏实现的类泛型元组结构体定义
 #define YINYUE200_DEFINE_PAIR(type1,type2) typedef struct tag_yinyue200_pair_of_##type1##_##type2 \
 {\
-	type1 Item1;\
-	type2 Item2;\
+  type1 Item1;\
+  type2 Item2;\
 } YINYUE200_PAIR_OF_##type1##_##type2;
 YINYUE200_DEFINE_PAIR(uint64_t, uint64_t)
 YINYUE200_DEFINE_PAIR(wchar_t, double)
@@ -111,6 +96,6 @@ int64_t xxHashPWSTR(PWSTR str);
 bool ComparePWSTR(PCWSTR left, PCWSTR right);
 inline void Yinyue200_FreeAndClear(void** str)
 {
-	free(*str);
-	*str = NULL;
+  free(*str);
+  *str = NULL;
 }
