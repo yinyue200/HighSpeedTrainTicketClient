@@ -17,24 +17,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vector.h"
-
+//初始化一个新元素
 void vector_init(vector* v)
 {
     vector_initwithcap(v, VECTOR_INIT_CAPACITY);
 }
-
+//指定初始化的数组大小
 void vector_initwithcap(vector* v,size_t capacity)
 {
     v->capacity = max(capacity, 2);
     v->total = 0;
     v->items = malloc(sizeof(void*) * v->capacity);
 }
-
+//统计元素数量
 int vector_total(vector* v)
 {
     return v->total;
 }
-
+//更新数组容量
 static void vector_resize(vector* v, int capacity)
 {
 #ifdef DEBUG_ON
@@ -47,27 +47,27 @@ static void vector_resize(vector* v, int capacity)
         v->capacity = capacity;
     }
 }
-
+//增加一个元素
 void vector_add(vector* v, void* item)
 {
     if (v->capacity == v->total)
         vector_resize(v, v->capacity * 2);
     ((void**)v->items)[v->total++] = item;
 }
-
+//为元素赋值
 void vector_set(vector* v, int index, void* item)
 {
     if (index >= 0 && index < v->total)
         ((void**)v->items)[index] = item;
 }
-
+//获取一个元素
 void* vector_get(vector* v, int index)
 {
     if (index >= 0 && index < v->total)
         return ((void**)v->items)[index];
     return NULL;
 }
-
+//删除该元素
 void vector_delete(vector* v, int index)
 {
     if (index < 0 || index >= v->total)
@@ -85,22 +85,22 @@ void vector_delete(vector* v, int index)
     if (v->total > 0 && v->total == v->capacity / 4)
         vector_resize(v, v->capacity / 2);
 }
-
+//释放该元素所占空间
 void vector_free(vector* v)
 {
     free(v->items);
 }
-
+//将数组元素的数量清零
 void vector_clear(vector* v)
 {
     v->total = 0;
 }
-
+//移动该元素
 void vector_move(vector* left, vector* right)
 {
     memcpy(left, right, sizeof(vector));
 }
-
+//复制该元素
 vector vector_clone(vector* right)
 {
     vector vec;
@@ -111,7 +111,7 @@ vector vector_clone(vector* right)
         memcpy(vec.items, right->items, sizeof(void*) * right->capacity);
     return vec;
 }
-
+//对元素进行排序
 void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func,void* context)
 {
     qsort_s(vec->items, vector_total(vec), sizeof(void*), func, context);

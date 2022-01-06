@@ -36,19 +36,31 @@ typedef struct vector {
     int capacity;
     int total;
 } vector;
-
+//初始化一个新元素
 void vector_init(vector*);
+//统计元素数量
 int vector_total(vector*);
+//更新数组容量
 static void vector_resize(vector*, int);
+//添加一个元素
 void vector_add(vector*, void*);
+//为元素赋值
 void vector_set(vector*, int, void*);
+//获取一个元素
 void* vector_get(vector*, int);
+//删除该元素
 void vector_delete(vector*, int);
+//释放该元素所占空间
 void vector_free(vector*);
+//将数组元素的数量清零
 void vector_clear(vector*);
+//移动该元素
 void vector_move(vector* left, vector* right);
+//指定初始化的数组大小
 void vector_initwithcap(vector* v, size_t capacity);
+//复制该元素
 vector vector_clone(vector* right);
+//对元素进行排序
 void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func, void* context);
 #endif
 
