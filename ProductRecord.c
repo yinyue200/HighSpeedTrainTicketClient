@@ -162,6 +162,7 @@ FailedIfFalse(WritePWSTR(L"\t", hFile));\
 free(str1);\
 free(str);\
 }while(0)
+//写入记录到文件
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 {
 	HANDLE hFile = CreateFile(path,               // file to open
@@ -193,6 +194,7 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 	}
 	CloseHandle(hFile);
 }
+//读取记录信息
 vector* ProductRecordLoadToVector(LPWSTR path)
 {
 	//FILE SHOULD BE UTF-8 ENCODED
