@@ -26,6 +26,22 @@ YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
     vector_init(&PT->TicketCount);
     return PT;
 }
+void AddTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
+{
+    VECTOR_ADD(yinyue200_ProductList, record);
+}
+void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
+{
+    for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
+    {
+        YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, YINYUE200_TRAINPLANRECORD_PTR, i);
+        if (allproduct == record)
+        {
+            VECTOR_DELETE(yinyue200_ProductList, i);
+            break;
+        }
+    }
+}
 void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     free(record->Name);

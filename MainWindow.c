@@ -887,7 +887,7 @@ void logincheckmsg(void* context)
                 for (size_t i = 0; i < vector_total(vec); i++)
                 {
                     YINYUE200_TRAINPLANRECORD_PTR one = vector_get(vec, i);
-                    vector_add(&yinyue200_ProductList, one);
+                    AddTrainPlanRecord(one);
                 }
                 vector_free(vec);
                 free(vec);
@@ -912,15 +912,7 @@ void logincheckmsg(void* context)
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
                         YINYUE200_TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
-                        for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
-                        {
-                            YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(yinyue200_ProductList, YINYUE200_TRAINPLANRECORD_PTR, i);
-                            if (allproduct == productrecord)
-                            {
-                                VECTOR_DELETE(yinyue200_ProductList, i);
-                                break;
-                            }
-                        }
+                        RemoveTrainPlanRecord(productrecord);
                         for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
                         {
                             YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);

@@ -76,6 +76,8 @@ typedef struct Yinyue200_TrainPlanRecord
                          //中国铁道出版社 全国铁路客运运价里程接算站示意图 
 } YINYUE200_TRAINPLANRECORD;
 typedef YINYUE200_TRAINPLANRECORD* YINYUE200_TRAINPLANRECORD_PTR;
+void AddTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record);
+void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record);
 //创建记录，并传递所有权（调用者负责free）
 YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord();
 void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record);

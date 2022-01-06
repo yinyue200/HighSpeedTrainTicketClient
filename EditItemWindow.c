@@ -576,7 +576,9 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 deepcopy_TrainPlanRecord_RoutePoints(&productrecord->RoutePoints, &windowdata->Route);
 
                 if (windowdata->TrainPlanRecord == NULL)
-                    VECTOR_ADD(yinyue200_ProductList, productrecord);
+                {
+                    AddTrainPlanRecord(productrecord);
+                }
 
                 if (LOWORD(wParam) == ID_BUTTON_SAVEANDNEXT)
                 {

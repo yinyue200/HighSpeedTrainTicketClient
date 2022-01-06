@@ -14,6 +14,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
+#include "common.h"
 typedef struct Yinyue200_MainWindowData
 {
     HWND WindowHwnd;
@@ -27,7 +28,7 @@ typedef struct Yinyue200_MainWindowData
     HWND Font;
 } YINYUE200_MAINWINDOWDATA;
 void CreateMainWindow();
-void Yinyue200_Main_UpdateListViewData(HWND hwnd);
+void Yinyue200_Main_UpdateListViewData(HWND hwnd, UINT dpi);
 typedef struct Yinyue200_Main_ListViewSortContext
 {
     //获取排序成员
