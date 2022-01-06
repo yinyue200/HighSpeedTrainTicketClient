@@ -3,6 +3,7 @@
 #include "ControlsCommonOperation.h"
 #include "DpiHelper.h"
 #include "PassengerRecordEditWindow.h"
+#include "LoginWindow.h"
 #define ID_BUTTON_SAVE 1
 #define ID_BUTTON_CANCEL 2
 #define ID_EDIT_IDTYPE 3
@@ -150,10 +151,15 @@ LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wPar
         ADDLABELANDEDIT(EMERGENCYCONTCATPERSONFULLNAME, L"紧急联系人姓名");
         ADDLABELANDEDIT(EMERGENCYCONTCATPERSONPHONENUMBER, L"紧急联系人手机号");
 
+        EnableWindow(hwnd_OWNER_Edit, false);
         if (windata->PassengerInfo != NULL)
         {
             EnableWindow(hwnd_IDTYPE_Edit, false);//不允许证件类型修改
             EnableWindow(hwnd_IDNUMBER_Edit, false);//不允许证件号修改
+        }
+        else
+        {
+            SendMessage(hwnd_OWNER_Edit, WM_SETTEXT, 0, GetNowLoginedUserName());
         }
 
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
