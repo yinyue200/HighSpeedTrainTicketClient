@@ -112,7 +112,11 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
         }
     }
 }
-
+//创建一个新的 hashmap
+//@param 初始大小
+//@param 判断两个 key 是否相等的函数指针
+//@param 通过元素获取执行key的指针的函数指针
+//@param 析构元素的函数指针
 HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc)
 {
     size = max(size, HASHMAP_INIT_SIZE);
@@ -134,7 +138,8 @@ HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_IsKeyEqual
     }
     return map;
 }
-
+//析构一个 hashmap
+//@param 要析构的 hashmap
 void HashMap_Free(HASHMAP* map)
 {
 
@@ -159,14 +164,17 @@ void HashMap_Free(HASHMAP* map)
 
     free(map->item);
 }
+//返回 hashmap 中是否包含有指定 key 的元素
 bool HashMap_ContainKey(HASHMAP* map, void* key)
 {
     return HashMap_GetPointerByKey(map, key, false) != NULL;
 }
+//获取 hashmap 中是否包含有指定 key 的元素
 void* HashMap_GetByKey(HASHMAP* map, void* key)
 {
     return *HashMap_GetPointerByKey(map, key, false);
 }
+//从 hashmap 中删除所有指定 key 的元素
 void* HashMap_RemoveByKey(HASHMAP* map, void* key)
 {
     uint64_t hash = map->hashKeyFunc(key);
@@ -184,6 +192,8 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
                 //node is the node to be del
                 if (node == &firstnode->node)
                 {
+                    map->delKeyFunc(firstnode->node.value);
+
                     if (firstnode->node.next == NULL)
                     {
                         firstnode->used = 0;
@@ -192,6 +202,10 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
                     {
                         memcpy(firstnode, firstnode->node.next, sizeof(HASHMAPNODE));
                     }
+
+                    map->count--;
+
+                    goto skipround;
                 }
                 else
                 {
@@ -200,6 +214,8 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
                     node = node->next;
                     map->delKeyFunc(tobedel->value);
                     free(tobedel);
+
+                    map->count--;
 
                     firstnode->used--;
 
@@ -239,6 +255,11 @@ void HashMap_CheckAndResize(HASHMAP* map)
         }
     }
 }
+//获取指定 key 的元素指针
+//@param hashmap
+//@param 指定的 key
+//@param 是否允许在找不到指定 key 的指针时预留新的元素位置以使得返回值不为空
+//@return 指向元素指针的指针
 void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 {
     if (allowadd)
@@ -274,6 +295,8 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 
                 firstnode->used++;
 
+                map->count++;
+
                 return &firstnode->node.value;
             }
             else
@@ -289,11 +312,25 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
     }
     else
     {
-        HashMap_SetNode(firstnode, hash);
-        return &firstnode->node.value;
+        if (allowadd)
+        {
+            map->count++;
+
+            HashMap_SetNode(firstnode, hash);
+            return &firstnode->node.value;
+        }
+        else
+        {
+            return NULL;
+        }
     }
 }
-
+//该函数可用于获取指定 key 的所有元素
+//@param hashmap
+//@param 指定的 key
+//@param lastnode
+//@param 当 lastnode 为 NULL 时 *maxposscount 将设置为该哈希表中 key 为该 key 的最多可能的元素数量
+//@return 当 lastnode 不为 NULL 时，返回 hashcode 中首个 key 为该 key 的元素，否则返回lastnode的下一个 key 为该 key 的元素
 HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *lastnode, size_t *maxposscount)
 {
     if (lastnode == NULL)
@@ -320,8 +357,7 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *last
         }
         else
         {
-            HashMap_SetNode(&tobefind->node, hash);
-            return &tobefind->node;
+            return NULL;
         }
     }
     else
@@ -343,6 +379,7 @@ void HashMap_RehashNode(HASHMAP* map, HASHMAPNODE* node)
 {
     node->hashvalue = map->hashKeyFunc(map->getKeyFunc(node->value));
 }
+//重新计算哈希表中元素的哈希值
 void HashMap_Rehash(HASHMAP* map)
 {
     for (size_t i = 0; i < map->listsize; i++)
@@ -361,6 +398,7 @@ void HashMap_Rehash(HASHMAP* map)
     }
     HashMap_RePlace(map, map->listsize);
 }
+//在哈希表中添加新的元素
 void HashMap_Add(HASHMAP* map, void* item)
 {
     HashMap_CheckAndResize(map);
@@ -390,4 +428,5 @@ void HashMap_Add(HASHMAP* map, void* item)
         firstnode->node.value = item;
         firstnode->used = 1;
     }
+    map->count++;
 }
