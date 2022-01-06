@@ -464,7 +464,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                     {
                         if (IsTimeFieldChk)
                         {
-                            uint64_t timepart = GetTimePartUINT64OFUINT64(record->StartTimePoint);
+                            uint64_t timepart = GetLocalTimePartUINT64OFUINT64(record->StartTimePoint);
                             SHOULDREV &= (timepart >= FieldTimeInt_Bottom && timepart <= FieldTimeInt_Top);
                         }
                     } while (0);

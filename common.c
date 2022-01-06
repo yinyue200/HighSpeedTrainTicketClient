@@ -301,13 +301,22 @@ FILETIME ConvertDateToUTCFILETIME(int year, int month, int day)
 }
 uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second)
 {
-	return Yinyue200_ConvertToTotalSecondFromUINT64(hour * 3600llu + minute * 60llu + second);
+	return Yinyue200_ConvertToUINT64FromTotalSecond(hour * 3600llu + minute * 60llu + second);
 }
 uint64_t GetTimePartUINT64OFUINT64(uint64_t time)
 {
 	FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
 	SYSTEMTIME systime;
 	FileTimeToSystemTime(&filetime, &systime);
+	return ConvertTimeToUINT64(systime.wHour, systime.wMinute, systime.wSecond) + systime.wMilliseconds * 10000;
+}
+uint64_t GetLocalTimePartUINT64OFUINT64(uint64_t time)
+{
+	FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
+	FILETIME localfiletime;
+	SYSTEMTIME systime;
+	FileTimeToLocalFileTime(&filetime, &localfiletime);
+	FileTimeToSystemTime(&localfiletime, &systime);
 	return ConvertTimeToUINT64(systime.wHour, systime.wMinute, systime.wSecond) + systime.wMilliseconds * 10000;
 }
 vector SplitStringToVectorOfString(PWSTR str, PWSTR spl)

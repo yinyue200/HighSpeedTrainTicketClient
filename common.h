@@ -101,6 +101,7 @@ FILETIME ConvertDateToUTCFILETIME(int year, int month, int day);
 //输入的是本地时间
 FILETIME ConvertDateToLocalFILETIME(int year, int month, int day);
 uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second);
+uint64_t GetLocalTimePartUINT64OFUINT64(uint64_t time);
 uint64_t GetTimePartUINT64OFUINT64(uint64_t time);
 vector SplitStringToVectorOfString(PWSTR str, PWSTR spl);
 void FreeVectorOfString(vector* vec);
