@@ -1,5 +1,5 @@
-//  SimpleStoreErp
-//  Copyright(C) 2021 “Û‘Ω
+//  HighSpeedTrainTicketClient
+//  Copyright(C) 2022 “Û‘Ω
 //
 //  This program is free software : you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by

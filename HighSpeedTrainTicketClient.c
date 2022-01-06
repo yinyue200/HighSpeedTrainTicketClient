@@ -1,9 +1,9 @@
-// SimpleStoreErp.c : This file contains the 'main' function. Program execution begins and ends there.
+// HighSpeedTrainTicketClient.c : This file contains the 'main' function. Program execution begins and ends there.
 //
-//  SimpleStoreErp
-//  Copyright(C) 2021 “Û‘Ω
+//  HighSpeedTrainTicketClient
+//  Copyright(C) 2022 “Û‘Ω
 //
-//  This program is free software : you can redistribute it and /or modify
+//  This program is free software : you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
 //  (at your option) any later version.

@@ -168,7 +168,7 @@
     <ClCompile Include="ProductRecord.c" />
     <ClCompile Include="RoutePointEditWindow.c" />
     <ClCompile Include="sha256.c" />
-    <ClCompile Include="SimpleStoreErp.c" />
+    <ClCompile Include="HighSpeedTrainTicketClient.c" />
     <ClCompile Include="stdatomic.c" />
     <ClCompile Include="UserManage.c" />
     <ClCompile Include="UserSetting.c" />

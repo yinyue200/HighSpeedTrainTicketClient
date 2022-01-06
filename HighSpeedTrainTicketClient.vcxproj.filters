@@ -27,7 +27,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SimpleStoreErp.c">
+    <ClCompile Include="HighSpeedTrainTicketClient.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdatomic.c">
