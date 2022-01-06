@@ -369,7 +369,7 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
     }
 }
 
-int64_t xxHashPWSTR(PWSTR str)
+uint64_t xxHashPWSTR(PWSTR str)
 {
     size_t len = wcslen(str);
     return xxhash_hash64_once(str, len, 0);
