@@ -24,6 +24,7 @@
 #include "DpiHelper.h"
 #include "ControlsCommonOperation.h"
 #include <CommCtrl.h>
+#include "PassengersManageWindow.h"
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
 #define ID_MENU_ABOUT 1
@@ -46,6 +47,7 @@
 #define ID_MENU_CHANGEPWD 18
 #define ID_MENU_SHOWUSERSLIST 19
 #define ID_MENU_IMPORT 20
+#define ID_MENU_PASSMANAGE 21 //乘客管理菜单
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
@@ -337,7 +339,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
             windata->sortmethod = 1;
         }
         windata->sortstate = 0;
-        Yinyue200_Main_UpdateListViewData(hWnd);
+        Yinyue200_Main_UpdateListViewData(hWnd, yinyue200_GetDpiForWindow(hWnd));
     }
     case NM_DBLCLK:
     {
@@ -392,7 +394,7 @@ BOOL InsertListViewItems(HWND hwndListView,size_t count)
 }
 #define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ↑",TEXT(name) L" ↓" }
 #define MAINWINDOW_COLUMNCOUNT 6
-void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
+void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first,UINT dpi)
 {
     HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
     LPWSTR       szString_o[MAINWINDOW_COLUMNCOUNT][3] = {
@@ -431,7 +433,7 @@ void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
     //initialize the columns
     lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     lvColumn.fmt = LVCFMT_LEFT;
-    lvColumn.cx = 120;
+    lvColumn.cx = YINYUE200_LOGICTOPHYBYDPI(120, dpi);
     for (i = 0; i < MAINWINDOW_COLUMNCOUNT; i++)
     {
         lvColumn.pszText = szString[i];
@@ -441,21 +443,15 @@ void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first)
             ListView_SetColumn(hwndListView, i, &lvColumn);
     }
 }
-BOOL Yinyue200_Main_InitListView(HWND hwnd,HWND hwndListView)
+BOOL Yinyue200_Main_InitListView(HWND hwnd,HWND hwndListView, UINT dpi)
 {
-    Yinyue200_Main_SetListViewColumn(hwnd, true);
+    Yinyue200_Main_SetListViewColumn(hwnd, true, dpi);
 
     InsertListViewItems(hwndListView, 0);
 
     return TRUE;
 }
-typedef struct Yinyue200_Main_ListViewSortContext
-{
-    //获取排序成员
-    void* (*GetCompareObject)(void* obj);
-    //是否反转比较结果
-    BOOL IS_REV_RESULT;
-} YINYUE200_MAINLISTVIEWSORTCONTEXT;
+
 int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right)
 {
     //宽字符串排序比较函数
@@ -504,7 +500,7 @@ int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* 
     vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_##comparetail##Compare, &qsortcontext);\
     break;\
 }
-void Yinyue200_Main_UpdateListViewData(HWND hwnd)
+void Yinyue200_Main_UpdateListViewData(HWND hwnd, UINT dpi)
 {
     HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
     HWND nextpagebtn = GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE);
@@ -529,8 +525,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
                 break;
             }
                 //以下是不同字段排序代码实现
-                ITEM_COMPAREIMPL(0,PWSTR,Name)
-                ITEM_COMPAREIMPL(1,int64,ID)
+                ITEM_COMPAREIMPL(0, PWSTR, Name)
                 ITEM_COMPAREIMPL(2, PWSTR, Type)
                 ITEM_COMPAREIMPL(3, PWSTR, State)
 
@@ -562,7 +557,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
             VECTOR_FREE(windata->PagedNowList);
             VECTOR_MOVE(windata->PagedNowList, nn);
         }
-        Yinyue200_Main_SetListViewColumn(hwnd, false);
+        Yinyue200_Main_SetListViewColumn(hwnd, false, dpi);
         InsertListViewItems(listview, VECTOR_TOTAL(windata->PagedNowList));
 
         wchar_t message[30];
@@ -573,7 +568,7 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd)
 //更新按钮状态并更新主列表
 void UpdateCheckBoxInfo(HWND hwnd,YINYUE200_MAINWINDOWDATA* windowdata)
 {
-    Yinyue200_Main_UpdateListViewData(hwnd);
+    Yinyue200_Main_UpdateListViewData(hwnd, yinyue200_GetDpiForWindow(hwnd));
     HWND lastpagebtn = GetDlgItem(hwnd, ID_BUTTON_PREVPAGE);
     HWND nextpagebtn = GetDlgItem(hwnd, ID_BUTTON_NEXTPAGE);
     HWND editpagebtn = GetDlgItem(hwnd, ID_EDIT_PAGE);
@@ -997,16 +992,15 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HMENU hFile = CreateMenu();
         HMENU hFind = CreateMenu();
         HMENU hAdd = CreateMenu();
-        HMENU hAddItem = CreateMenu();
-        HMENU hAns = CreateMenu();
+        HMENU hBookTicket = CreateMenu();
         HMENU hUsr = CreateMenu();
         HMENU hHelp = CreateMenu();
 
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFile, L"文件");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFind, L"查询");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAdd, L"新增");
-        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAns, L"统计");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hUsr, L"用户管理");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hBookTicket, L"订票");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hHelp, L"帮助");
 
         AppendMenu(hHelp, MF_STRING, ID_MENU_VWS, L"GitHub");
@@ -1021,13 +1015,14 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hUsr, MF_STRING, ID_MENU_ADDUSER, L"添加用户");
         AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"重设用户密码和权限");
         AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
+        AppendMenu(hBookTicket, MF_STRING, ID_MENU_PASSMANAGE, L"乘客管理");
 
         UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
         SetMenu(hwnd, hMenubar);
 
         HWND listview = Yinyue200_Main_CreateListView(hwnd, dpi);
-        Yinyue200_Main_InitListView(hwnd,listview);
+        Yinyue200_Main_InitListView(hwnd, listview, dpi);
 
         HWND hwndPageButton = Yinyue200_FastCreateCheckBoxControl(hwnd, ID_CHECKBOX_PAGE, L"按页显示");
         HWND hwndPrevPageButton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_PREVPAGE, L"上一页");
@@ -1059,6 +1054,10 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
         switch (LOWORD(wParam))
         {
+        case ID_MENU_PASSMANAGE:
+            //乘客管理
+            CreatePassengersManageWindow();
+            break;
         case ID_MENU_VWS:
             ShellExecute(NULL, L"Open", L"https://github.com/yinyue200/SimpleStoreErp", NULL, NULL, SW_SHOWNORMAL);
             break;

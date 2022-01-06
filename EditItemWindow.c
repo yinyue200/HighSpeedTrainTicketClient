@@ -113,7 +113,11 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 #define SETNULLORPRODUCTINFOMEMBERINTDATA_EXPR(chwnd,expr) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lld", (expr)); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
 #define SETNULLORPRODUCTINFOMEMBERINTDATA(chwnd,member) SETNULLORPRODUCTINFOMEMBERINTDATA_EXPR(chwnd,productrecord->##member)
 #define SETNULLORPRODUCTINFOMEMBERPRICEDATA(chwnd,member) if(productrecord==NULL)SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, L"");else{ WCHAR _temp_buffer[30];swprintf(_temp_buffer,30, L"%lf", productrecord->##member); SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, _temp_buffer);}
-#define SAVEPRODUCTINFOMEMBERDATA(memberid,member) productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));
+#define SAVEPRODUCTINFOMEMBERDATA(memberid,member) do\
+{\
+    free(productrecord->##member);\
+    productrecord->##member=CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
+}while(0);
 #define SAVEPRODUCTINFOMEMBERINT32DATA(memberid,member,expr,defaultdata) do{PWCHAR _temp_int32_str = CreateWstrForWindowText(GetDlgItem(hwnd,memberid));\
 int32_t _temp_int32;\
 int _temp_ret = swscanf(_temp_int32_str, L"%d", &_temp_int32);\
@@ -476,12 +480,15 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         HWND hwnd_ROUTE_Edit = Yinyue200_FastCreateListViewControl(hwnd, ID_LISTVIEW_ROUTE);
 
+        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
+
+
         {
             LV_COLUMN   lvColumn;
             //initialize the columns
             lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
             lvColumn.fmt = LVCFMT_LEFT;
-            lvColumn.cx = 120;
+            lvColumn.cx = YINYUE200_LOGICTOPHYBYDPI(120, dpi);
             LPWSTR szString[EDITITEMWINDOW_COLUMNCOUNT] = {
                 L"车站",
                 L"里程（千米）",
@@ -516,7 +523,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             EnableWindow(hwnd_NAME_Edit, false);
         }
 
-        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
         Yinyue200_SetWindowSize(hwnd, 700, 780, dpi);
 

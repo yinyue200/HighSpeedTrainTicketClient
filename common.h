@@ -109,3 +109,8 @@ void FreeVectorOfString(vector* vec);
 bool WritePWSTR(PCWSTR str, HANDLE hFile);
 int64_t xxHashPWSTR(PWSTR str);
 bool ComparePWSTR(PCWSTR left, PCWSTR right);
+inline void Yinyue200_FreeAndClear(void** str)
+{
+	free(*str);
+	*str = NULL;
+}
