@@ -15,6 +15,7 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
 #include <stdint.h>
+#include "xxhash.h"
 LPWORD lpwAlign(LPWORD lpIn)
 {
 	ULONG ul;
@@ -365,4 +366,14 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
 	{
 		return false;
 	}
+}
+
+int64_t xxHashPWSTR(PWSTR str)
+{
+	size_t len = wcslen(str);
+	return xxhash_hash64_once(str, len, 0);
+}
+bool ComparePWSTR(PCWSTR left, PCWSTR right)
+{
+	return wcscmp(left, right) == 0;
 }

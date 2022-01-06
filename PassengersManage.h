@@ -24,11 +24,33 @@ typedef struct Yinyue200_PassengerInfo
 	PWCHAR PhoneNum;//4
 	PWCHAR EmergencyContactPersonFullName;//5
 	PWCHAR EmergencyContactPhoneNumber;//6
+
+	bool deled;//不序列化
 } YINYUE200_PASSENGERINFO;
 typedef YINYUE200_PASSENGERINFO* YINYUE200_PASSENGERINFO_PTR;
 YINYUE200_PASSENGERINFO_PTR CreatePassengerInfo();
 vector* GetFullListOfPassengerInfo();
-vector* GetFullListOfPassengerInfoRefWithOwner(PWCHAR owner);
+vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner);
 vector AddPassenger(YINYUE200_PASSENGERINFO_PTR newpassenger);
 vector DeletePassenger(YINYUE200_PASSENGERINFO_PTR tobedel);
 void FreePassengerInfo(YINYUE200_PASSENGERINFO_PTR record);
+//构造获取 ProductRecord 成员的函数定义的宏
+#define YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(name) inline void* yinyue200_GetPassengerInfo##name(void* obj)\
+{\
+YINYUE200_PASSENGERINFO_PTR p = obj;\
+return p->name;\
+}
+//构造获取 ProductRecord 成员的地址的函数定义的宏
+#define YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERADDRMETHOD(name) inline void* yinyue200_GetPassengerInfo##name(void* obj)\
+{\
+YINYUE200_PASSENGERINFO_PTR p = obj;\
+return &p->name;\
+}
+
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(IDType)
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(IDNumber)
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(FullName)
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(Owner)
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(PhoneNum)
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(EmergencyContactPersonFullName)
+YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(EmergencyContactPhoneNumber)

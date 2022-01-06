@@ -15,18 +15,6 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
  
 
-//构造获取 ProductRecord 成员的函数定义的宏
-#define DEFINE_GETMEMBERMETHOD(name) void* yinyue200_GetTrainPlanRecord##name(void* obj)\
-{\
-YINYUE200_TRAINPLANRECORD_PTR p = obj;\
-return p->name;\
-}
-//构造获取 ProductRecord 成员的地址的函数定义的宏
-#define DEFINE_GETMEMBERADDRMETHOD(name) void* yinyue200_GetTrainPlanRecord##name(void* obj)\
-{\
-YINYUE200_TRAINPLANRECORD_PTR p = obj;\
-return &p->name;\
-}
 #include "ProductRecord.h"
 
 YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
@@ -325,11 +313,6 @@ vector* ProductRecordLoadToVector(LPWSTR path)
 	CloseHandle(hFile);
 	return vec;
 }
-
-DEFINE_GETMEMBERMETHOD(Name);
-DEFINE_GETMEMBERADDRMETHOD(ID);
-DEFINE_GETMEMBERMETHOD(Type)
-DEFINE_GETMEMBERMETHOD(State)
 
 PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint)
 {

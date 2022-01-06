@@ -15,7 +15,9 @@
 //	along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "PassengersManage.h"
 #include "UserSetting.h"
+#include "HashMap.h"
 static vector* yinyue200_FullListOfPassengers = NULL;
+static HASHMAP* yinyue200_Passengers_OwnerIndexed = NULL;
 //caseid是信息列数（0开始） member是成员名称
 #define LOADWSTRDATATOVECTOR(member,caseid) case caseid:\
 {\
@@ -128,11 +130,23 @@ vector* LoadPassengerInfoFromFile(PWSTR path)
 	CloseHandle(hFile);
 	return vec;
 }
+PWSTR yinyue200_GetOwnerFromIndex(void* index)
+{
+	return yinyue200_GetPassengerInfoOwner(vector_get(yinyue200_FullListOfPassengers, index));
+}
 void Yinyue200_InitFullListOfPassengersIfNeed()
 {
 	if (yinyue200_FullListOfPassengers == NULL)
 	{
 		yinyue200_FullListOfPassengers = LoadPassengerInfoFromFile(yinyue200_GetPassengerInfoConfigFilePath());
+
+		//构建 owner 索引
+		yinyue200_Passengers_OwnerIndexed = yinyue200_safemalloc(sizeof(HASHMAP));
+		*yinyue200_Passengers_OwnerIndexed = HashMap_Create(vector_total(yinyue200_FullListOfPassengers), xxHashPWSTR, ComparePWSTR, yinyue200_GetOwnerFromIndex, HashSet_NoFree);
+		for (int i = 0; i < vector_total(yinyue200_FullListOfPassengers); i++)
+		{
+			HashMap_Add(yinyue200_Passengers_OwnerIndexed, i);
+		}
 	}
 }
 void Yinyue200_FreeFullListOfPassengers()
@@ -145,6 +159,11 @@ void Yinyue200_FreeFullListOfPassengers()
 		}
 		vector_free(yinyue200_FullListOfPassengers);
 		yinyue200_FullListOfPassengers = NULL;
+
+
+		HashMap_Free(yinyue200_Passengers_OwnerIndexed);
+		free(yinyue200_Passengers_OwnerIndexed);
+		yinyue200_Passengers_OwnerIndexed = NULL;
 	}
 }
 YINYUE200_PASSENGERINFO_PTR CreatePassengerInfo()
@@ -168,17 +187,31 @@ vector* GetFullListOfPassengerInfo()
 	return yinyue200_FullListOfPassengers;
 }
 
-vector* GetFullListOfPassengerInfoRefWithOwner(PWCHAR owner)
+vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner)
 {
-	//return vector();
+	size_t maxposs;
+	HASHMAPNODE* node = HashMap_GetPointersByKey(yinyue200_Passengers_OwnerIndexed, owner, NULL, &maxposs);
+	vector vec;
+	vector_initwithcap(&vec, maxposs);
+	while (node)
+	{
+		YINYUE200_PASSENGERINFO_PTR record = vector_get(yinyue200_FullListOfPassengers, node->value);
+		if (record->deled == false)
+		{
+			vector_add(&vec, record);
+		}
+		node = HashMap_GetPointersByKey(yinyue200_Passengers_OwnerIndexed, owner, node, NULL);//get next node
+	}
+	return vec;
 }
 
 vector AddPassenger(YINYUE200_PASSENGERINFO_PTR newpassenger)
 {
-	//return vector();
+	vector_add(&yinyue200_FullListOfPassengers, newpassenger);
+	HashMap_Add(yinyue200_Passengers_OwnerIndexed, vector_total(yinyue200_FullListOfPassengers));
 }
 
 vector DeletePassenger(YINYUE200_PASSENGERINFO_PTR tobedel)
 {
-	//return vector();
+	tobedel->deled = true;
 }

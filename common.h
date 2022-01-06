@@ -107,3 +107,5 @@ vector SplitStringToVectorOfString(PWSTR str, PWSTR spl);
 void FreeVectorOfString(vector* vec);
 //写入宽字符串到文件
 bool WritePWSTR(PCWSTR str, HANDLE hFile);
+int64_t xxHashPWSTR(PWSTR str);
+bool ComparePWSTR(PCWSTR left, PCWSTR right);
