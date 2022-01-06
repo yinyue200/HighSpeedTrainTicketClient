@@ -82,7 +82,7 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
         CLASS_NAME,                     // Window class
-        L"编辑单个记录-我的小店出入库管理系统",    // Window text
+        L"编辑车次",    // Window text
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position

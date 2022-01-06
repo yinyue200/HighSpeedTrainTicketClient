@@ -79,7 +79,7 @@ void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
         CLASS_NAME,                     // Window class
-        L"选择筛选条件-我的小店出入库管理系统",    // Window text
+        L"选择筛选车次条件",    // Window text
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position

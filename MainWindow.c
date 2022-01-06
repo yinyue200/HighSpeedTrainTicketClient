@@ -165,7 +165,7 @@ void CreateMainWindow()
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
         CLASS_NAME,                     // Window class
-        L"我的小店出入库管理系统",    // Window text
+        L"高铁订票系统",    // Window text
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
