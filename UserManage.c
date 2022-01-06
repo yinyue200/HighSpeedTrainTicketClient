@@ -17,7 +17,7 @@
 #include "common.h"
 #include "ProductRecord.h"
 #include "sha256.h"
-
+//写入用户信息
 bool yinyue200_UserRecordSaveToFile(LPWSTR path, vector* vec)
 {
 	HANDLE hFile = CreateFile(path,               // file to open
@@ -49,6 +49,7 @@ bool yinyue200_UserRecordSaveToFile(LPWSTR path, vector* vec)
 	}
 	CloseHandle(hFile);
 }
+//读取用户信息
 vector* UserRecordLoadToVector(LPWSTR path)
 {
 	//FILE SHOULD BE UTF-8 ENCODED
@@ -156,6 +157,7 @@ vector* UserRecordLoadToVector(LPWSTR path)
 	}
 	return vec;
 }
+//对宽字符串做 SHA-256 运算
 void Hash256LPWSTR(LPWSTR str,wchar_t buf[65])
 {
 	int len = wcslen(str);
