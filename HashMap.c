@@ -131,6 +131,7 @@ HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_IsKeyEqual
 		map.getKeyFunc = getkey;
 		map.delKeyFunc = delfunc;
 	}
+	return map;
 }
 
 void HashMap_Free(HASHMAP* map)
