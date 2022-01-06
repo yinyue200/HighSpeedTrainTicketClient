@@ -47,5 +47,8 @@ void* HashMap_GetFromKey(HASHMAP* map, void* key);
 void* HashMap_RemoveByKey(HASHMAP* map, void* key);
 void HashMap_CheckAndResize(HASHMAP* map);
 void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd);
-
+HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE* lastnode);
+void HashMap_Rehash(HASHMAP* map);
+void HashMap_Add(HASHMAP* map, void* item);
+inline void HashSet_NoFree(void* obj){}
 

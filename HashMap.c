@@ -113,6 +113,26 @@ HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_IsKeyEqual
 
 void HashMap_Free(HASHMAP* map)
 {
+
+	for (int i = 0; i < map->listsize; i++)
+	{
+		HASHMAPNODE* firstnode = &map->item[i];
+		if (firstnode->used)
+		{
+			map->delKeyFunc(firstnode->value);
+			HASHMAPNODE* node = firstnode->next;
+			while (node)
+			{
+				HASHMAPNODE* nnode = node->next;
+
+				map->delKeyFunc(node->value);
+				free(node);
+
+				node = nnode;
+			}
+		}
+	}
+
 	free(map->item);
 }
 bool HashMap_ContainKey(HASHMAP* map, void* key)
@@ -245,4 +265,94 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 	}
 }
 
-
+HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *lastnode)
+{
+	if (lastnode == NULL)
+	{
+		int64_t hash = map->hashKeyFunc(key);
+		size_t place = hash % map->listsize;
+		HASHMAPNODE* tobefind = &map->item[place];
+		if (tobefind->used)
+		{
+			HASHMAPNODE* onode;
+			HASHMAPNODE* node = tobefind;
+			do
+			{
+				onode = node;
+				if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key))
+				{
+					return &node;
+				}
+				node = node->next;
+			} while (node);
+			return NULL;
+		}
+		else
+		{
+			HashMap_SetNode(tobefind, hash);
+			return &tobefind;
+		}
+	}
+	else
+	{
+		int64_t hash = lastnode->hashvalue;
+		HASHMAPNODE* node = lastnode->next;
+		while (node)
+		{
+			if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key))
+			{
+				return node;
+			}
+			node = node->next;
+		}
+	}
+}
+void HashMap_RehashNode(HASHMAP* map, HASHMAPNODE* node)
+{
+	node->hashvalue = map->hashKeyFunc(map->getKeyFunc(node->value));
+}
+void HashMap_Rehash(HASHMAP* map)
+{
+	for (size_t i = 0; i < map->listsize; i++)
+	{
+		HASHMAPNODE* firstnode = &map->item[i];
+		if (firstnode->used)
+		{
+			HashMap_RehashNode(map, firstnode);
+			HASHMAPNODE* node = firstnode->next;
+			while (node)
+			{
+				HashMap_RehashNode(map, node);
+				node = node->next;
+			}
+		}
+	}
+	HashMap_RePlace(map, map->listsize);
+}
+void HashMap_Add(HASHMAP* map, void* item)
+{
+	HashMap_CheckAndResize(map);
+	int64_t hash = map->hashKeyFunc(map->getKeyFunc(item));
+	size_t place = hash % map->listsize;
+	HASHMAPNODE* firstnode = &map->item[hash];
+	if (firstnode->used)
+	{
+		HASHMAPNODE* nnnode = malloc(sizeof(HASHMAPNODE));
+		if (nnnode)
+		{
+			HashMap_SetNode(nnnode, hash);
+			nnnode->value = item;
+			nnnode->next = firstnode->next;
+			firstnode->next = nnnode;
+		}
+		else
+		{
+			UnrecoveryableFailed();
+		}
+	}
+	else
+	{
+		HashMap_SetNode(firstnode, hash);
+		firstnode->value = item;
+	}
+}
