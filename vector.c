@@ -95,12 +95,12 @@ void vector_clear(vector* v)
 {
     v->total = 0;
 }
-//移动该元素
+//移动整个vector
 void vector_move(vector* left, vector* right)
 {
     memcpy(left, right, sizeof(vector));
 }
-//复制该元素
+//复制整个vector
 vector vector_clone(vector* right)
 {
     vector vec;

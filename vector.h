@@ -54,11 +54,11 @@ void vector_delete(vector*, int);
 void vector_free(vector*);
 //将数组元素的数量清零
 void vector_clear(vector*);
-//移动该元素
+//移动整个vector
 void vector_move(vector* left, vector* right);
 //指定初始化的数组大小
 void vector_initwithcap(vector* v, size_t capacity);
-//复制该元素
+//复制整个vector
 vector vector_clone(vector* right);
 //对元素进行排序
 void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func, void* context);
