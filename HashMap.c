@@ -334,6 +334,7 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *last
 			}
 			node = node->next;
 		}
+		return NULL;
 	}
 }
 void HashMap_RehashNode(HASHMAP* map, HASHMAPNODE* node)
