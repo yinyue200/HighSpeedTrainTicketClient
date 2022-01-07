@@ -86,6 +86,13 @@ FILETIME ConvertDateToUTCFILETIME(int year, int month, int day);
 //输入的是本地时间
 FILETIME ConvertDateToLocalFILETIME(int year, int month, int day);
 uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second);
+uint64_t GetDatePartUINT64OFUINT64(uint64_t time);
+/// <summary>
+/// 将国际时间转换为本地时间并获取其日期部分
+/// </summary>
+/// <param name="time">国际时间</param>
+/// <returns></returns>
+uint64_t GetLocalDatePartUINT64OFUINT64(uint64_t time);
 uint64_t GetLocalTimePartUINT64OFUINT64(uint64_t time);
 uint64_t GetTimePartUINT64OFUINT64(uint64_t time);
 vector SplitStringToVectorOfString(PWSTR str, PWSTR spl);
@@ -99,3 +106,12 @@ inline void Yinyue200_FreeAndClear(void** str)
   free(*str);
   *str = NULL;
 }
+inline bool Yinyue200_LocalFileTimeToFileTime(const FILETIME* lpLocalFileTime,FILETIME *lpFileTime)
+{
+	return LocalFileTimeToFileTime(lpLocalFileTime, lpFileTime);
+}
+inline bool Yinyue200_FileTimeToLocalFileTime(const FILETIME* lpFileTime, FILETIME* lpLocalFileTime)
+{
+	return FileTimeToLocalFileTime(lpFileTime, lpLocalFileTime);
+}
+uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time);

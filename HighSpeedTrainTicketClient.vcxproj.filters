@@ -93,6 +93,12 @@
     <ClCompile Include="PassengerRecordEditWindow.c">
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="TicketsManage.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BitVector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -157,6 +163,12 @@
     </ClInclude>
     <ClInclude Include="PassengerRecordEditWindow.h">
       <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="TicketsManage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BitVector.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

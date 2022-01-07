@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BitVector.c" />
     <ClCompile Include="chromiumbase64.c" />
     <ClCompile Include="common.c" />
     <ClCompile Include="ControlsCommonOperation.c" />
@@ -170,12 +171,14 @@
     <ClCompile Include="sha256.c" />
     <ClCompile Include="HighSpeedTrainTicketClient.c" />
     <ClCompile Include="stdatomic.c" />
+    <ClCompile Include="TicketsManage.c" />
     <ClCompile Include="UserManage.c" />
     <ClCompile Include="UserSetting.c" />
     <ClCompile Include="vector.c" />
     <ClCompile Include="xxhash.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BitVector.h" />
     <ClInclude Include="chromiumbase64.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ControlsCommonOperation.h" />
@@ -193,6 +196,7 @@
     <ClInclude Include="ProductRecord.h" />
     <ClInclude Include="sha256.h" />
     <ClInclude Include="stdatomic.h" />
+    <ClInclude Include="TicketsManage.h" />
     <ClInclude Include="UserManage.h" />
     <ClInclude Include="UserSetting.h" />
     <ClInclude Include="vector.h" />

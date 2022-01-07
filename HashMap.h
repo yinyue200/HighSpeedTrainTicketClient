@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include "vector.h"
 #define HASHMAP_INIT_SIZE 4 //HASHMAP 最小初始大小
-typedef bool (*HashMap_IsKeyEqualFunc)(void* left, void* right);
+typedef bool (*HashMap_IsKeyEqualFunc)(void* objkey, void* searchkey);
 typedef uint64_t (*HashMap_HashKeyFunc)(void* key);//计算指定元素 Key 的 HASH 的函数
 typedef void* (*HashMap_GetKeyFunc)(void* obj);
 typedef void (*HashMap_FreeItemFunc)(void* obj);
@@ -39,6 +39,7 @@ typedef struct HashMap
     HASHMAPNODEBASIC* item;
     size_t listsize;
     size_t count;
+    HashMap_HashKeyFunc parHashKeyFunc;
     HashMap_HashKeyFunc hashKeyFunc;
     HashMap_IsKeyEqualFunc equalFunc;
     HashMap_GetKeyFunc getKeyFunc;
@@ -46,10 +47,12 @@ typedef struct HashMap
 } HASHMAP;
 //创建一个新的 hashmap
 //@param 初始大小
+//@param hash func
+//@param 对传入的参数计算hash的函数指针
 //@param 判断两个 key 是否相等的函数指针
 //@param 通过元素获取执行key的指针的函数指针
 //@param 析构元素的函数指针
-HASHMAP HashMap_Create(size_t size,HashMap_HashKeyFunc hash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc);
+HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_HashKeyFunc parhash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc);
 //析构一个 hashmap
 //@param 要析构的 hashmap
 void HashMap_Free(HASHMAP *map);
@@ -57,6 +60,15 @@ void HashMap_Free(HASHMAP *map);
 bool HashMap_ContainKey(HASHMAP* map, void* key);
 //获取 hashmap 中是否包含有指定 key 的元素
 void* HashMap_GetByKey(HASHMAP* map, void* key);
+/// <summary>
+/// 从 hashmap 中删除指定的元素
+/// </summary>
+/// <param name="map"></param>
+/// <param name="item">要删除的元素</param>
+/// <returns>被删除元素的指针</returns>
+void* HashMap_RemoveItem(HASHMAP* map, void* item);
+//从 hashmap 中删除指定 key 的元素
+void* HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item);
 //从 hashmap 中删除所有指定 key 的元素
 void* HashMap_RemoveByKey(HASHMAP* map, void* key);
 void HashMap_CheckAndResize(HASHMAP* map);
@@ -77,5 +89,6 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE* last
 void HashMap_Rehash(HASHMAP* map);
 //在哈希表中添加新的元素
 void HashMap_Add(HASHMAP* map, void* item);
-inline void HashSet_NoFree(void* obj){}
+inline void HashMap_NoFree(void* obj){}
+inline void* HashMap_GetKeyNone(void* obj) { return obj; }
 

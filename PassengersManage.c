@@ -195,7 +195,7 @@ void Yinyue200_InitFullListOfPassengersIfNeed()
 
         //¹¹½¨ owner Ë÷Òý
         yinyue200_Passengers_OwnerIndexed = yinyue200_safemalloc(sizeof(HASHMAP));
-        *yinyue200_Passengers_OwnerIndexed = HashMap_Create(vector_total(yinyue200_FullListOfPassengers), xxHashPWSTR, ComparePWSTR, yinyue200_GetOwnerFromIndex, HashSet_NoFree);
+        *yinyue200_Passengers_OwnerIndexed = HashMap_Create(vector_total(yinyue200_FullListOfPassengers), xxHashPWSTR, xxHashPWSTR, ComparePWSTR, yinyue200_GetOwnerFromIndex, HashMap_NoFree);
         for (int i = 0; i < vector_total(yinyue200_FullListOfPassengers); i++)
         {
             HashMap_Add(yinyue200_Passengers_OwnerIndexed, i);

@@ -18,6 +18,7 @@
 #define VECTOR_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define VECTOR_INIT_CAPACITY 4
 
@@ -31,7 +32,7 @@
 #define VECTOR_CLEAR(vec) vector_clear(&(vec))
 #define VECTOR_MOVE(left,right) vector_move(&(left),&(right))
 
-typedef struct vector {
+typedef struct tag_vector {
     void* items;
     int capacity;
     int total;
@@ -48,6 +49,8 @@ void vector_add(vector*, void*);
 void vector_set(vector*, int, void*);
 //获取一个元素
 void* vector_get(vector*, int);
+//获取一个元素指针
+void** vector_getPointer(vector*, int);
 //删除该元素
 void vector_delete(vector*, int);
 //释放该元素所占空间
@@ -62,7 +65,6 @@ void vector_initwithcap(vector* v, size_t capacity);
 vector vector_clone(vector* right);
 //对元素进行排序
 void vector_qsort(vector* vec, _CoreCrtSecureSearchSortCompareFunction func, void* context);
-#endif
 
 #define DEFINE_VECTOR(type) \
 void vector_init_##type(vector* v);\
@@ -72,6 +74,7 @@ static void vector_resize_##type(vector* v, int capacity);\
 void vector_add_##type(vector* v, type item);\
 void vector_set_##type(vector* v, int index, type item);\
 type vector_get_##type(vector* v, int index);\
+type* vector_getPointer_##type(vector* v, int index);\
 void vector_delete_##type(vector* v, int index);\
 vector vector_clone_##type(vector* right);\
 inline void vector_free_##type(vector* v){ vector_free(v);}\
@@ -80,3 +83,6 @@ void vector_qsort_##type(vector* vec, _CoreCrtSecureSearchSortCompareFunction fu
 
 DEFINE_VECTOR(wchar_t)
 DEFINE_VECTOR(int)
+DEFINE_VECTOR(uint64_t)
+
+#endif

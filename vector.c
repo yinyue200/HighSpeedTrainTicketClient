@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vector.h"
+
 //初始化一个新元素
 void vector_init(vector* v)
 {
@@ -65,6 +66,12 @@ void* vector_get(vector* v, int index)
 {
     if (index >= 0 && index < v->total)
         return ((void**)v->items)[index];
+    return NULL;
+}
+void** vector_getPointer(vector* v, int index)
+{
+    if (index >= 0 && index < v->total)
+        return &((void**)v->items)[index];
     return NULL;
 }
 //删除该元素
@@ -155,6 +162,12 @@ type vector_get_##type(vector* v, int index)\
         return ((type*)v->items)[index];\
     return NULL;\
 }\
+type* vector_getPointer_##type(vector* v, int index)\
+{\
+    if (index >= 0 && index < v->total)\
+        return &((type*)v->items)[index];\
+    return NULL;\
+}\
 void vector_delete_##type(vector* v, int index)\
 {\
     if (index < 0 || index >= v->total)\
@@ -189,3 +202,4 @@ void vector_qsort_##type(vector* vec, _CoreCrtSecureSearchSortCompareFunction fu
 
 DEFINE_VECTOR_IMPL(wchar_t)
 DEFINE_VECTOR_IMPL(int)
+DEFINE_VECTOR_IMPL(uint64_t)

@@ -114,10 +114,12 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
 }
 //创建一个新的 hashmap
 //@param 初始大小
+//@param hash func
+//@param 对传入的参数计算hash的函数指针
 //@param 判断两个 key 是否相等的函数指针
 //@param 通过元素获取执行key的指针的函数指针
 //@param 析构元素的函数指针
-HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc)
+HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_HashKeyFunc parhash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc)
 {
     size = max(size, HASHMAP_INIT_SIZE);
     HASHMAP map;
@@ -135,6 +137,7 @@ HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_IsKeyEqual
         map.getKeyFunc = getkey;
         map.delKeyFunc = delfunc;
         map.hashKeyFunc = hash;
+        map.parHashKeyFunc = parhash;
     }
     return map;
 }
@@ -172,12 +175,14 @@ bool HashMap_ContainKey(HASHMAP* map, void* key)
 //获取 hashmap 中是否包含有指定 key 的元素
 void* HashMap_GetByKey(HASHMAP* map, void* key)
 {
-    return *HashMap_GetPointerByKey(map, key, false);
+    void** ret = HashMap_GetPointerByKey(map, key, false);
+    if (ret == NULL)
+        return NULL;
+    return *ret;
 }
-//从 hashmap 中删除所有指定 key 的元素
-void* HashMap_RemoveByKey(HASHMAP* map, void* key)
+void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
 {
-    uint64_t hash = map->hashKeyFunc(key);
+    uint64_t hash = map->parHashKeyFunc(key);
     size_t place = hash % map->listsize;
     HASHMAPNODEBASIC* firstnode = &map->item[place];
     if (firstnode->used)
@@ -187,7 +192,7 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
         do
         {
             onode = node;
-            if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key))
+            if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key) && (checkitem==false||item == node->value))
             {
                 //node is the node to be del
                 if (node == &firstnode->node)
@@ -210,7 +215,7 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
                 else
                 {
                     onode->next = node->next;
-                    HASHMAPNODE *tobedel = node;
+                    HASHMAPNODE* tobedel = node;
                     node = node->next;
                     map->delKeyFunc(tobedel->value);
                     free(tobedel);
@@ -231,6 +236,26 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
     {
         return NULL;
     }
+}
+/// <summary>
+/// 从 hashmap 中删除指定的元素
+/// </summary>
+/// <param name="map"></param>
+/// <param name="item">要删除的元素</param>
+/// <returns>被删除元素的指针</returns>
+void* HashMap_RemoveItem(HASHMAP* map, void* item)
+{
+    return HashMap_Remove_Inner(map, map->getKeyFunc(item), item, true);
+}
+//从 hashmap 中删除指定 key 的元素
+void* HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item)
+{
+    return HashMap_Remove_Inner(map, key, item, true);
+}
+//从 hashmap 中删除所有指定 key 的元素
+void* HashMap_RemoveByKey(HASHMAP* map, void* key)
+{
+    return HashMap_Remove_Inner(map, key, NULL, false);
 }
 void HashMap_SetNode(HASHMAPNODE* node, int64_t hash)
 {
@@ -266,7 +291,7 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
     {
         HashMap_CheckAndResize(map);
     }
-    uint64_t hash = map->hashKeyFunc(key);
+    uint64_t hash = map->parHashKeyFunc(key);
     size_t place = hash % map->listsize;
     HASHMAPNODEBASIC* firstnode = &map->item[place];
     if (firstnode->used)
@@ -335,7 +360,7 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *last
 {
     if (lastnode == NULL)
     {
-        uint64_t hash = map->hashKeyFunc(key);
+        uint64_t hash = map->parHashKeyFunc(key);
         size_t place = hash % map->listsize;
         HASHMAPNODEBASIC* tobefind = &map->item[place];
         *maxposscount = tobefind->used;

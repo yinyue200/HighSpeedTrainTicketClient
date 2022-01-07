@@ -16,7 +16,53 @@
  
 
 #include "ProductRecord.h"
+#include "HashMap.h"
+#include "xxhash.h"
 
+static HASHMAP Yinyue200_TrainIdIndexHashMap = { 0 };
+uint64_t Yinyue200_xxhashfortrainid(YINYUE200_PAIR_OF_uint64_t_uint64_t train)
+{
+    return xxhash_hash64_once(&train, 16, 0);
+}
+bool Yinyue200_CompareTrainId(YINYUE200_PAIR_OF_uint64_t_uint64_t* left, YINYUE200_PAIR_OF_uint64_t_uint64_t* right)
+{
+    return left->Item1 == right->Item1 && left->Item2 == right->Item2;
+}
+
+/// <summary>
+/// 初始化索引
+/// </summary>
+void Yinyue200_InitTrainPlanRecordIndexs()
+{
+    Yinyue200_TrainIdIndexHashMap = HashMap_Create(vector_total(&yinyue200_ProductList), 
+        Yinyue200_xxhashfortrainid, 
+        Yinyue200_xxhashfortrainid, 
+        Yinyue200_CompareTrainId,
+        yinyue200_GetTrainPlanRecordID,
+        HashMap_NoFree);
+
+    for (int i = 0; i < vector_total(&yinyue200_ProductList); i++)
+    {
+        HashMap_Add(&Yinyue200_TrainIdIndexHashMap, vector_get(&yinyue200_ProductList, i));
+    }
+}
+
+YINYUE200_TRAINPLANRECORD_PTR Yinyue200_GetTrainPlanRecordByTrainID(YINYUE200_PAIR_OF_uint64_t_uint64_t ID)
+{
+    return HashMap_GetByKey(&Yinyue200_TrainIdIndexHashMap, &ID);
+}
+YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(YINYUE200_TRAINPLANRECORD_PTR plan, PWSTR station)
+{
+    for (int i = 0; i < vector_total(&plan->RoutePoints); i++)
+    {
+        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR one = vector_get(&plan->RoutePoints, i);
+        if (wcscmp(one->Station.DisplayName, station)==0)
+        {
+            return one;
+        }
+    }
+    return NULL;
+}
 YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 {
     YINYUE200_TRAINPLANRECORD_PTR PT = malloc(sizeof(YINYUE200_TRAINPLANRECORD));
@@ -29,6 +75,7 @@ YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 void AddTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     VECTOR_ADD(yinyue200_ProductList, record);
+    HashMap_Add(&Yinyue200_TrainIdIndexHashMap, record);
 }
 void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
@@ -41,6 +88,8 @@ void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
             break;
         }
     }
+
+    HashMap_RemoveItem(&Yinyue200_TrainIdIndexHashMap, record);
 }
 void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
@@ -380,7 +429,7 @@ int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINP
     SYSTEMTIME systime;
     FILETIME utcfiletime = Yinyue200_ConvertToFileTimeFromUINT64(record->StartTimePoint);
     FILETIME localfiletime;
-    FileTimeToLocalFileTime(&utcfiletime, &localfiletime);
+    Yinyue200_FileTimeToLocalFileTime(&utcfiletime, &localfiletime);
     FileTimeToSystemTime(&localfiletime, &systime);
     systime.wHour = 0;
     systime.wMinute = 0;
@@ -405,23 +454,11 @@ int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINP
         return -1;
     }
 }
-//该函数获取车次开行至指定日期所经过的天数
-//传入的时间是本地时间
-int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalFileTime(YINYUE200_TRAINPLANRECORD_PTR record, FILETIME filetime)
-{
-    return Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, Yinyue200_ConvertToUINT64FromFileTime(filetime));
-}
-//该函数获取车次开行至指定日期所经过的天数
-//传入的时间是本地时间
-int Yinyue200_GetTrainPlanRecordCreatedTotalDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day)
-{
-    return Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalFileTime(record, ConvertDateToLocalFILETIME(year, month, day));
-}
 //该函数检查指定日期是否开行指定车次
 //传入的时间是本地时间
-bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day)
+bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t time)
 {
-    int days = Yinyue200_GetTrainPlanRecordCreatedTotalDate(record, year, month, day);
+    int days = Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, time);
     if (days % record->Repeat == 0)
     {
         return true;
@@ -461,4 +498,26 @@ int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR reco
 void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type, int32_t value)
 {
     *Yinyue200_GetTrainPlanRecordSeatCountPointer(record, type) = value;
+}
+
+int32_t GetSeatCountOfAllTypeOfSeat(YINYUE200_TRAINPLANRECORD_PTR record)
+{
+    int32_t sum = 0;
+    for (int i = 0; i < vector_total(&record->RoutePoints); i++)
+    {
+        YINYUE200_PAIR_OF_int32_t_int32_t* pair = vector_get(&record->RoutePoints, i);
+        sum += pair->Item2;
+    }
+    return sum;
+}
+
+uint64_t Yinyue200_GetLocalTrainStartTimePoint(YINYUE200_TRAINPLANRECORD_PTR train)
+{
+    uint64_t utctrainstarttime = train->StartTimePoint;
+    FILETIME utctrainstarttimefiletime = Yinyue200_ConvertToFileTimeFromUINT64(utctrainstarttime);
+    FILETIME localtrainstarttimefiletime;
+    Yinyue200_FileTimeToLocalFileTime(&utctrainstarttimefiletime, &localtrainstarttimefiletime);
+    uint64_t localtrainstarttime = Yinyue200_ConvertToUINT64FromFileTime(localtrainstarttimefiletime);
+
+    return localtrainstarttime;
 }

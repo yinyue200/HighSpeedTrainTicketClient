@@ -16,6 +16,7 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <Windows.h>
 #include <stdint.h>
+#include "vector.h"
 #include "common.h"
 //构造获取 ProductRecord 成员的函数定义的宏
 #define YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(name) inline void* yinyue200_GetTrainPlanRecord##name(void* obj)\
@@ -76,6 +77,9 @@ typedef struct Yinyue200_TrainPlanRecord
                          //中国铁道出版社 全国铁路客运运价里程接算站示意图 
 } YINYUE200_TRAINPLANRECORD;
 typedef YINYUE200_TRAINPLANRECORD* YINYUE200_TRAINPLANRECORD_PTR;
+YINYUE200_TRAINPLANRECORD_PTR Yinyue200_GetTrainPlanRecordByTrainID(YINYUE200_PAIR_OF_uint64_t_uint64_t ID);
+void Yinyue200_InitTrainPlanRecordIndexs();
+YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(YINYUE200_TRAINPLANRECORD_PTR plan, PWSTR station);
 void AddTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record);
 void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record);
 //创建记录，并传递所有权（调用者负责free）
@@ -93,22 +97,15 @@ PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPL
 PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint);
 YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecord_RoutePoint(PWSTR str);
 YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t(PWSTR str);
-//该函数获取车次开行至指定日期所经过的天数
-//filetime 是本地时间
-int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t filetime);
-//该函数获取车次开行至指定日期所经过的天数
-//filetime 是本地时间
-int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalFileTime(YINYUE200_TRAINPLANRECORD_PTR record, FILETIME filetime);
-//该函数获取车次开行至指定日期所经过的天数
-//传入的时间是本地时间
-int Yinyue200_GetTrainPlanRecordCreatedTotalDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day);
 //该函数检查指定日期是否开行指定车次
 //传入的时间是本地时间
-bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, int year, int month, int day);
+bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t time);
 
 int32_t* Yinyue200_GetTrainPlanRecordSeatCountPointer(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type);
 int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type);
 void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type, int32_t value);
+int32_t GetSeatCountOfAllTypeOfSeat(YINYUE200_TRAINPLANRECORD_PTR record);
+uint64_t Yinyue200_GetLocalTrainStartTimePoint(YINYUE200_TRAINPLANRECORD_PTR train);
 
 //=======构造获取 TrainPlanRecord 成员的函数声明=======
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(Name)

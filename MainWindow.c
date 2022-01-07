@@ -277,7 +277,7 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                 {
                     FILETIME utcstarttime = Yinyue200_ConvertToFileTimeFromUINT64(record->StartTimePoint);
                     FILETIME localstarttime;
-                    FileTimeToLocalFileTime(&utcstarttime, &localstarttime);
+                    Yinyue200_FileTimeToLocalFileTime(&utcstarttime, &localstarttime);
                     SYSTEMTIME systime;
                     FileTimeToSystemTime(&localstarttime, &systime);
                     swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%02d:%02d", systime.wHour, systime.wMinute);

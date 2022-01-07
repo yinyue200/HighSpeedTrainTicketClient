@@ -298,7 +298,7 @@ FILETIME ConvertDateToUTCFILETIME(int year, int month, int day)
 {
     FILETIME localfiletime = ConvertDateToLocalFILETIME(year, month, day);
     FILETIME utcfiletime;
-    LocalFileTimeToFileTime(&localfiletime, &utcfiletime);
+    Yinyue200_LocalFileTimeToFileTime(&localfiletime, &utcfiletime);
     return utcfiletime;
 }
 uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second)
@@ -312,14 +312,52 @@ uint64_t GetTimePartUINT64OFUINT64(uint64_t time)
     FileTimeToSystemTime(&filetime, &systime);
     return ConvertTimeToUINT64(systime.wHour, systime.wMinute, systime.wSecond) + systime.wMilliseconds * 10000;
 }
+/// <summary>
+/// 将国际时间转换为本地时间并获取其日期部分
+/// </summary>
+/// <param name="time">国际时间</param>
+/// <returns></returns>
+uint64_t GetLocalDatePartUINT64OFUINT64(uint64_t time)
+{
+    FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
+    FILETIME localfiletime;
+    Yinyue200_FileTimeToLocalFileTime(&filetime, &localfiletime);
+    SYSTEMTIME systime;
+    FileTimeToSystemTime(&localfiletime, &systime);
+    systime.wHour = 0;
+    systime.wMinute = 0;
+    systime.wSecond = 0;
+    systime.wMilliseconds = 0;
+    SystemTimeToFileTime(&systime, &localfiletime);
+    return Yinyue200_ConvertToUINT64FromFileTime(localfiletime);
+}
+uint64_t GetDatePartUINT64OFUINT64(uint64_t time)
+{
+    FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
+    SYSTEMTIME systime;
+    FileTimeToSystemTime(&filetime, &systime);
+    systime.wHour = 0;
+    systime.wMinute = 0;
+    systime.wSecond = 0;
+    systime.wMilliseconds = 0;
+    SystemTimeToFileTime(&systime, &filetime);
+    return Yinyue200_ConvertToUINT64FromFileTime(filetime);
+}
 uint64_t GetLocalTimePartUINT64OFUINT64(uint64_t time)
 {
     FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
     FILETIME localfiletime;
     SYSTEMTIME systime;
-    FileTimeToLocalFileTime(&filetime, &localfiletime);
+    Yinyue200_FileTimeToLocalFileTime(&filetime, &localfiletime);
     FileTimeToSystemTime(&localfiletime, &systime);
     return ConvertTimeToUINT64(systime.wHour, systime.wMinute, systime.wSecond) + systime.wMilliseconds * 10000;
+}
+uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time)
+{
+    FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
+    FILETIME utcfiletime;
+    Yinyue200_LocalFileTimeToFileTime(&filetime, &utcfiletime);
+    return Yinyue200_ConvertToUINT64FromFileTime(utcfiletime);
 }
 vector SplitStringToVectorOfString(PWSTR str, PWSTR spl)
 {

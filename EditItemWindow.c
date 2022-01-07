@@ -280,7 +280,7 @@ void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrec
     {
         FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(productrecord->StartTimePoint);
         FILETIME localfiletime;
-        FileTimeToLocalFileTime(&filetime, &localfiletime);//lpLocalFileTime cannot be the same as the lpFileTime parameter.
+        Yinyue200_FileTimeToLocalFileTime(&filetime, &localfiletime);//lpLocalFileTime cannot be the same as the lpFileTime parameter.
         SYSTEMTIME systime;
         FileTimeToSystemTime(&localfiletime, &systime);
         DateTime_SetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTDATE), GDT_VALID, &systime);
@@ -569,7 +569,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     FILETIME filetime;
                     SystemTimeToFileTime(&date, &filetime);
                     FILETIME utcfiletime;
-                    LocalFileTimeToFileTime(&filetime, &utcfiletime);
+                    Yinyue200_LocalFileTimeToFileTime(&filetime, &utcfiletime);
                     productrecord->StartTimePoint = Yinyue200_ConvertToUINT64FromFileTime(utcfiletime);
                 }
 

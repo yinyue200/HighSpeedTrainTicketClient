@@ -571,7 +571,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 //FREE_LOADDATAFILTERPROC_FLITER_WSTR(ResentBy);
                 //FREE_LOADDATAFILTERPROC_FLITER_WSTR(Signer);
                 mainwindow->sortstate = 0;
-                Yinyue200_Main_UpdateListViewData(mainwindow->WindowHwnd);
+                Yinyue200_Main_UpdateListViewData(mainwindow->WindowHwnd, yinyue200_GetDpiForWindow(mainwindow->WindowHwnd));
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
             else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
