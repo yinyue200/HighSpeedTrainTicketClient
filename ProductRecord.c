@@ -131,6 +131,7 @@ void deepcopy_TrainPlanRecord_RoutePoints(vector *srcvec,vector *orivec)
         ptr->Distance = oriitem->Distance;
         ptr->RouteRunTimeSpan = oriitem->RouteRunTimeSpan;
         ptr->Station.DisplayName = CreateWstrFromWstr(oriitem->Station.DisplayName);
+        ptr->ResidenceTime = oriitem->ResidenceTime;
         vector_add(srcvec, ptr);
     }
 }
