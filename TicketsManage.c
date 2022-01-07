@@ -18,7 +18,168 @@
 #include "HashMap.h"
 #include "xxhash.h"
 #include "BitVector.h"
+#include "UserSetting.h"
 
+#include "FileDataLoad.h"
+static vector* Yinyue200_AllTickets = NULL;
+static HASHMAP Yinyue200_TrainIdAndLocalDateHashMap;
+bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec);
+vector* LoadTicketsInfoFromFile(PWSTR path)
+{
+	//FILE SHOULD BE UTF-8 ENCODED
+	vector* vec = yinyue200_safemalloc(sizeof(vector));
+	vector_init(vec);
+
+	HANDLE hFile = CreateFile(path,               // file to open
+		GENERIC_READ,          // open for reading
+		FILE_SHARE_READ,       // share for reading
+		NULL,                  // default security
+		OPEN_EXISTING,         // existing file only
+		FILE_ATTRIBUTE_NORMAL, // normal file
+		NULL);                 // no attr. template
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(hFile);
+		return vec;//找不到文件，返回空 vector
+	}
+
+	LARGE_INTEGER FILESIZEINFO;
+	GetFileSizeEx(hFile, &FILESIZEINFO);
+	if (FILESIZEINFO.QuadPart == 0)
+	{
+		CloseHandle(hFile);
+		return vec;
+	}
+	char* data = yinyue200_safemalloc(FILESIZEINFO.QuadPart);
+	DWORD readsize;
+
+	BOOL readfilesucc = ReadFile(hFile, data, FILESIZEINFO.QuadPart, &readsize, NULL);
+
+	if (readfilesucc)
+	{
+		int laststart = 0;
+		int tindex = 0;
+		BOOL lastisbl = FALSE;
+		YINYUE200_TICKET_PTR p = Create_Yinyue200_Ticket();
+		if (p)
+		{
+			for (size_t i = 0; i < FILESIZEINFO.QuadPart; i++)
+			{
+				char one = data[i];
+				size_t size = i - laststart;
+				if (one == '\t' || one == '\r' || one == '\n')
+				{
+					if (size > 0)
+					{
+						PWCHAR info = malloc(size * 2 + 2);
+						if (info == NULL)
+						{
+							UnrecoveryableFailed();
+							return NULL;
+						}
+						int sizechars = MultiByteToWideChar(CP_UTF8, 0, &data[laststart], size, info, size);
+						info[sizechars] = 0;
+						switch (tindex)
+						{
+							LOADWPAIRINTDATATOVECTOR(ID, 0);
+							LOADWSTRDATATOVECTOR(PassengerName, 1);
+							LOADWSTRDATATOVECTOR(PassengerIDType, 2);
+							LOADWSTRDATATOVECTOR(PassengerID, 3);
+							LOADUINTDATATOVECTOR(CreatedDate, 4);
+							LOADWSTRDATATOVECTOR(TrainName, 5);
+							LOADWPAIRINTDATATOVECTOR(TrainID, 6);
+							LOADUINTDATATOVECTOR(TrainTime, 7);
+							LOADWSTRDATATOVECTOR(StartStation, 8);
+							LOADWSTRDATATOVECTOR(EndStation, 9);
+							LOADUINTDATATOVECTOR(Price, 10);
+							LOADINT32DATATOVECTOR(SeatNumber, 11);
+							LOADINT32DATATOVECTOR(SeatLevel, 12);
+							LOADUINTDATATOVECTOR(TrainStartTime, 13);
+						default:
+							break;
+						}
+					}
+					tindex++;
+					laststart = i + 1;
+				}
+				if (one == '\r' || one == '\n')
+				{
+					laststart = i + 1;
+					tindex = 0;
+					if (!lastisbl)
+					{
+						VECTOR_ADD(*vec, p);
+						p = CreatePassengerInfo();
+						if (p == NULL)
+						{
+							UnrecoveryableFailed();
+						}
+					}
+					lastisbl = true;
+				}
+				else
+				{
+					lastisbl = false;
+				}
+			}
+			free(p);
+		}
+		else
+		{
+			UnrecoveryableFailed();
+		}
+	}
+	else
+	{
+		UnrecoveryableFailed();
+	}
+	free(data);
+	CloseHandle(hFile);
+	return vec;
+}
+bool yinyue200_TicketsInfoSave()
+{
+	return yinyue200_TicketsInfoSaveToFile(yinyue200_GetTicketInfoConfigFilePath(), Yinyue200_AllTickets);
+}
+//写入记录到文件
+bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec)
+{
+	HANDLE hFile = CreateFile(path,               // file to open
+		GENERIC_READ | GENERIC_WRITE,          // open for reading
+		0,       // share for reading
+		NULL,                  // default security
+		CREATE_ALWAYS, //create file always
+		FILE_ATTRIBUTE_NORMAL, // normal file
+		NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		int errcod = GetLastError();
+		MessageBox(NULL, L"Save Failed!", NULL, 0);
+		return false;
+	}
+	size_t length = VECTOR_TOTAL(*vec);
+	for (size_t i = 0; i < length; i++)
+	{
+		YINYUE200_TICKET_PTR record = VECTOR_GET(*vec, YINYUE200_TICKET_PTR, i);
+		SAVEPAIRINTDATATOVECTOR(ID);
+		SAVEWSTRDATATOVECTOR(PassengerName);
+		SAVEWSTRDATATOVECTOR(PassengerIDType);
+		SAVEWSTRDATATOVECTOR(PassengerID);
+		SAVEUINTDATATOVECTOR(CreatedDate);
+		SAVEWSTRDATATOVECTOR(TrainName);
+		SAVEPAIRINTDATATOVECTOR(TrainID);
+		SAVEUINTDATATOVECTOR(TrainTime);
+		SAVEWSTRDATATOVECTOR(StartStation);
+		SAVEWSTRDATATOVECTOR(EndStation);
+		SAVEUINTDATATOVECTOR(Price);
+		SAVEINT32DATATOVECTOR(SeatNumber);
+		SAVEINT32DATATOVECTOR(SeatLevel);
+		SAVEUINTDATATOVECTOR(TrainStartTime);
+		FailedIfFalse(WritePWSTR(L"\n", hFile));
+	}
+	CloseHandle(hFile);
+	return true;
+}
 
 void free_Yinyue200_SeatInfoCache(YINYUE200_SEATINFOCACHE_PTR cache)
 {
@@ -28,8 +189,7 @@ void free_Yinyue200_SeatInfoCache(YINYUE200_SEATINFOCACHE_PTR cache)
 	}
 	free(cache);
 }
-static vector Yinyue200_AllTickets = { 0 };
-static HASHMAP Yinyue200_TrainIdAndLocalDateHashMap;
+
 /// <summary>
 /// 余票信息缓存
 /// 元素类型 YINYUE200_SEATINFOCACHE_PTR
@@ -76,20 +236,20 @@ uint64_t Yinyue200_TrainIdAndDateHash_Pair(YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_u
 }
 void Yinyue200_InitTicketBookingSystemIfNeed()
 {
-	if (Yinyue200_AllTickets.capacity == 0)
+	if (Yinyue200_AllTickets==NULL)
 	{
-		//TODO : load tickets from file
+		Yinyue200_AllTickets = LoadTicketsInfoFromFile(yinyue200_GetTicketInfoConfigFilePath());
 
-		Yinyue200_TrainIdAndLocalDateHashMap = HashMap_Create(vector_total(&Yinyue200_AllTickets),
+		Yinyue200_TrainIdAndLocalDateHashMap = HashMap_Create(vector_total(Yinyue200_AllTickets),
 			Yinyue200_TrainIdAndDateHash, 
 			Yinyue200_TrainIdAndDateHash_Pair, 
 			Yinyue200_TrainIdAndDateHash_IsKeyEqualFunc,
 			HashMap_GetKeyNone, 
 			HashMap_NoFree);
 
-		for (size_t i = 0; i < vector_total(&Yinyue200_AllTickets); i++)//建立日期车次的车票索引
+		for (size_t i = 0; i < vector_total(Yinyue200_AllTickets); i++)//建立日期车次的车票索引
 		{
-			HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, vector_get(&Yinyue200_AllTickets, i));
+			HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, vector_get(Yinyue200_AllTickets, i));
 		}
 
 		Yinyue200_TicketCountHashMap = HashMap_Create(0, 
@@ -213,7 +373,7 @@ bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_P
 void Yinyue200_AddTicketInfo(YINYUE200_TICKET_PTR ticket)
 {
 	Yinyue200_InitTicketBookingSystemIfNeed();
-	vector_add(&Yinyue200_AllTickets, ticket);
+	vector_add(Yinyue200_AllTickets, ticket);
 	HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, ticket);
 
 	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t pair;

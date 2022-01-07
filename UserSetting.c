@@ -18,6 +18,7 @@
 static PWCHAR yinyue200_configFilePath = L"data.tsv";
 static PWCHAR yinyue200_userConfigFilePath = L"userinfo.tsv";
 static PWCHAR yinyue200_passengerInfoConfigFilePath = L"passengerinfo.tsv";
+static PWCHAR yinyue200_ticketsInfoConfigFilePath = L"ticketsinfo.tsv";
 //获取数据文件路径
 PWCHAR yinyue200_GetConfigFilePath()
 {
@@ -32,3 +33,8 @@ PWCHAR yinyue200_GetPassengerInfoConfigFilePath()
 {
     return yinyue200_passengerInfoConfigFilePath;
 }
+PWCHAR yinyue200_GetTicketInfoConfigFilePath()
+{
+    return yinyue200_ticketsInfoConfigFilePath;
+}
+

@@ -26,6 +26,8 @@
 #include <CommCtrl.h>
 #include "PassengersManageWindow.h"
 #include "PassengersManage.h"
+#include "TicketsManage.h"
+
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
 #define ID_MENU_ABOUT 1
@@ -1063,6 +1065,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         case ID_MENU_SAVE:
             yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(), &yinyue200_ProductList);
             yinyue200_MemoryPassengerInfoSaveToFile();
+            yinyue200_TicketsInfoSave();
             MessageBox(hwnd, L"保存成功", L"消息", 0);
             break;
         case ID_MENU_LOADALL:

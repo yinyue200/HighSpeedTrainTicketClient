@@ -18,12 +18,9 @@
 #include "HashMap.h"
 static vector* yinyue200_FullListOfPassengers = NULL;
 static HASHMAP* yinyue200_Passengers_OwnerIndexed = NULL;
-//caseid是信息列数（0开始） member是成员名称
-#define LOADWSTRDATATOVECTOR(member,caseid) case caseid:\
-{\
-    p->##member = info;\
-    break;\
-}
+
+#include "FileDataLoad.h"
+
 vector* LoadPassengerInfoFromFile(PWSTR path)
 {
     //FILE SHOULD BE UTF-8 ENCODED
@@ -130,12 +127,7 @@ vector* LoadPassengerInfoFromFile(PWSTR path)
     CloseHandle(hFile);
     return vec;
 }
-//member是成员名称
-#define SAVEWSTRDATATOVECTOR(member) \
-do{\
-    FailedIfFalse(WritePWSTR(record->##member, hFile));\
-    FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}while(0)
+
 //写入记录到文件
 bool yinyue200_PassengerInfoSaveToFile(LPWSTR path, vector* vec)
 {

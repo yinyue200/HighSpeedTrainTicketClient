@@ -49,7 +49,9 @@ typedef struct Yinyue200_SeatInfoCache
 
 } YINYUE200_SEATINFOCACHE;
 typedef YINYUE200_SEATINFOCACHE* YINYUE200_SEATINFOCACHE_PTR;
-YINYUE200_DEFINE_PAIR(YINYUE200_PAIR_OF_uint64_t_uint64_t,uint64_t)
+YINYUE200_DEFINE_PAIR(YINYUE200_PAIR_OF_uint64_t_uint64_t, uint64_t)
+YINYUE200_TICKET_PTR Create_Yinyue200_Ticket();
+bool yinyue200_TicketsInfoSave();
 inline int Yinyue200_IsLeapYear(int year)
 {
 	return ((0 == year % 4) && (0 != year % 100)) || (0 == year % 400);

@@ -174,4 +174,9 @@
   <ItemGroup>
     <Manifest Include="app.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="FileDataLoad.h">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

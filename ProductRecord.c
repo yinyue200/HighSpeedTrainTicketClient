@@ -134,99 +134,8 @@ void deepcopy_TrainPlanRecord_RoutePoints(vector *srcvec,vector *orivec)
         vector_add(srcvec, ptr);
     }
 }
+#include "FileDataLoad.h"
 
-//caseid是信息列数（0开始） member是成员名称
-#define LOADINTDATATOVECTOR(member,caseid) case caseid:\
-{\
-    int64_t id;\
-    if (swscanf(info, L"%lld", &id) == 1)\
-    {\
-        p->##member = id;\
-    }\
-    free(info);\
-    break;\
-}
-//caseid是信息列数（0开始） member是成员名称
-#define LOADUINTDATATOVECTOR(member,caseid) case caseid:\
-{\
-    uint64_t id;\
-    if (swscanf(info, L"%llu", &id) == 1)\
-    {\
-        p->##member = id;\
-    }\
-    free(info);\
-    break;\
-}
-//caseid是信息列数（0开始） member是成员名称
-#define LOADPRICEDATATOVECTOR(member,caseid) case caseid:\
-{\
-    double id;\
-    if (swscanf(info, L"%lf", &id) == 1)\
-    {\
-        p->##member = id;\
-    }\
-    free(info);\
-    break;\
-}
-//caseid是信息列数（0开始） member是成员名称
-#define LOADWSTRDATATOVECTOR(member,caseid) case caseid:\
-{\
-    p->##member = info;\
-    break;\
-}
-//caseid是信息列数（0开始） member是成员名称
-#define LOADVECTORDATATOVECTOR(member,caseid,func) case caseid:\
-{\
-    PWSTR decodeinfo = Yinyue200_TsvDecode(info);\
-    p->##member = Yinyue200_ConvertStringToVector(decodeinfo, (func));\
-    free(decodeinfo);\
-    break;\
-}
-//member是成员名称
-#define SAVEWSTRDATATOVECTOR(member) \
-do{\
-    FailedIfFalse(WritePWSTR(record->##member, hFile));\
-    FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}while(0)
-//member是成员名称
-#define SAVEINTDATATOVECTOR(member) \
-do{\
-    wchar_t idbuffer[30];\
-    swprintf_s(idbuffer, 30, L"%lld", record->##member);\
-    FailedIfFalse(WritePWSTR(idbuffer, hFile));\
-    FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}while(0)
-#define SAVEUINTDATATOVECTOR(member) \
-do{\
-    wchar_t idbuffer[30];\
-    swprintf_s(idbuffer, 30, L"%llu", record->##member);\
-    FailedIfFalse(WritePWSTR(idbuffer, hFile));\
-    FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}while(0)
-#define SAVEPAIROFUINT64DATATOVECTOR(member) \
-do{\
-    wchar_t idbuffer[100];\
-    swprintf_s(idbuffer, 100, L"%llu;%llu", record->##member.Item1,record->##member.Item2);\
-    FailedIfFalse(WritePWSTR(idbuffer, hFile));\
-    FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}while(0)
-//member是成员名称
-#define SAVEDOUBLEDATATOVECTOR(member) \
-do{\
-    wchar_t idbuffer[30];\
-    swprintf_s(idbuffer, 30, L"%lf", record->##member);\
-    FailedIfFalse(WritePWSTR(idbuffer, hFile));\
-    FailedIfFalse(WritePWSTR(L"\t", hFile));\
-}while(0)
-#define SAVEVECTORDATATOVECTOR(member,func) \
-do{\
-PWSTR str = Yinyue200_ConvertVectorToString(&record->##member, (func));\
-PWSTR str1 = Yinyue200_TsvEncode(str);\
-FailedIfFalse(WritePWSTR(str1, hFile));\
-FailedIfFalse(WritePWSTR(L"\t", hFile));\
-free(str1);\
-free(str);\
-}while(0)
 //写入记录到文件
 bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
 {
@@ -248,7 +157,7 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
     {
         YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(*vec, YINYUE200_TRAINPLANRECORD_PTR, i);
         SAVEWSTRDATATOVECTOR(Name);
-        SAVEPAIROFUINT64DATATOVECTOR(ID);
+        SAVEPAIRINTDATATOVECTOR(ID);
         SAVEWSTRDATATOVECTOR(Type);
         SAVEWSTRDATATOVECTOR(State);
         SAVEUINTDATATOVECTOR(Repeat);
@@ -318,27 +227,14 @@ vector* ProductRecordLoadToVector(LPWSTR path)
                         info[sizechars] = 0;
                         switch (tindex)
                         {
-                        case 0:
-                            p->Name = info;
-                            break;
-                        case 1:
-                        {
-                            uint64_t id_high;
-                            uint64_t id_low;
-                            if (swscanf(info, L"%llu;%llu", &id_high, &id_low) == 2)
-                            {
-                                YINYUE200_PAIR_OF_uint64_t_uint64_t pair = { id_high,id_low };
-                                p->ID = pair;
-                            }
-                            free(info);
-                            break;
-                        }
-                        LOADWSTRDATATOVECTOR(Type, 2)
-                            LOADWSTRDATATOVECTOR(State, 3)
-                            LOADINTDATATOVECTOR(Repeat, 4)
+                            LOADWSTRDATATOVECTOR(Name, 0);
+                            LOADWPAIRINTDATATOVECTOR(ID, 1);
+                            LOADWSTRDATATOVECTOR(Type, 2);
+                            LOADWSTRDATATOVECTOR(State, 3);
+                            LOADINTDATATOVECTOR(Repeat, 4);
                             LOADVECTORDATATOVECTOR(RoutePoints, 5, ConvertStringToYinyue200_TrainPlanRecord_RoutePoint);
-                        LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t);
-                        LOADUINTDATATOVECTOR(StartTimePoint, 7)
+                            LOADVECTORDATATOVECTOR(TicketCount, 6, ConvertStringToYINYUE200_PAIR_OF_int32_t_int32_t);
+                            LOADUINTDATATOVECTOR(StartTimePoint, 7);
                         default:
                             break;
                         }
