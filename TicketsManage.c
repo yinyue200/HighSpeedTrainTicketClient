@@ -392,6 +392,42 @@ void Yinyue200_AddTicketInfo(YINYUE200_TICKET_PTR ticket)
 		}
 	}
 }
+/// <summary>
+/// 计算区间票价
+/// </summary>
+/// <param name="train"></param>
+/// <param name="startstation"></param>
+/// <param name="endstation"></param>
+/// <param name=""></param>
+/// <returns>以分为单位</returns>
+int32_t Yinyue200_TicketManage_GetPrice(YINYUE200_TRAINPLANRECORD_PTR train, PWSTR startstation, PWSTR endstation, enum TrainSeatType seatLevel)
+{
+	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR start = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, startstation);
+	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR end = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, endstation);
+	if (end->Distance > start->Distance)
+		return -1;
+	uint64_t dis = end->Distance > start->Distance;
+	double disdouble = dis / 1000.0;
+	double baseprice;
+	switch (seatLevel)
+	{
+	case TRAINTICKETTYPE_BUSINESSCLASS:
+		baseprice = 1.2;
+		break;
+	case TRAINTICKETTYPE_FIRSTCLASS:
+		baseprice = 0.6;
+		break;
+	default:
+	case TRAINTICKETTYPE_SECONDCLASS:
+	case TRAINTICKETTYPE_UNKNOWN:
+		baseprice = 0.46;
+		break;
+	}
+	double price = baseprice * disdouble;
+
+	return price * 100.0;
+
+}
 BITVECTOR Yinyue200_GetSeatUsability(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date, PWSTR startstation, PWSTR endstation, YINYUE200_SEATINFOCACHE_PTR seatinfo)
 {
 
@@ -507,7 +543,7 @@ int32_t Yinyue200_GetUseableSeatsNumber(YINYUE200_TRAINPLANRECORD_PTR train, BIT
 /// <param name="month">本地时间，月份</param>
 /// <param name="day">本地时间，日期</param>
 /// <returns></returns>
-YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train, 
+YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train, 
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo, 
 	size_t count, 
 	int year, int month, int day, 
@@ -522,9 +558,9 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train,
 	FILETIME localdatefiletime = ConvertDateToLocalFILETIME(year, month, day);
 	uint64_t localdateuint64 = Yinyue200_ConvertToUINT64FromFileTime(localdatefiletime);
 
-	uint64_t localtrainstarttime = Yinyue200_GetLocalTrainStartTimePoint(Train);
+	uint64_t localtrainstarttime = Yinyue200_GetLocalTrainStartTimePoint(train);
 
-	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR startstaionroutepoint = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(Train, startstation);
+	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR startstaionroutepoint = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, startstation);
 	uint64_t localstationstarttime = localtrainstarttime + startstaionroutepoint->RouteRunTimeSpan;
 
 	uint64_t thistrainstationstarttime = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(year, month, day)) + GetTimePartUINT64OFUINT64(localstationstarttime);
@@ -535,8 +571,8 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train,
 
 	uint64_t thistrainstarttimedate = GetDatePartUINT64OFUINT64(thistrainstarttime);
 
-	ticket->TrainID = Train->ID;
-	ticket->TrainName = CreateWstrFromWstr(Train->Name);
+	ticket->TrainID = train->ID;
+	ticket->TrainName = CreateWstrFromWstr(train->Name);
 	FILETIME nowtime;
 	GetSystemTimeAsFileTime(&nowtime);
 	FILETIME nowutctime;
@@ -556,14 +592,16 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train,
 
 	ticket->SeatLevel = seatLevel;
 
-	YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(Train, thistrainstarttimedate);
-	BITVECTOR seatuse = Yinyue200_GetSeatUsability(Train, thistrainstarttimedate, startstation, endstation, seatinfo);
-	ticket->SeatNumber = Yinyue200_AllocSeatNumber(Train, &seatuse, seatLevel, seatinfo);
+	YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(train, thistrainstarttimedate);
+	BITVECTOR seatuse = Yinyue200_GetSeatUsability(train, thistrainstarttimedate, startstation, endstation, seatinfo);
+	ticket->SeatNumber = Yinyue200_AllocSeatNumber(train, &seatuse, seatLevel, seatinfo);
 
 	free_Yinyue200_SeatInfoCache(seatinfo);
 	BitVector_Free(&seatuse);
 
 	Yinyue200_AddTicketInfo(ticket);
+
+	ticket->Price = Yinyue200_TicketManage_GetPrice(train, startstation, endstation, seatLevel);
 
 	return ticket;
 }
