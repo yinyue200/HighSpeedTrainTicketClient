@@ -307,7 +307,34 @@ int32_t Yinyue200_AllocSeatNumber(YINYUE200_TRAINPLANRECORD_PTR train, BITVECTOR
 	
 	return -1;
 }
+/// <summary>
+/// 获取余票数量
+/// </summary>
+/// <param name="train">车次</param>
+/// <param name="seatusability">区间座位情况</param>
+/// <param name="seatLevel">座位等级</param>
+/// <param name="seatinfo">座位情况</param>
+/// <returns></returns>
+int32_t Yinyue200_GetUseableSeatsNumber(YINYUE200_TRAINPLANRECORD_PTR train, BITVECTOR* seatusability, enum TrainSeatType seatLevel, YINYUE200_SEATINFOCACHE_PTR seatinfo)
+{
+	int32_t seatscount = 0;
 
+	int seatcheckbottom;
+	int seatchecktop;
+
+	Yinyue200_GetSeatBottomAndTopForSeatLevel(train, seatLevel, &seatcheckbottom, &seatchecktop, seatinfo->seatcount);
+
+	for (int32_t i = seatcheckbottom; i < seatchecktop; i++)
+	{
+		bool canuse = BitVector_GetBit(seatusability, i) == 0;
+		if (canuse)
+		{
+			return seatscount++; //座位号从1开始
+		}
+	}
+
+	return seatscount;
+}
 /// <summary>
 /// 注意，该函数不会校验购买车票是否合法，务必在调用该函数前自行检查
 /// </summary>

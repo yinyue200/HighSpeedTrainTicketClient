@@ -54,6 +54,10 @@ inline int Yinyue200_IsLeapYear(int year)
 	return ((0 == year % 4) && (0 != year % 100)) || (0 == year % 400);
 }
 int Yinyue200_GetMonthMaxDay(int year, int month);
+/// <summary>
+/// ·ÖÅä×ùÎ»ºÅ
+/// </summary>
+int32_t Yinyue200_AllocSeatNumber(YINYUE200_TRAINPLANRECORD_PTR train, BITVECTOR* seatusability, enum TrainSeatType seatLevel, YINYUE200_SEATINFOCACHE_PTR seatinfo);
 bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation);
 YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train,
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo,
