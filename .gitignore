@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /data.tsv
 /passengerinfo.tsv
+/ticketsinfo.tsv

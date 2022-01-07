@@ -37,13 +37,13 @@ vector DeletePassenger(YINYUE200_PASSENGERINFO_PTR tobedel);
 void FreePassengerInfo(YINYUE200_PASSENGERINFO_PTR record);
 bool yinyue200_PassengerInfoSaveToFile(LPWSTR path, vector* vec);
 bool yinyue200_MemoryPassengerInfoSaveToFile();
-//构造获取 ProductRecord 成员的函数定义的宏
+//构造获取 YINYUE200_PASSENGERINFO 成员的函数定义的宏
 #define YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERMETHOD(name) inline void* yinyue200_GetPassengerInfo##name(void* obj)\
 {\
 YINYUE200_PASSENGERINFO_PTR p = obj;\
 return p->name;\
 }
-//构造获取 ProductRecord 成员的地址的函数定义的宏
+//构造获取 YINYUE200_PASSENGERINFO 成员的地址的函数定义的宏
 #define YINYUE200_PASSENGERINFO_DEFINE_GETMEMBERADDRMETHOD(name) inline void* yinyue200_GetPassengerInfo##name(void* obj)\
 {\
 YINYUE200_PASSENGERINFO_PTR p = obj;\

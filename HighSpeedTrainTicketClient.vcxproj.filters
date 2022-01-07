@@ -99,6 +99,9 @@
     <ClCompile Include="BitVector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TicketManageWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -169,6 +172,9 @@
     </ClInclude>
     <ClInclude Include="BitVector.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TicketManageWindow.h">
+      <Filter>Header Files\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

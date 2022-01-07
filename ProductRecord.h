@@ -114,6 +114,11 @@ uint64_t Yinyue200_GetLocalTrainStartTimePoint(YINYUE200_TRAINPLANRECORD_PTR tra
 /// <returns></returns>
 int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t filetime);
 
+inline uint64_t GetTrainPlanRecordRoutePointStartedTime(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR record)
+{
+    return record->RouteRunTimeSpan + record->ResidenceTime;
+}
+
 //=======构造获取 TrainPlanRecord 成员的函数声明=======
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(Name)
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERADDRMETHOD(ID)
