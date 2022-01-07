@@ -141,6 +141,7 @@ vector* LoadTicketsInfoFromFile(PWSTR path)
 }
 bool yinyue200_TicketsInfoSave()
 {
+	if (Yinyue200_AllTickets == NULL) return true;
 	return yinyue200_TicketsInfoSaveToFile(yinyue200_GetTicketInfoConfigFilePath(), Yinyue200_AllTickets);
 }
 //写入记录到文件
@@ -335,11 +336,12 @@ bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_P
 	uint64_t localtrainstarttime = Yinyue200_GetLocalTrainStartTimePoint(Train);
 
 	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR startstaionroutepoint = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(Train, startstation);
-	uint64_t localstationstarttime = localtrainstarttime + startstaionroutepoint->RouteRunTimeSpan;
+	uint64_t spantime = GetTrainPlanRecordRoutePointStartedTime(startstaionroutepoint);
+	uint64_t localstationstarttime = localtrainstarttime + spantime;
 
 	uint64_t thistrainstationstarttime = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(year, month, day)) + GetTimePartUINT64OFUINT64(localstationstarttime);
 
-	uint64_t thistrainstarttime = thistrainstationstarttime - startstaionroutepoint->RouteRunTimeSpan;
+	uint64_t thistrainstarttime = thistrainstationstarttime - spantime;
 
 	if (thistrainstationstarttime > localtime)
 	{
@@ -419,6 +421,8 @@ int32_t Yinyue200_TicketManage_GetPrice(YINYUE200_TRAINPLANRECORD_PTR train, PWS
 {
 	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR start = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, startstation);
 	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR end = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, endstation);
+	if (start == NULL || end == NULL)
+		return -1;
 	if (end->Distance > start->Distance)
 		return -1;
 	uint64_t dis = end->Distance > start->Distance;
@@ -557,7 +561,7 @@ int32_t Yinyue200_GetUseableSeatsNumber(YINYUE200_TRAINPLANRECORD_PTR train, BIT
 /// <param name="year">本地时间，购买车票年份</param>
 /// <param name="month">本地时间，月份</param>
 /// <param name="day">本地时间，日期</param>
-/// <returns></returns>
+/// <returns>返回 NULL 表示订票失败</returns>
 YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train, 
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo, 
 	size_t count, 
@@ -577,12 +581,18 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	uint64_t localtrainstarttime = Yinyue200_GetLocalTrainStartTimePoint(train);
 
 	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR startstaionroutepoint = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, startstation);
-	uint64_t localstationstarttime = localtrainstarttime + startstaionroutepoint->RouteRunTimeSpan;
+
+	if (startstaionroutepoint == NULL)
+		return NULL;
+
+	uint64_t spantime = GetTrainPlanRecordRoutePointStartedTime(startstaionroutepoint);
+
+	uint64_t localstationstarttime = localtrainstarttime + spantime;
 
 	uint64_t thistrainstationstarttime = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(year, month, day)) + GetTimePartUINT64OFUINT64(localstationstarttime);
 	ticket->TrainTime = Yinyue200_ConvertLocalUint64ToUtcUint64(thistrainstationstarttime);
 
-	uint64_t thistrainstarttime = thistrainstationstarttime - startstaionroutepoint->RouteRunTimeSpan;
+	uint64_t thistrainstarttime = thistrainstationstarttime - spantime;
 	ticket->TrainStartTime = Yinyue200_ConvertLocalUint64ToUtcUint64(thistrainstarttime);
 
 	uint64_t thistrainstarttimedate = GetDatePartUINT64OFUINT64(thistrainstarttime);
