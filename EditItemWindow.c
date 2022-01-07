@@ -54,12 +54,13 @@ typedef struct Yinyue200_EditItemWindowData
     YINYUE200_TRAINPLANRECORD_PTR TrainPlanRecord;
     vector Route;
     bool enablesave;
+    bool bookmode;
     HFONT lastfont;
 } YINYUE200_EDITITEMWINDOWDATA;
 void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context);
 YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enablesave)
+void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enablesave, bool bookmode)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
@@ -427,6 +428,12 @@ void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_
     }
     free(context);
 }
+int __cdecl CompareRoutePoint(void* context, void const* left, void const* right)
+{
+    YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR* leftobj = left;
+    YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR* rightobj = right;
+    return (*rightobj)->RouteRunTimeSpan - (*leftobj)->RouteRunTimeSpan;
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -574,6 +581,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 }
 
                 freeTrainPlanRecord_RoutePoints(&productrecord->RoutePoints);
+
+                //ÅÅÐòpoints
+                vector_qsort(&windowdata->Route, CompareRoutePoint, NULL);
+
                 deepcopy_TrainPlanRecord_RoutePoints(&productrecord->RoutePoints, &windowdata->Route);
 
                 if (windowdata->TrainPlanRecord == NULL)

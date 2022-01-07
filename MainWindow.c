@@ -193,7 +193,7 @@ void CreateMainWindow()
 }
 void edititemlogined(void* context)
 {
-    CreateEditItemWindow(context, yinyue200_LoganUserInfo==NULL?false: wcscmp(yinyue200_LoganUserInfo->Type , L"ADMIN")==0);
+    CreateEditItemWindow(context, yinyue200_LoganUserInfo == NULL ? false : wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN") == 0, false);
 }
 #define LISTVIEWNOTIFTLOADCOLINT(caseid,membername) case caseid:\
 {\
@@ -896,7 +896,7 @@ void logincheckmsg(void* context)
         }
         case ID_MENU_ADDRECORD:
         {
-            CreateEditItemWindow(NULL,true);
+            CreateEditItemWindow(NULL, true, false);
             break;
         }
         default:
@@ -1158,6 +1158,28 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             windata->pagestart = 0;
                         UpdateCheckBoxInfo(hwnd, windata);
                         break;
+                    case ID_BUTTON_BOOKTICKET:
+                    {
+                        HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
+                        int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                        if (iPos == -1)
+                        {
+                            MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                        }
+                        else
+                        {
+                            int nextiPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                            if (nextiPos == -1)
+                            {
+                                CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos), false, true);
+                            }
+                            else
+                            {
+                                MessageBox(hwnd, L"一次只能预定一趟列车的车票", NULL, 0);
+                            }
+                        }
+                        break;
+                    }
                     case ID_BUTTON_REMOVESELECTEDITEMS:
                     {
                         HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
