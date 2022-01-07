@@ -23,6 +23,7 @@
 #include "FileDataLoad.h"
 static vector* Yinyue200_AllTickets = NULL;
 static HASHMAP Yinyue200_TrainIdAndLocalDateHashMap;
+static HASHMAP Yinyue200_TicketInfo_OwnerIndexed;
 bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec);
 vector* LoadTicketsInfoFromFile(PWSTR path)
 {
@@ -95,6 +96,7 @@ vector* LoadTicketsInfoFromFile(PWSTR path)
 							LOADINT32DATATOVECTOR(SeatNumber, 11);
 							LOADINT32DATATOVECTOR(SeatLevel, 12);
 							LOADUINTDATATOVECTOR(TrainStartTime, 13);
+							LOADWSTRDATATOVECTOR(Owner, 14);
 						default:
 							break;
 						}
@@ -175,6 +177,7 @@ bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec)
 		SAVEINT32DATATOVECTOR(SeatNumber);
 		SAVEINT32DATATOVECTOR(SeatLevel);
 		SAVEUINTDATATOVECTOR(TrainStartTime);
+		SAVEUINTDATATOVECTOR(Owner);
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
 	}
 	CloseHandle(hFile);
@@ -240,16 +243,27 @@ void Yinyue200_InitTicketBookingSystemIfNeed()
 	{
 		Yinyue200_AllTickets = LoadTicketsInfoFromFile(yinyue200_GetTicketInfoConfigFilePath());
 
-		Yinyue200_TrainIdAndLocalDateHashMap = HashMap_Create(vector_total(Yinyue200_AllTickets),
+		int ticketcounts = vector_total(Yinyue200_AllTickets);
+
+		Yinyue200_TrainIdAndLocalDateHashMap = HashMap_Create(ticketcounts,
 			Yinyue200_TrainIdAndDateHash, 
 			Yinyue200_TrainIdAndDateHash_Pair, 
 			Yinyue200_TrainIdAndDateHash_IsKeyEqualFunc,
 			HashMap_GetKeyNone, 
 			HashMap_NoFree);
 
-		for (size_t i = 0; i < vector_total(Yinyue200_AllTickets); i++)//建立日期车次的车票索引
+		Yinyue200_TicketInfo_OwnerIndexed = HashMap_Create(ticketcounts,
+			xxHashPWSTR,
+			xxHashPWSTR,
+			ComparePWSTR,
+			yinyue200_GetTicketInfoOwner,
+			HashMap_NoFree);
+
+		for (size_t i = 0; i < ticketcounts; i++)//建立日期车次的车票索引
 		{
-			HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, vector_get(Yinyue200_AllTickets, i));
+			void* one = vector_get(Yinyue200_AllTickets, i);
+			HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, one);
+			HashMap_Add(&Yinyue200_TicketInfo_OwnerIndexed, one);
 		}
 
 		Yinyue200_TicketCountHashMap = HashMap_Create(0, 
@@ -375,6 +389,7 @@ void Yinyue200_AddTicketInfo(YINYUE200_TICKET_PTR ticket)
 	Yinyue200_InitTicketBookingSystemIfNeed();
 	vector_add(Yinyue200_AllTickets, ticket);
 	HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, ticket);
+	HashMap_Add(&Yinyue200_TicketInfo_OwnerIndexed, ticket);
 
 	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t pair;
 	pair.Item1 = ticket->TrainID;
@@ -549,7 +564,8 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	int year, int month, int day, 
 	PWSTR startstation,
 	PWSTR endstation,
-	enum TrainSeatType seatLevel
+	enum TrainSeatType seatLevel,
+	PWSTR owner
 )
 {
 	Yinyue200_InitTicketBookingSystemIfNeed();
@@ -599,10 +615,11 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	free_Yinyue200_SeatInfoCache(seatinfo);
 	BitVector_Free(&seatuse);
 
-	Yinyue200_AddTicketInfo(ticket);
+	ticket->Owner = CreateWstrFromWstr(owner);
 
 	ticket->Price = Yinyue200_TicketManage_GetPrice(train, startstation, endstation, seatLevel);
 
+	Yinyue200_AddTicketInfo(ticket);
 	return ticket;
 }
 void Yinyue200_SetCacheInfoForNewTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train)
