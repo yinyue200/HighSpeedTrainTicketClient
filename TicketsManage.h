@@ -38,10 +38,16 @@ typedef struct Yinyue200_Ticket
 	uint64_t TrainStartTime;//UTC 起点站开车时间和日期
 } YINYUE200_TICKET;
 typedef YINYUE200_TICKET* YINYUE200_TICKET_PTR;
-typedef struct Yinyue200_TicketUsedData
+typedef struct Yinyue200_SeatInfoCache
 {
-	int32_t Data[4];
-} YINYUE200_TICKETUSEDDATA;
+	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainID;
+	uint64_t Date;//local date
+	BITVECTOR* seatinfo;
+	int seatinfocount;
+	int32_t seatcount;
+
+} YINYUE200_SEATINFOCACHE;
+typedef YINYUE200_SEATINFOCACHE* YINYUE200_SEATINFOCACHE_PTR;
 YINYUE200_DEFINE_PAIR(YINYUE200_PAIR_OF_uint64_t_uint64_t,uint64_t)
 inline int Yinyue200_IsLeapYear(int year)
 {
@@ -49,6 +55,13 @@ inline int Yinyue200_IsLeapYear(int year)
 }
 int Yinyue200_GetMonthMaxDay(int year, int month);
 bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation);
-YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train, YINYUE200_PASSENGERINFO_PTR PassengerInfo, size_t count, int year, int month, int day);
+YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR Train,
+	YINYUE200_PASSENGERINFO_PTR PassengerInfo,
+	size_t count,
+	int year, int month, int day,
+	PWSTR startstation,
+	PWSTR endstation,
+	enum TrainSeatType seatLevel
+);
 bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, uint64_t* refundprice);
-YINYUE200_TICKETUSEDDATA Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date);
+YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date);

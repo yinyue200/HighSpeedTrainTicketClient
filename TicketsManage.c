@@ -19,16 +19,7 @@
 #include "xxhash.h"
 #include "BitVector.h"
 
-typedef struct Yinyue200_SeatInfoCache
-{
-	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainID;
-	uint64_t Date;//local date
-	BITVECTOR* seatinfo;
-	int seatinfocount;
-	int32_t seatcount;
 
-} YINYUE200_SEATINFOCACHE;
-typedef YINYUE200_SEATINFOCACHE* YINYUE200_SEATINFOCACHE_PTR;
 void free_Yinyue200_SeatInfoCache(YINYUE200_SEATINFOCACHE_PTR cache)
 {
 	for (size_t i = 0; i < cache->seatinfocount; i++)
@@ -307,7 +298,7 @@ int32_t Yinyue200_AllocSeatNumber(YINYUE200_TRAINPLANRECORD_PTR train, BITVECTOR
 
 	for (int32_t i = seatcheckbottom; i < seatchecktop; i++)
 	{
-		bool canuse = BitVector_GetBit(seatusability, i);
+		bool canuse = BitVector_GetBit(seatusability, i) == 0;
 		if (canuse)
 		{
 			return i + 1; //座位号从1开始
