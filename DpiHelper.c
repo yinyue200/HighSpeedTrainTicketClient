@@ -66,6 +66,10 @@ HFONT yinyue200_CreateDefaultFont(HWND winhwnd)
     HFONT font = CreateFontIndirect(&ncm.lfMessageFont);
     return font;
 }
+HFONT Yinyue200_CreateFont(UINT size,UINT dpi)
+{
+    return CreateFont(-MulDiv(size, dpi, 72), 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, L"Arial");
+}
 //É¾³ý×ÖÌå
 BOOL yinyue200_DeleteFont(HFONT font)
 {

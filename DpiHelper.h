@@ -23,6 +23,7 @@ UINT yinyue200_GetDpiForWindow(HWND hWnd);
 //uiAction： The system-wide parameter to be retrieved. This function is only intended for use with SPI_GETICONTITLELOGFONT, SPI_GETICONMETRICS,
 //or SPI_GETNONCLIENTMETRICS. See SystemParametersInfo for more information on these values.
 UINT yinyue200_SystemParametersInfoForDpi(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni, UINT dpi);
+HFONT Yinyue200_CreateFont(UINT size, UINT dpi);
 //创建默认的字体
 HFONT yinyue200_CreateDefaultFont(HWND winhwnd);
 //删除字体

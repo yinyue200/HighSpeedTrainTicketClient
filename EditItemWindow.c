@@ -48,6 +48,7 @@
 #define ID_LABEL_SECONDCLASSSEATCOUNT 31
 #define ID_EDIT_BUSINESSCLASSSEATCOUNT 32
 #define ID_LABEL_BUSINESSCLASSSEATCOUNT 33
+#define ID_LABEL_TICKETINFO 34
 
 typedef struct Yinyue200_EditItemWindowData
 {
@@ -56,6 +57,10 @@ typedef struct Yinyue200_EditItemWindowData
     bool enablesave;
     bool bookmode;
     HFONT lastfont;
+    HFONT largefont;
+
+    PWSTR startstation;
+    PWSTR endstation;
 } YINYUE200_EDITITEMWINDOWDATA;
 void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context);
 YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
@@ -77,13 +82,14 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
     YINYUE200_EDITITEMWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(YINYUE200_EDITITEMWINDOWDATA));
     windowdata->TrainPlanRecord = productrecord;
     windowdata->enablesave = enablesave;
+    windowdata->bookmode = bookmode;
 
     // Create the window.
 
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
         CLASS_NAME,                     // Window class
-        L"编辑车次",    // Window text
+        L"车次信息",    // Window text
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
@@ -107,6 +113,38 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 
 
     return;
+}
+void Yinyue200_EditItemWindow_UpdateTicketInfo(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA *windata)
+{
+    HWND ticketinfohwnd = Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETINFO);
+    if (windata->startstation && windata->endstation)
+    {
+        size_t count = 100 + wcslen(windata->startstation) + wcslen(windata->endstation);
+        LPWSTR buffer = CreateWSTR(count);
+        swprintf(buffer, count, L"你当前的订单信息\r\n%s → %s", windata->startstation, windata->endstation);
+        SendMessage(ticketinfohwnd, WM_SETTEXT, 0, buffer);
+        free(buffer);
+    }
+    else if (windata->startstation)
+    {
+        size_t count = 100 + wcslen(windata->startstation);
+        LPWSTR buffer = CreateWSTR(count);
+        swprintf(buffer, count, L"你当前的订单信息\r\n%s →（未设置）", windata->startstation);
+        SendMessage(ticketinfohwnd, WM_SETTEXT, 0, buffer);
+        free(buffer);
+    }
+    else if (windata->endstation)
+    {
+        size_t count = 100 + wcslen(windata->endstation);
+        LPWSTR buffer = CreateWSTR(count);
+        swprintf(buffer, count, L"你当前的订单信息\r\n（未设置）→ %s", windata->endstation);
+        SendMessage(ticketinfohwnd, WM_SETTEXT, 0, buffer);
+        free(buffer);
+    }
+    else
+    {
+        SendMessage(ticketinfohwnd, WM_SETTEXT, 0, L"你当前的订单信息\r\n空（请先在左下方设置起点和终点）");
+    }
 }
 
 #define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
@@ -228,6 +266,13 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVEANDNEXT, 20 + 100, lasty, 100, 50);
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_CANCEL, 10 + 200 + 20, lasty, 100, 50);
+
+        if (windata->bookmode)
+        {
+            font = windata->largefont;
+            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETINFO, 520, 10, 400, 100);
+            font = windata->lastfont;
+        }
 
     }
 }
@@ -434,6 +479,29 @@ int __cdecl CompareRoutePoint(void* context, void const* left, void const* right
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR* rightobj = right;
     return (*rightobj)->RouteRunTimeSpan - (*leftobj)->RouteRunTimeSpan;
 }
+YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRouted(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA *windata)
+{
+    HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
+    int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+    if (iPos == -1)
+    {
+        MessageBox(hwnd, L"请至少选择一项", NULL, 0);
+        return NULL;
+    }
+    else
+    {
+        int nextpos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+        if (nextpos != -1)
+        {
+            MessageBox(hwnd, L"只能选择一项", NULL, 0);
+            return NULL;
+        }
+        else
+        {
+            return vector_get(&windata->Route, iPos);
+        }
+    }
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -446,9 +514,12 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             CREATESTRUCT* cs = lParam;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
         }
+        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
+
 
         YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
+        windowdata->largefont = Yinyue200_CreateFont(15, dpi);
 
         ADDLABELANDEDIT(NAME, L"车次");
         ADDLABELANDEDIT(ID, L"ID");
@@ -487,8 +558,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         HWND hwnd_ROUTE_Edit = Yinyue200_FastCreateListViewControl(hwnd, ID_LISTVIEW_ROUTE);
 
-        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
-
 
         {
             LV_COLUMN   lvColumn;
@@ -509,8 +578,8 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             }
         }
 
-        HWND hwnd_ROUTE_ADDBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEADD, L"添加路径点");
-        HWND hwnd_ROUTE_DELBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEDELETE, L"删除路径点");
+        HWND hwnd_ROUTE_ADDBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEADD, windowdata->bookmode ? L"设置为起点" : L"添加路径点");
+        HWND hwnd_ROUTE_DELBTN = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ROUTEDELETE, windowdata->bookmode ? L"设置为终点" : L"删除路径点");
 
         HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"保存");
         HWND hwndButton_SaveAndNext = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVEANDNEXT, L"保存并添加下一个");
@@ -523,16 +592,35 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         if (!windowdata->enablesave)
         {
             EnableWindow(hwndButton_Save, false);
+            EnableWindow(hwndButton_SaveAndNext, false);
         }
 
         if (productrecord)
         {
             EnableWindow(hwnd_ID_Edit, false);
             EnableWindow(hwnd_NAME_Edit, false);
+
+            if (windowdata->bookmode)
+            {
+                ShowWindow(hwndButton_Save, SW_HIDE);
+                ShowWindow(hwndButton_SaveAndNext, SW_HIDE);
+
+                EnableWindow(hwnd_STARTDATE_Edit, false);
+                EnableWindow(hwnd_STARTTIME_Edit, false);
+                EnableWindow(hwnd_STATE_Edit, false);
+                EnableWindow(hwnd_TYPE_Edit, false);
+                EnableWindow(hwnd_REPEAT_Edit, false);
+                EnableWindow(hwnd_BUSINESSCLASSSEATCOUNT_Edit, false);
+                EnableWindow(hwnd_FIRSTCLASSSEATCOUNT_Edit, false);
+                EnableWindow(hwnd_SECONDCLASSSEATCOUNT_Edit, false);
+
+                Yinyue200_FastCreateLabelControlWithoutContent(hwnd, ID_LABEL_TICKETINFO);
+                Yinyue200_EditItemWindow_UpdateTicketInfo(hwnd, windowdata);
+            }
         }
 
 
-        Yinyue200_SetWindowSize(hwnd, 700, 780, dpi);
+        Yinyue200_SetWindowSize(hwnd, windowdata->bookmode ? 1100 : 700, 780, dpi);
 
         SIZE winsize = Yinyue200_GetWindowClientAreaSize(hwnd);
         LayoutControls_EditItemWindow(hwnd, dpi, windowdata);
@@ -609,56 +697,80 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             case ID_BUTTON_ROUTEADD:
             {
                 YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                EnableWindow(hwnd, false);
+                if (windata->bookmode)
+                {
+                    YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR route = Yinyue200_EditItemWindow_GetSelectedRouted(hwnd, windata);
+                    if (route)
+                    {
+                        windata->startstation = CreateWstrFromWstr(route->Station.DisplayName);
+                        Yinyue200_EditItemWindow_UpdateTicketInfo(hwnd, windata);
+                    }
+                }
+                else
+                {
+                    EnableWindow(hwnd, false);
 
-                YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
-                callbackcontext->hwnd = hwnd;
-                callbackcontext->add = true;
+                    YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
+                    callbackcontext->hwnd = hwnd;
+                    callbackcontext->add = true;
 
-                CreateRoutePointEditWindow(NULL, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext);
+                    CreateRoutePointEditWindow(NULL, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext);
+                }
+
             }
                 break;
             case ID_BUTTON_ROUTEDELETE:
             {
                 YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
-                int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
-                if (iPos == -1)
+                if (windata->bookmode)
                 {
-                    MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                    YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR route = Yinyue200_EditItemWindow_GetSelectedRouted(hwnd, windata);
+                    if (route)
+                    {
+                        windata->endstation = CreateWstrFromWstr(route->Station.DisplayName);
+                        Yinyue200_EditItemWindow_UpdateTicketInfo(hwnd, windata);
+                    }
                 }
                 else
                 {
-                    vector* vec = yinyue200_safemalloc(sizeof(vector));
-                    vector_init_int(vec);
-
-                    while (iPos != -1) {
-                        // iPos is the index of a selected item
-                        // do whatever you want with it
-                        vector_add_int(vec, iPos);
-
-                        // Get the next selected item
-                        iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
-                    }
-                    wchar_t warningmsg[50];
-                    swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total_int(vec));
-                    if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
+                    HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
+                    int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                    if (iPos == -1)
                     {
-                        for (int i = vector_total(vec) - 1; i >= 0; i--)
-                        {
-                            int tobedelindex = vector_get_int(vec, i);
-                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR tobedel = vector_get(&windata->Route, tobedelindex);
-                            free(tobedel->Station.DisplayName);
-                            free(tobedel);
-                            vector_delete_int(&windata->Route, tobedelindex);
-                        }
+                        MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
                     }
-                    vector_free_int(vec);
-                    free(vec);
+                    else
+                    {
+                        vector* vec = yinyue200_safemalloc(sizeof(vector));
+                        vector_init_int(vec);
+
+                        while (iPos != -1) {
+                            // iPos is the index of a selected item
+                            // do whatever you want with it
+                            vector_add_int(vec, iPos);
+
+                            // Get the next selected item
+                            iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                        }
+                        wchar_t warningmsg[50];
+                        swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total_int(vec));
+                        if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
+                        {
+                            for (int i = vector_total(vec) - 1; i >= 0; i--)
+                            {
+                                int tobedelindex = vector_get_int(vec, i);
+                                YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR tobedel = vector_get(&windata->Route, tobedelindex);
+                                free(tobedel->Station.DisplayName);
+                                free(tobedel);
+                                vector_delete_int(&windata->Route, tobedelindex);
+                            }
+                        }
+                        vector_free_int(vec);
+                        free(vec);
+                    }
+
+                    EditItemWindow_InsertListViewItems(hListView, vector_total(&windata->Route));
                 }
-
-                EditItemWindow_InsertListViewItems(hListView, vector_total(&windata->Route));
-
             }
             break;
             default:
@@ -675,9 +787,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         freeTrainPlanRecord_RoutePoints(&windowdata->Route);
 
+        yinyue200_DeleteFont(windowdata->largefont);
         yinyue200_DeleteFont(windowdata->lastfont);
-        if(windowdata!=NULL)
+        if (windowdata != NULL)
+        {
+            free(windowdata->startstation);
+            free(windowdata->endstation);
             free(windowdata);
+        }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
         CheckIfNoWindowAndQuit();
