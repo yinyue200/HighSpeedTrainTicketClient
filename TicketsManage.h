@@ -17,6 +17,7 @@
 #include "common.h"
 #include "PassengersManage.h"
 #include "ProductRecord.h"
+#include "BitVector.h"
 typedef struct Yinyue200_Ticket
 {
 	YINYUE200_PAIR_OF_uint64_t_uint64_t ID;

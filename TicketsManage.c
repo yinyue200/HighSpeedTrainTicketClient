@@ -36,6 +36,44 @@ static HASHMAP Yinyue200_TrainIdAndLocalDateHashMap;
 /// </summary>
 static HASHMAP Yinyue200_TicketCountHashMap;
 void Yinyue200_SetCacheInfoForNewTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train);
+bool Yinyue200_TrainIdAndDateHash_IsKeyEqualFunc(void* objkey, void* searchkey)
+{
+	YINYUE200_TICKET_PTR ticket = objkey;
+	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair = searchkey;
+	return ticket->TrainID.Item1 == pair->Item1.Item1
+		&& ticket->TrainID.Item2 == pair->Item1.Item2
+		&& GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime) == pair->Item2;
+}
+bool Yinyue200_TrainIdAndDateSeatInfoCache_IsKeyEqualFunc(void* objkey, void* searchkey)
+{
+	YINYUE200_SEATINFOCACHE_PTR seatinfo = objkey;
+	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair = searchkey;
+	return seatinfo->TrainID.Item1 == pair->Item1.Item1
+		&& seatinfo->TrainID.Item2 == pair->Item1.Item2
+		&& seatinfo->Date == pair->Item2;
+}
+uint64_t Yinyue200_SeatInfoCacheHash(YINYUE200_SEATINFOCACHE_PTR seatinfo)
+{
+	XXHASH64 xxhash = CreateXXHash64(0);
+	xxhash_add64(&xxhash, &seatinfo->TrainID, 16);
+	xxhash_add64(&xxhash, &seatinfo->Date, 8);
+	return xxhash_hash64(&xxhash);
+}
+uint64_t Yinyue200_TrainIdAndDateHash(YINYUE200_TICKET_PTR ticket)
+{
+	XXHASH64 xxhash = CreateXXHash64(0);
+	xxhash_add64(&xxhash, &ticket->ID, 16);
+	uint64_t localdatepart = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
+	xxhash_add64(&xxhash, &localdatepart, 8);
+	return xxhash_hash64(&xxhash);
+}
+uint64_t Yinyue200_TrainIdAndDateHash_Pair(YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair)
+{
+	XXHASH64 xxhash = CreateXXHash64(0);
+	xxhash_add64(&xxhash, &pair->Item1, 16);
+	xxhash_add64(&xxhash, &pair->Item2, 8);
+	return xxhash_hash64(&xxhash);
+}
 void Yinyue200_InitTicketBookingSystemIfNeed()
 {
 	if (Yinyue200_AllTickets.capacity == 0)
@@ -62,48 +100,12 @@ void Yinyue200_InitTicketBookingSystemIfNeed()
 			free_Yinyue200_SeatInfoCache);
 	}
 }
-bool Yinyue200_TrainIdAndDateSeatInfoCache_IsKeyEqualFunc(void* objkey, void* searchkey)
-{
-	YINYUE200_SEATINFOCACHE_PTR seatinfo = objkey;
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair = searchkey;
-	return seatinfo->TrainID.Item1 == pair->Item1.Item1
-		&& seatinfo->TrainID.Item2 == pair->Item1.Item2
-		&& seatinfo->Date == pair->Item2;
-}
-uint64_t Yinyue200_SeatInfoCacheHash(YINYUE200_SEATINFOCACHE_PTR seatinfo)
-{
-	XXHASH64 xxhash = CreateXXHash64(0);
-	xxhash_add64(&xxhash, &seatinfo->TrainID, 16);
-	xxhash_add64(&xxhash, &seatinfo->Date, 8);
-	return xxhash_hash64(&xxhash);
-}
-uint64_t Yinyue200_TrainIdAndDateHash(YINYUE200_TICKET_PTR ticket)
-{
-	XXHASH64 xxhash = CreateXXHash64(0);
-	xxhash_add64(&xxhash, &ticket->ID, 16);
-	uint64_t localdatepart = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
-	xxhash_add64(&xxhash, &localdatepart, 8);
-	return xxhash_hash64(&xxhash);
-}
-uint64_t Yinyue200_TrainIdAndDateHash_Pair(YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t *pair)
-{
-	XXHASH64 xxhash = CreateXXHash64(0);
-	xxhash_add64(&xxhash, &pair->Item1, 16);
-	xxhash_add64(&xxhash, &pair->Item2, 8);
-	return xxhash_hash64(&xxhash);
-}
+
 YINYUE200_TICKET_PTR Create_Yinyue200_Ticket()
 {
 	return yinyue200_safemallocandclear(sizeof(YINYUE200_TICKET));
 }
-bool Yinyue200_TrainIdAndDateHash_IsKeyEqualFunc(void* objkey, void* searchkey)
-{
-	YINYUE200_TICKET_PTR ticket = objkey;
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair = searchkey;
-	return ticket->TrainID.Item1 == pair->Item1.Item1 
-		&& ticket->TrainID.Item2 == pair->Item1.Item2 
-		&& GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime) == pair->Item2;
-}
+
 int Yinyue200_GetMonthMaxDay(int year, int month)
 {
 	switch (month)
