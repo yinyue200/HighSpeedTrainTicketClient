@@ -435,7 +435,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                         if (IsDateFieldChk)
                         {
                             bool ret = false;
-                            int date = Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, FieldDateInt_Bottom);
+                            int date =  Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, FieldDateInt_Bottom);
                             if (date >= 0)
                             {
                                 int modrev = date % record->Repeat;

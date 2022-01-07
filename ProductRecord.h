@@ -106,6 +106,13 @@ int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR reco
 void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type, int32_t value);
 int32_t GetSeatCountOfAllTypeOfSeat(YINYUE200_TRAINPLANRECORD_PTR record);
 uint64_t Yinyue200_GetLocalTrainStartTimePoint(YINYUE200_TRAINPLANRECORD_PTR train);
+/// <summary>
+/// 该函数获取车次开行至指定日期所经过的天数
+/// </summary>
+/// <param name="record"></param>
+/// <param name="filetime">传入的时间是本地时间</param>
+/// <returns></returns>
+int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t filetime);
 
 //=======构造获取 TrainPlanRecord 成员的函数声明=======
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(Name)

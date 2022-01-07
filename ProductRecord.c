@@ -422,8 +422,14 @@ YINYUE200_PAIR_OF_int32_t_int32_t* ConvertStringToYINYUE200_PAIR_OF_int32_t_int3
     }
     return ptr;
 }
-//该函数获取车次开行至指定日期所经过的天数
-//传入的时间是本地时间
+
+
+/// <summary>
+/// 该函数获取车次开行至指定日期所经过的天数
+/// </summary>
+/// <param name="record"></param>
+/// <param name="filetime">传入的时间是本地时间</param>
+/// <returns></returns>
 int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t filetime)
 {
     SYSTEMTIME systime;
