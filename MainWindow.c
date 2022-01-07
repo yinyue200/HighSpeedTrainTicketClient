@@ -51,6 +51,7 @@
 #define ID_MENU_SHOWUSERSLIST 19
 #define ID_MENU_IMPORT 20
 #define ID_MENU_PASSMANAGE 21 //乘客管理菜单
+#define ID_BUTTON_BOOKTICKET 22
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
@@ -247,32 +248,12 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                     LISTVIEWNOTIFTLOADCOLWSTR(2, State)
                 case 3://始发站
                     {
-                        vector* vec = &record->RoutePoints;
-                        int total = vector_total(vec);
-                        if (total > 1)
-                        {
-                            YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, 0);
-                            swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%s", routepoint->Station.DisplayName);
-                        }
-                        else
-                        {
-                            swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"NULL");
-                        }
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%s", yinyue200_GetTrainPlanRecordStartStationForDisplay(record));
                         break;
                     }
                 case 4://终到站
                 {
-                    vector* vec = &record->RoutePoints;
-                    int total = vector_total(vec);
-                    if (total > 1)
-                    {
-                        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, total - 1);
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%s", routepoint->Station.DisplayName);
-                    }
-                    else
-                    {
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"NULL");
-                    }
+                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%s", yinyue200_GetTrainPlanRecordEndStationForDisplay(record));
                     break;
                 }
                 case 5://发车时间
@@ -497,6 +478,20 @@ int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* 
     else
         return result;
 }
+int Yinyue200_Main_UpdateListViewData_localTimeCompare(void* pcontext, void const* left, void const* right)
+{
+    //本地时间排序比较函数
+    YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
+    YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    uint64_t const* l = context->GetCompareObject(*leftrecord);
+    uint64_t const* r = context->GetCompareObject(*rightrecord);
+    int result = GetLocalDatePartUINT64OFUINT64(*l) - GetLocalDatePartUINT64OFUINT64(*r);
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
 #define ITEM_COMPAREIMPL(casenum,comparetail,name)  case casenum: \
 {\
     qsortcontext.GetCompareObject = yinyue200_GetTrainPlanRecord##name;\
@@ -528,10 +523,13 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd, UINT dpi)
                 break;
             }
                 //以下是不同字段排序代码实现
-                ITEM_COMPAREIMPL(0, PWSTR, Name)
-                ITEM_COMPAREIMPL(2, PWSTR, Type)
-                ITEM_COMPAREIMPL(3, PWSTR, State)
-
+            ITEM_COMPAREIMPL(0, PWSTR, Name);
+            ITEM_COMPAREIMPL(1, PWSTR, Type);
+            ITEM_COMPAREIMPL(2, PWSTR, State);
+            ITEM_COMPAREIMPL(3, PWSTR, StartStationForDisplay);
+            ITEM_COMPAREIMPL(4, PWSTR, EndStationForDisplay);
+            ITEM_COMPAREIMPL(5, localTime, StartTimePoint);
+                    
             default:
                 break;
             }
@@ -971,7 +969,9 @@ void LayoutControls_MainWindow(HWND hwnd, UINT dpi, YINYUE200_MAINWINDOWDATA* wi
     buttonx += 100;
     YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_NEXTPAGE, buttonx, buttony, 100, 50);
     buttonx += 100;
-    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_REMOVESELECTEDITEMS, buttonx, buttony, 100, 50);
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_REMOVESELECTEDITEMS, buttonx, buttony + 5, 100, 40);
+    buttonx += 110;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_BOOKTICKET, buttonx, buttony + 5, 120, 40);
 }
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1024,6 +1024,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HWND hwndPageInputEdit = Yinyue200_FastCreateEditControl(hwnd, ID_EDIT_PAGE, L"1");
         HWND hwndNextPageButton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_NEXTPAGE, L"下一页");
         HWND hwndRemoveSelectedItemsButton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_REMOVESELECTEDITEMS, L"删除所选");
+        Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_BOOKTICKET, L"预定所选的一个车次");
 
         YINYUE200_MAINWINDOWDATA* windata = yinyue200_safemallocandclear(sizeof(YINYUE200_MAINWINDOWDATA));
         windata->sortcomindex = -1;

@@ -126,8 +126,38 @@ YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(Type)
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(State)
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERADDRMETHOD(RoutePoints)
 YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERADDRMETHOD(TicketCount)
-YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(StartTimePoint)
-YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(Repeat)
+YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERADDRMETHOD(StartTimePoint)
+YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERADDRMETHOD(Repeat)
+
+inline PWSTR yinyue200_GetTrainPlanRecordStartStationForDisplay(YINYUE200_TRAINPLANRECORD_PTR obj)
+{
+    vector* vec = &obj->RoutePoints;
+    int total = vector_total(vec);
+    if (total > 1)
+    {
+        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, 0);
+        return routepoint->Station.DisplayName;
+    }
+    else
+    {
+        return L"NULL";
+    }
+}
+
+inline PWSTR yinyue200_GetTrainPlanRecordEndStationForDisplay(YINYUE200_TRAINPLANRECORD_PTR obj)
+{
+    vector* vec = &obj->RoutePoints;
+    int total = vector_total(vec);
+    if (total > 1)
+    {
+        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, total - 1);
+        return routepoint->Station.DisplayName;
+    }
+    else
+    {
+        return L"NULL";
+    }
+}
 
 //========
 
