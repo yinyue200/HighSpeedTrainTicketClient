@@ -702,6 +702,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR route = Yinyue200_EditItemWindow_GetSelectedRouted(hwnd, windata);
                     if (route)
                     {
+                        free(windata->startstation);
                         windata->startstation = CreateWstrFromWstr(route->Station.DisplayName);
                         Yinyue200_EditItemWindow_UpdateTicketInfo(hwnd, windata);
                     }
@@ -727,6 +728,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR route = Yinyue200_EditItemWindow_GetSelectedRouted(hwnd, windata);
                     if (route)
                     {
+                        free(windata->endstation);
                         windata->endstation = CreateWstrFromWstr(route->Station.DisplayName);
                         Yinyue200_EditItemWindow_UpdateTicketInfo(hwnd, windata);
                     }
