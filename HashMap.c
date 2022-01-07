@@ -322,7 +322,9 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
 
                 map->count++;
 
-                return &firstnode->node.value;
+                nnode->value = NULL;
+
+                return &nnode->value;
             }
             else
             {

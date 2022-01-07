@@ -666,7 +666,7 @@ YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECO
 	key.Item1 = train->ID;
 	key.Item2 = date;
 	YINYUE200_SEATINFOCACHE_PTR *result = HashMap_GetPointerByKey(&Yinyue200_TicketCountHashMap, &key, true);
-	if (result == NULL)
+	if (*result == NULL)
 	{
 		YINYUE200_SEATINFOCACHE_PTR ptr = yinyue200_safemalloc(sizeof(YINYUE200_SEATINFOCACHE));
 		*ptr = Yinyue200_CalcUsedTicketCount(train, date);
