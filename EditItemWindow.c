@@ -810,6 +810,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     BitVector_Free(&seatvec);
                 }
                 break;
+            }
             case ID_BUTTON_BOOKTICKETS:
             {
                 YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
@@ -1060,7 +1061,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             break;
             default:
                 break;
-            }
             }
             break;
         }
