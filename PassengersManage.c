@@ -176,7 +176,6 @@ bool yinyue200_MemoryPassengerInfoSaveToFile()
 }
 PWSTR yinyue200_GetOwnerFromIndex(void* index)
 {
-    Yinyue200_InitFullListOfPassengersIfNeed();
     return yinyue200_GetPassengerInfoOwner(vector_get(yinyue200_FullListOfPassengers, index));
 }
 void Yinyue200_InitFullListOfPassengersIfNeed()
@@ -231,6 +230,23 @@ vector* GetFullListOfPassengerInfo()
 {
     Yinyue200_InitFullListOfPassengersIfNeed();
     return yinyue200_FullListOfPassengers;
+}
+
+bool CheckIfThereAreAnyPassengerInfoRefWithOwner(PWCHAR owner)
+{
+    Yinyue200_InitFullListOfPassengersIfNeed();
+    size_t maxposs;
+    HASHMAPNODE* node = HashMap_GetPointersByKey(yinyue200_Passengers_OwnerIndexed, owner, NULL, &maxposs);
+    while (node)
+    {
+        YINYUE200_PASSENGERINFO_PTR record = vector_get(yinyue200_FullListOfPassengers, node->value);
+        if (record->deled == false)
+        {
+            return true;
+        }
+        node = HashMap_GetPointersByKey(yinyue200_Passengers_OwnerIndexed, owner, node, NULL);//get next node
+    }
+    return false;
 }
 
 vector CreateFullListOfPassengerInfoRefWithOwner(PWCHAR owner)

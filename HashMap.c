@@ -412,7 +412,7 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *last
                 onode = node;
                 if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key))
                 {
-                    return &node;
+                    return node;
                 }
                 node = node->next;
             } while (node);

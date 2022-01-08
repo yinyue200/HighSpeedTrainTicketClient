@@ -1171,7 +1171,14 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             int nextiPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
                             if (nextiPos == -1)
                             {
-                                CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos), false, true);
+                                if (CheckIfThereAreAnyPassengerInfoRefWithOwner(GetNowLoginedUserName()))
+                                {
+                                    CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos), false, true);
+                                }
+                                else
+                                {
+                                    MessageBox(hwnd, L"请在主窗口>订票>乘客管理中使用自己的账号添加一些乘客再来吧", NULL, 0);
+                                }
                             }
                             else
                             {

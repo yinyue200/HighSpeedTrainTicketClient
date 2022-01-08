@@ -409,10 +409,18 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
 
 uint64_t xxHashPWSTR(PWSTR str)
 {
+    if (str == NULL)
+        return 0;
     size_t len = wcslen(str);
+    if (len == 0)
+        return 0;
     return xxhash_hash64_once(str, len, 0);
 }
 bool ComparePWSTR(PCWSTR left, PCWSTR right)
 {
+    if (left == NULL)
+        left = L"";
+    if (right == NULL)
+        right = L"";
     return wcscmp(left, right) == 0;
 }

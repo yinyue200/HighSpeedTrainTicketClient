@@ -53,6 +53,14 @@
 #define ID_EDIT_BOOKTICKETDATESELECTION 35 //订票日期选择控件
 #define ID_BUTTON_SEARCHTICKETS 36 //搜索余票
 #define ID_LABEL_TICKETDATA 37
+//#define ID_LABEL_BOOKTICKETTYPE 38
+#define ID_EDIT_BOOKTICKETTYPE 39 //combobox
+#define ID_LABEL_PASSENGERSELECTION 40
+#define ID_EDIT_PASSENGERSELECTION 41
+#define ID_EDIT_PASSENGERSELECTION 42
+#define ID_EDIT_PASSENGERSELECTION 43
+
+
 
 typedef struct Yinyue200_EditItemWindowData
 {
@@ -275,10 +283,12 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         {
             font = windata->largefont;
             YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETINFO, 520, 10, 450, 100);
-            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETDATA, 520, 170, 450, 100);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETDATA, 520, 170, 450, 125);
             font = windata->lastfont;
             YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_BOOKTICKETDATESELECTION, 520, 110, 200, 25);
             YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SEARCHTICKETS, 520, 140, 100, 25);
+
+            YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_BOOKTICKETTYPE, 520, 295, 200, 25);
         }
 
     }
@@ -559,7 +569,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         HWND hwnd_STARTDATE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTDATE, L"首次发车日期");
         HWND hwnd_STARTDATE_Edit = Yinyue200_FastCreateDatePickControl(hwnd, ID_EDIT_STARTDATE);
-        HWND hwnd_STARTTIME_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTTIME, L"首次发车时间");
+        HWND hwnd_STARTTIME_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STARTTIME, windowdata->bookmode ? L"发车时间" : L"首次发车时间");
         HWND hwnd_STARTTIME_Edit = Yinyue200_FastCreateTimePickControl(hwnd, ID_EDIT_STARTTIME);
         HWND hwnd_ROUTEEDITNOTICE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_ROUTEEDITNOTICE, L"路线编辑");
 
@@ -575,7 +585,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             LPWSTR szString[EDITITEMWINDOW_COLUMNCOUNT] = {
                 L"车站",
                 L"里程（千米）",
-                L"时间（分钟）",
+                L"到达时间（分钟）",
                 L"停留时间（分钟）"
             };
             for (int i = 0; i < EDITITEMWINDOW_COLUMNCOUNT; i++)
@@ -628,6 +638,30 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SEARCHTICKETS, L"查询可用的车票");
                 Yinyue200_FastCreateLabelControlWithoutContent(hwnd, ID_LABEL_TICKETDATA);
+
+                HWND hwnd_BOOKTICKETTYPE_Edit = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_BOOKTICKETTYPE);
+
+                do 
+                {
+                    TCHAR States[3][10] =
+                    {
+                        L"商务座", L"一等座", L"二等座"
+                    };
+
+                    TCHAR A[16];
+                    int  k = 0;
+
+                    memset(&A, 0, sizeof(A));
+                    for (k = 0; k < 3; k += 1)
+                    {
+                        wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)States[k]);
+
+                        // Add string to combobox.
+                        SendMessage(hwnd_BOOKTICKETTYPE_Edit, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)A);
+                    }
+                } while (0);
+
+                ShowWindow(hwnd_BOOKTICKETTYPE_Edit, SW_HIDE);
             }
         }
 
@@ -684,8 +718,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                         PWSTR buffer = CreateWSTR(300);
 
-                        swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
+                        swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张\r\n\r\n请选择你要预定的座位类别", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
                         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
+
+                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
 
                         free(buffer);
                         BitVector_Free(&seatvec);
