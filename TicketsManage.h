@@ -58,7 +58,18 @@ enum Yinyue200_TicketRefuseReason
 	YINYUE200_TICKETREFUSERESON_NOTRAIN = 4
 };
 typedef YINYUE200_SEATINFOCACHE* YINYUE200_SEATINFOCACHE_PTR;
-YINYUE200_DEFINE_PAIR(YINYUE200_PAIR_OF_uint64_t_uint64_t, uint64_t)
+typedef struct Yinyue200_TrainIdAndDate
+{
+	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainId;
+	uint64_t LocalDate;
+} YINYUE200_TRAINIDAANDDATE;
+typedef struct Yinyue200_TrainIdAndDateAndPassenger
+{
+	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainId;
+	uint64_t LocalDate;
+	PWSTR PassengerID;
+	PWSTR PassengerIDType;
+} YINYUE200_TRAINIDAANDDATEANDPASSENGER;
 YINYUE200_TICKET_PTR Create_Yinyue200_Ticket();
 bool yinyue200_TicketsInfoSave();
 inline int Yinyue200_IsLeapYear(int year)
@@ -89,7 +100,8 @@ int32_t Yinyue200_AllocSeatNumber(YINYUE200_TRAINPLANRECORD_PTR train, BITVECTOR
 /// <param name=""></param>
 /// <returns>以分为单位</returns>
 int32_t Yinyue200_TicketManage_GetPrice(YINYUE200_TRAINPLANRECORD_PTR train, PWSTR startstation, PWSTR endstation, enum TrainSeatType seatLevel);
-enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation);
+bool Yinyue200_IsTicketBookedForPassenger(YINYUE200_TRAINPLANRECORD_PTR train, YINYUE200_PASSENGERINFO_PTR passenger, uint64_t localdate);;
+enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, uint64_t localdate, PWSTR startstation, PWSTR endstation, uint64_t* thistrainstartdatetime_out);
 YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo,
 	int year, int month, int day,

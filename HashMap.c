@@ -142,10 +142,14 @@ HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_HashKeyFun
         map.delKeyFunc = delfunc;
         map.hashKeyFunc = hash;
         map.parHashKeyFunc = parhash;
+        map.coefficient = 1;
     }
     return map;
 }
-
+HASHMAP HashMap_SetCoefficient(HASHMAP* map, int coefficient)
+{
+    map->coefficient = coefficient;
+}
 /// <summary>
 /// Îö¹¹Ò»¸ö hashmap
 /// </summary>
@@ -295,7 +299,7 @@ void HashMap_SetNode(HASHMAPNODE* node, uint64_t hash)
 }
 void HashMap_CheckAndResize(HASHMAP* map)
 {
-    if (map->count + 1 > map->listsize)
+    if (map->count + 1 > map->listsize * map->coefficient)
     {
         //À©Èİ
         size_t olistsize = map->listsize;

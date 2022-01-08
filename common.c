@@ -414,7 +414,7 @@ uint64_t xxHashPWSTR(PWSTR str)
     size_t len = wcslen(str);
     if (len == 0)
         return 0;
-    return xxhash_hash64_once(str, len, 0);
+    return xxhash_hash64_once(str, len * sizeof(WCHAR), 0);
 }
 bool ComparePWSTR(PCWSTR left, PCWSTR right)
 {

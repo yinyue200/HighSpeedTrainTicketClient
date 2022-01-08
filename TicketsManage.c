@@ -22,8 +22,9 @@
 
 #include "FileDataLoad.h"
 static vector* Yinyue200_AllTickets = NULL;
-static HASHMAP Yinyue200_TrainIdAndLocalDateHashMap;
+static HASHMAP Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed;
 static HASHMAP Yinyue200_TicketInfo_OwnerIndexed;
+static HASHMAP Yinyue200_TicketInfo_TrainIdAndPassengerIndexed;
 bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec);
 vector* LoadTicketsInfoFromFile(PWSTR path)
 {
@@ -203,18 +204,18 @@ void Yinyue200_SetCacheInfoForNewTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYU
 bool Yinyue200_TrainIdAndDateHash_IsKeyEqualFunc(void* objkey, void* searchkey)
 {
 	YINYUE200_TICKET_PTR ticket = objkey;
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair = searchkey;
-	return ticket->TrainID.Item1 == pair->Item1.Item1
-		&& ticket->TrainID.Item2 == pair->Item1.Item2
-		&& GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime) == pair->Item2;
+	YINYUE200_TRAINIDAANDDATE* pair = searchkey;
+	return ticket->TrainID.Item1 == pair->TrainId.Item1
+		&& ticket->TrainID.Item2 == pair->TrainId.Item2
+		&& GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime) == pair->LocalDate;
 }
 bool Yinyue200_TrainIdAndDateSeatInfoCache_IsKeyEqualFunc(void* objkey, void* searchkey)
 {
 	YINYUE200_SEATINFOCACHE_PTR seatinfo = objkey;
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair = searchkey;
-	return seatinfo->TrainID.Item1 == pair->Item1.Item1
-		&& seatinfo->TrainID.Item2 == pair->Item1.Item2
-		&& seatinfo->Date == pair->Item2;
+	YINYUE200_TRAINIDAANDDATE* pair = searchkey;
+	return seatinfo->TrainID.Item1 == pair->TrainId.Item1
+		&& seatinfo->TrainID.Item2 == pair->TrainId.Item2
+		&& seatinfo->Date == pair->LocalDate;
 }
 uint64_t Yinyue200_SeatInfoCacheHash(YINYUE200_SEATINFOCACHE_PTR seatinfo)
 {
@@ -226,17 +227,49 @@ uint64_t Yinyue200_SeatInfoCacheHash(YINYUE200_SEATINFOCACHE_PTR seatinfo)
 uint64_t Yinyue200_TrainIdAndDateHash(YINYUE200_TICKET_PTR ticket)
 {
 	XXHASH64 xxhash = CreateXXHash64(0);
-	xxhash_add64(&xxhash, &ticket->ID, 16);
+	xxhash_add64(&xxhash, &ticket->TrainID, 16);
 	uint64_t localdatepart = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
 	xxhash_add64(&xxhash, &localdatepart, 8);
 	return xxhash_hash64(&xxhash);
 }
-uint64_t Yinyue200_TrainIdAndDateHash_Pair(YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t* pair)
+uint64_t Yinyue200_TrainIdAndDateHash_Pair(YINYUE200_TRAINIDAANDDATE* pair)
 {
 	XXHASH64 xxhash = CreateXXHash64(0);
-	xxhash_add64(&xxhash, &pair->Item1, 16);
-	xxhash_add64(&xxhash, &pair->Item2, 8);
+	xxhash_add64(&xxhash, &pair->TrainId, 16);
+	xxhash_add64(&xxhash, &pair->LocalDate, 8);
 	return xxhash_hash64(&xxhash);
+}
+uint64_t Yinyue200_TrainIdAndPassengerIDHash(YINYUE200_TICKET_PTR ticket)
+{
+	XXHASH64 xxhash = CreateXXHash64(0);
+	xxhash_add64(&xxhash, &ticket->TrainID, 16);
+	uint64_t localdatepart = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
+	xxhash_add64(&xxhash, &localdatepart, 8);
+	size_t idlen = wcslen(ticket->PassengerID);
+	xxhash_add64(&xxhash, ticket->PassengerID, idlen * sizeof(WCHAR));
+	size_t idtypelen = wcslen(ticket->PassengerIDType);
+	xxhash_add64(&xxhash, ticket->PassengerIDType, idtypelen * sizeof(WCHAR));
+	return xxhash_hash64(&xxhash);
+}
+uint64_t Yinyue200_TrainIdAndPassengerID_Pair(YINYUE200_TRAINIDAANDDATEANDPASSENGER* pair)
+{
+	XXHASH64 xxhash = CreateXXHash64(0);
+	xxhash_add64(&xxhash, &pair->TrainId, 16);
+	xxhash_add64(&xxhash, &pair->LocalDate, 8);
+	size_t idlen = wcslen(pair->PassengerID);
+	xxhash_add64(&xxhash, pair->PassengerID, idlen * sizeof(WCHAR));
+	size_t idtypelen = wcslen(pair->PassengerIDType);
+	xxhash_add64(&xxhash, pair->PassengerIDType, idtypelen * sizeof(WCHAR));
+	return xxhash_hash64(&xxhash);
+}
+bool Yinyue200_TrainIdAndPassengerID_IsKeyEqualFunc(void* objkey, void* searchkey)
+{
+	YINYUE200_TICKET_PTR ticket = objkey;
+	YINYUE200_TRAINIDAANDDATEANDPASSENGER* pair = searchkey;
+	return ticket->TrainID.Item1 == pair->TrainId.Item1
+		&& ticket->TrainID.Item2 == pair->TrainId.Item2
+		&& GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime) == pair->LocalDate
+		&& wcscmp(ticket->PassengerID, pair->PassengerID) == 0 && wcscmp(ticket->PassengerIDType, pair->PassengerIDType) == 0;
 }
 void Yinyue200_InitTicketBookingSystemIfNeed()
 {
@@ -246,25 +279,35 @@ void Yinyue200_InitTicketBookingSystemIfNeed()
 
 		int ticketcounts = vector_total(Yinyue200_AllTickets);
 
-		Yinyue200_TrainIdAndLocalDateHashMap = HashMap_Create(ticketcounts,
-			Yinyue200_TrainIdAndDateHash, 
-			Yinyue200_TrainIdAndDateHash_Pair, 
+		Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed = HashMap_Create(ticketcounts / 5,
+			Yinyue200_TrainIdAndDateHash,
+			Yinyue200_TrainIdAndDateHash_Pair,
 			Yinyue200_TrainIdAndDateHash_IsKeyEqualFunc,
-			HashMap_GetKeyNone, 
+			HashMap_GetKeyNone,
+			HashMap_NoFree);
+		HashMap_SetCoefficient(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, 5);
+
+		Yinyue200_TicketInfo_TrainIdAndPassengerIndexed = HashMap_Create(ticketcounts,
+			Yinyue200_TrainIdAndPassengerIDHash,
+			Yinyue200_TrainIdAndPassengerID_Pair,
+			Yinyue200_TrainIdAndPassengerID_IsKeyEqualFunc,
+			HashMap_GetKeyNone,
 			HashMap_NoFree);
 
-		Yinyue200_TicketInfo_OwnerIndexed = HashMap_Create(ticketcounts,
+		Yinyue200_TicketInfo_OwnerIndexed = HashMap_Create(ticketcounts / 5,
 			xxHashPWSTR,
 			xxHashPWSTR,
 			ComparePWSTR,
 			yinyue200_GetTicketInfoOwner,
 			HashMap_NoFree);
+		HashMap_SetCoefficient(&Yinyue200_TicketInfo_OwnerIndexed, 5);
 
 		for (size_t i = 0; i < ticketcounts; i++)//建立日期车次的车票索引
 		{
 			void* one = vector_get(Yinyue200_AllTickets, i);
-			HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, one);
+			HashMap_Add(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, one);
 			HashMap_Add(&Yinyue200_TicketInfo_OwnerIndexed, one);
+			HashMap_Add(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, one);
 		}
 
 		Yinyue200_TicketCountHashMap = HashMap_Create(0, 
@@ -280,7 +323,15 @@ YINYUE200_TICKET_PTR Create_Yinyue200_Ticket()
 {
 	return yinyue200_safemallocandclear(sizeof(YINYUE200_TICKET));
 }
-
+bool Yinyue200_IsTicketBookedForPassenger(YINYUE200_TRAINPLANRECORD_PTR train, YINYUE200_PASSENGERINFO_PTR passenger, uint64_t localdate)
+{
+	YINYUE200_TRAINIDAANDDATEANDPASSENGER pair;
+	pair.TrainId = train->ID;
+	pair.LocalDate = localdate;
+	pair.PassengerID = passenger->IDNumber;
+	pair.PassengerIDType = passenger->IDType;
+	return HashMap_ContainKey(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, &pair);
+}
 int Yinyue200_GetMonthMaxDay(int year, int month)
 {
 	switch (month)
@@ -328,7 +379,7 @@ void Yinyue200_adjustDateTime(int* year, int* month, int* day)
 /// <summary>
 /// 传入的是本地时间
 /// </summary>
-enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation)
+enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, uint64_t localdate, PWSTR startstation, PWSTR endstation, uint64_t *thistrainstartdatetime_out)
 {
 	SYSTEMTIME systime;
 	GetLocalTime(&systime);//获取本地时间
@@ -342,9 +393,9 @@ enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimi
 	uint64_t spantime = GetTrainPlanRecordRoutePointStartedTime(startstaionroutepoint);
 	uint64_t localstationstarttime = localtrainstarttime + spantime;
 
-	uint64_t thistrainstationstarttime = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(year, month, day)) + GetTimePartUINT64OFUINT64(localstationstarttime);
+	uint64_t thistrainstationstarttime = localdate + GetTimePartUINT64OFUINT64(localstationstarttime);
 
-	uint64_t thistrainstarttime = thistrainstationstarttime - spantime;
+	*thistrainstartdatetime_out = thistrainstationstarttime - spantime;
 
 	if (thistrainstationstarttime > localtime)
 	{
@@ -369,7 +420,7 @@ enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimi
 			}
 		}
 
-		if (Yinyue200_CheckTrainPlanRecordDate(Train, thistrainstarttime))
+		if (Yinyue200_CheckTrainPlanRecordDate(Train, *thistrainstartdatetime_out))
 		{
 			return YINYUE200_TICKETREFUSERESON_NOREFUSE;
 		}
@@ -393,12 +444,13 @@ void Yinyue200_AddTicketInfo(YINYUE200_TICKET_PTR ticket)
 {
 	Yinyue200_InitTicketBookingSystemIfNeed();
 	vector_add(Yinyue200_AllTickets, ticket);
-	HashMap_Add(&Yinyue200_TrainIdAndLocalDateHashMap, ticket);
+	HashMap_Add(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, ticket);
+	HashMap_Add(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, ticket);
 	HashMap_Add(&Yinyue200_TicketInfo_OwnerIndexed, ticket);
 
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t pair;
-	pair.Item1 = ticket->TrainID;
-	pair.Item2 = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
+	YINYUE200_TRAINIDAANDDATE pair;
+	pair.TrainId = ticket->TrainID;
+	pair.LocalDate = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
 
 	YINYUE200_SEATINFOCACHE_PTR seatinfocache = HashMap_GetByKey(&Yinyue200_TicketCountHashMap, &pair);
 
@@ -701,18 +753,18 @@ YINYUE200_SEATINFOCACHE Yinyue200_CalcUsedTicketCount(YINYUE200_TRAINPLANRECORD_
 	cacheinfo.Date = date;
 	cacheinfo.TrainID = train->ID;
 
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t key;
-	key.Item1 = train->ID;
-	key.Item2 = date;
+	YINYUE200_TRAINIDAANDDATE key;
+	key.TrainId = train->ID;
+	key.LocalDate = date;
 	size_t maxposscount;
-	HASHMAPNODE* node = HashMap_GetPointersByKey(&Yinyue200_TrainIdAndLocalDateHashMap, &key, NULL, &maxposscount);
+	HASHMAPNODE* node = HashMap_GetPointersByKey(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, &key, NULL, &maxposscount);
 	while (node)
 	{
 		YINYUE200_TICKET_PTR record = node->value;
 
 		Yinyue200_SetCacheInfoForNewTicket(&cacheinfo, record, train);
 
-		node = HashMap_GetPointersByKey(&Yinyue200_TrainIdAndLocalDateHashMap, &key, node, NULL);
+		node = HashMap_GetPointersByKey(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, &key, node, NULL);
 	}
 
 
@@ -728,9 +780,9 @@ YINYUE200_SEATINFOCACHE Yinyue200_CalcUsedTicketCount(YINYUE200_TRAINPLANRECORD_
 YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date)
 {
 	Yinyue200_InitTicketBookingSystemIfNeed();
-	YINYUE200_PAIR_OF_YINYUE200_PAIR_OF_uint64_t_uint64_t_uint64_t key;
-	key.Item1 = train->ID;
-	key.Item2 = date;
+	YINYUE200_TRAINIDAANDDATE key;
+	key.TrainId = train->ID;
+	key.LocalDate = date;
 	YINYUE200_SEATINFOCACHE_PTR *result = HashMap_GetPointerByKey(&Yinyue200_TicketCountHashMap, &key, true);
 	if (*result == NULL)
 	{

@@ -564,7 +564,7 @@ void Yinyue200_EditItemWindow_SetPasss(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* 
         free(buffer);
     }
 }
-bool Yinyue200_EditItemWindow_BeforeTicketCheck(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windowdata, SYSTEMTIME date)
+bool Yinyue200_EditItemWindow_BeforeTicketCheck(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windowdata, uint64_t date,uint64_t *thistrainstartlocal)
 {
     if (windowdata->TrainPlanRecord->State && wcscmp(windowdata->TrainPlanRecord->State, L"停运") == 0)
     {
@@ -578,7 +578,7 @@ bool Yinyue200_EditItemWindow_BeforeTicketCheck(HWND hwnd, YINYUE200_EDITITEMWIN
     }
     else
     {
-        enum Yinyue200_TicketRefuseReason reason = Yinyue200_CheckTrainPlanRecordDateWithBookLimit(windowdata->TrainPlanRecord, date.wYear, date.wMonth, date.wDay, windowdata->startstation, windowdata->endstation);
+        enum Yinyue200_TicketRefuseReason reason = Yinyue200_CheckTrainPlanRecordDateWithBookLimit(windowdata->TrainPlanRecord, date, windowdata->startstation, windowdata->endstation, thistrainstartlocal);
         switch (reason)
         {
         case YINYUE200_TICKETREFUSERESON_NOREFUSE:
@@ -790,8 +790,9 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 SYSTEMTIME date;
                 DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
-
-                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, date))
+                uint64_t localdateint64 = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+                uint64_t localthistrainstartdatetime;
+                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, localdateint64,&localthistrainstartdatetime))
                 {
                     double businessprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS) / 100.0;
                     double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
@@ -832,9 +833,12 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 SYSTEMTIME date;
                 DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
-
-                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, date))
+                uint64_t localdateint64 = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+                uint64_t localthistrainstartdatetime;
+                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, localdateint64,&localthistrainstartdatetime))
                 {
+                    uint64_t localthistrainstartdate = GetDatePartUINT64OFUINT64(localthistrainstartdatetime);
+
                     //首先检查乘客信息
                     vector selectindexs;
                     vector_init_int(&selectindexs);
@@ -872,7 +876,17 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                                     goto exitbookticket;
                                 }
                             }
-                            vector_add_int(&selectindexs, one);
+
+                            //检查该乘客是否已买过同车次同日期的票
+                            if (Yinyue200_IsTicketBookedForPassenger(windowdata->TrainPlanRecord, vector_get(&windowdata->passengers, one - 1), localthistrainstartdate)==false)
+                            {
+                                vector_add_int(&selectindexs, one);
+                            }
+                            else
+                            {
+                                MessageBox(hwnd, L"有乘客已经买过同日期同车次的票啦", NULL, 0);
+                                goto exitbookticket;
+                            }
                         }
                     }
                     for (int j = 0; j < vector_total_int(&selectindexs); j++)
