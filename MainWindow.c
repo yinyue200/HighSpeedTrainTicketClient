@@ -457,8 +457,22 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
     YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     int64_t const* l = context->GetCompareObject(*leftrecord);
+    int64_t li = *l;
     int64_t const* r = context->GetCompareObject(*rightrecord);
-    int result = *l - *r;
+    int64_t ri = *r;
+    int result;
+    if (li == ri)
+    {
+        result = 0;
+    }
+    else if(li>ri)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
     if (context->IS_REV_RESULT)
         return -result;
     else

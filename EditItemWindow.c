@@ -504,7 +504,22 @@ int __cdecl CompareRoutePoint(void* context, void const* left, void const* right
 {
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR* leftobj = left;
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR* rightobj = right;
-    return (*rightobj)->RouteRunTimeSpan - (*leftobj)->RouteRunTimeSpan;
+    uint64_t leftint = (*rightobj)->RouteRunTimeSpan;
+    uint64_t rightint = (*leftobj)->RouteRunTimeSpan;
+    int result;
+    if (leftint == rightint)
+    {
+        result = 0;
+    }
+    else if (leftint > rightint)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
+    return  -result;
 }
 YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRouted(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windata)
 {
