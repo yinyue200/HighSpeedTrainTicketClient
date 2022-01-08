@@ -158,7 +158,30 @@ LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wPar
         YINYUE200_PASSENGERINFOEDITWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         windata->lastfont = yinyue200_CreateDefaultFont(hwnd);
 
-        ADDLABELANDEDIT(IDTYPE, L"证件类型");
+        Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_IDTYPE, L"证件类型");
+        HWND hwnd_IDTYPE_Edit = Yinyue200_FastCreateComboBoxControl(hwnd, ID_EDIT_IDTYPE);
+
+        do
+        {
+            TCHAR States[6][20] =
+            {
+                L"中国居民身份证", L"港澳居民来往内地通行证", L"台湾居民来往大陆通行证", L"护照", L"外国人永久居留身份证", L"港澳台居民居住证"
+            };
+
+            TCHAR A[16];
+            int  k = 0;
+
+            memset(&A, 0, sizeof(A));
+            for (k = 0; k < 6; k += 1)
+            {
+                wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)States[k]);
+
+                // Add string to combobox.
+                SendMessage(hwnd_IDTYPE_Edit, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)A);
+            }
+        } while (0);
+
+
         ADDLABELANDEDIT(IDNUMBER, L"证件号");
         ADDLABELANDEDIT(FULLNAME, L"姓名");
         ADDLABELANDEDIT(OWNER, L"创建人");
