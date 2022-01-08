@@ -178,7 +178,7 @@ bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec)
 		SAVEINT32DATATOVECTOR(SeatNumber);
 		SAVEINT32DATATOVECTOR(SeatLevel);
 		SAVEUINTDATATOVECTOR(TrainStartTime);
-		SAVEUINTDATATOVECTOR(Owner);
+		SAVEWSTRDATATOVECTOR(Owner);
 		FailedIfFalse(WritePWSTR(L"\n", hFile));
 	}
 	CloseHandle(hFile);
