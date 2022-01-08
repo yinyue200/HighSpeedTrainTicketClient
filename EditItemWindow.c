@@ -20,6 +20,7 @@
 #include "DpiHelper.h"
 #include "RoutePointEditWindow.h"
 #include "TicketsManage.h"
+#include "LoginWindow.h"
 #include <commctrl.h>
 #define EDITITEMWINDOW_COLUMNCOUNT 4
 #define ID_EDIT_NAME 1
@@ -56,10 +57,10 @@
 //#define ID_LABEL_BOOKTICKETTYPE 38
 #define ID_EDIT_BOOKTICKETTYPE 39 //combobox
 #define ID_LABEL_PASSENGERSELECTION 40
-#define ID_EDIT_PASSENGERSELECTION 41
-#define ID_EDIT_PASSENGERSELECTION 42
-#define ID_EDIT_PASSENGERSELECTION 43
-
+#define ID_EDIT_PASSENGERSELECTION_1 41
+#define ID_EDIT_PASSENGERSELECTION_2 42
+#define ID_EDIT_PASSENGERSELECTION_3 43
+#define ID_BUTTON_BOOKTICKETS 44
 
 
 typedef struct Yinyue200_EditItemWindowData
@@ -73,6 +74,8 @@ typedef struct Yinyue200_EditItemWindowData
 
     PWSTR startstation;
     PWSTR endstation;
+
+    vector passengers;
 } YINYUE200_EDITITEMWINDOWDATA;
 void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context);
 YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
@@ -289,6 +292,13 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
             YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SEARCHTICKETS, 520, 140, 100, 25);
 
             YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_BOOKTICKETTYPE, 520, 295, 200, 25);
+
+            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_PASSENGERSELECTION, 520, 325, 450, 25);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_PASSENGERSELECTION_1, 520, 355, 450, 25);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_PASSENGERSELECTION_2, 520, 380, 450, 25);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_PASSENGERSELECTION_3, 520, 405, 450, 25);
+
+            YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_BOOKTICKETS, 700, 430, 50, 50);
         }
 
     }
@@ -519,6 +529,24 @@ YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRou
         }
     }
 }
+void Yinyue200_EditItemWindow_SetPasss(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windata)
+{
+    for (int k = 0; k < vector_total(&windata->passengers); k += 1)
+    {
+        YINYUE200_PASSENGERINFO_PTR passinfo = vector_get(&windata->passengers, k);
+
+        int size = Yinyue200_wcslenWithNull(passinfo->IDType) + Yinyue200_wcslenWithNull(passinfo->IDNumber) + Yinyue200_wcslenWithNull(passinfo->FullName) + 100;
+
+        PWSTR buffer = CreateWSTR(size);
+
+        swprintf(buffer, size, L"%s (%s : %s)", Yinyue200_GetPWSTRWithoutNull(passinfo->FullName), Yinyue200_GetPWSTRWithoutNull(passinfo->IDType), Yinyue200_GetPWSTRWithoutNull(passinfo->IDNumber));
+
+        // Add string to combobox.
+        SendMessage(hwnd, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)buffer);
+
+        free(buffer);
+    }
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -662,6 +690,24 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 } while (0);
 
                 ShowWindow(hwnd_BOOKTICKETTYPE_Edit, SW_HIDE);
+
+                windowdata->passengers = CreateFullListOfPassengerInfoRefWithOwner(GetNowLoginedUserName());
+
+                HWND passlabel = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_PASSENGERSELECTION, L"选择乘客（最少1人，最多3人）：");
+
+                HWND pass1 = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_PASSENGERSELECTION_1);
+                HWND pass2 = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_PASSENGERSELECTION_2);
+                HWND pass3 = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_PASSENGERSELECTION_3);
+                ShowWindow(pass1, SW_HIDE);
+                ShowWindow(pass2, SW_HIDE);
+                ShowWindow(pass3, SW_HIDE);
+                ShowWindow(passlabel, SW_HIDE);
+                Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
+                Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
+                Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
+
+                HWND bookticketbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_BOOKTICKETS, L"下单");
+                ShowWindow(bookticketbutton, SW_HIDE);
             }
         }
 
@@ -723,6 +769,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                         ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
 
+                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), SW_SHOW);
+                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), SW_SHOW);
+                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), SW_SHOW);
+                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
+                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
+
+
+
                         free(buffer);
                         BitVector_Free(&seatvec);
 
@@ -747,6 +801,14 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 }
             }
         exitticketbooking:;
+                break;
+            case ID_BUTTON_BOOKTICKETS:
+            {
+                //首先检查乘客信息
+                //vector selectindexs;
+                //vector_init_int(&selectindexs);
+
+            }
                 break;
             case ID_BUTTON_SAVEANDNEXT:
             case ID_BUTTON_SAVE:

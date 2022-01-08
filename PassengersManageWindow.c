@@ -22,6 +22,7 @@
 #include "PassengersManageWindow.h"
 #include "MainWindow.h"
 #include "PassengerRecordEditWindow.h"
+#include "LoginWindow.h"
 #define ID_LISTVIEW_DATA 1
 #define ID_BUTTON_DEL 2
 #define ID_BUTTON_ADD 3

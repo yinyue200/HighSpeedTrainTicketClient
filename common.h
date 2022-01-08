@@ -114,4 +114,15 @@ inline bool Yinyue200_FileTimeToLocalFileTime(const FILETIME* lpFileTime, FILETI
 {
 	return FileTimeToLocalFileTime(lpFileTime, lpLocalFileTime);
 }
+inline size_t Yinyue200_wcslenWithNull(PWSTR str)
+{
+	if (str == NULL)return 0;
+	return wcslen(str);
+}
+inline PWSTR Yinyue200_GetPWSTRWithoutNull(PWSTR str)
+{
+	if (str == NULL)
+		return L"";
+	return str;
+}
 uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time);
