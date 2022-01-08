@@ -325,7 +325,10 @@ void Yinyue200_adjustDateTime(int* year, int* month, int* day)
 		(*year)++;
 	}
 }
-bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation)
+/// <summary>
+/// 传入的是本地时间
+/// </summary>
+enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation)
 {
 	SYSTEMTIME systime;
 	GetSystemTime(&systime);//获取本地时间
@@ -349,7 +352,7 @@ bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_P
 
 		if (span < Yinyue200_ConvertToUINT64FromTotalSecond(60 * 10))
 		{
-			return false;//开车前10分钟以内不再允许订票
+			return YINYUE200_TICKETREFUSERESON_TOOLATE;//开车前10分钟以内不再允许订票
 		}
 
 		{
@@ -362,23 +365,23 @@ bool Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_P
 
 			if (thistrainstationstarttime > twomonthago)
 			{
-				return false;//不能预定两个月后的车票
+				return YINYUE200_TICKETREFUSERESON_TOOEARLY;//不能预定两个月后的车票
 			}
 		}
 
 		if (Yinyue200_CheckTrainPlanRecordDate(Train, thistrainstarttime))
 		{
-			return true;
+			return YINYUE200_TICKETREFUSERESON_NOREFUSE;
 		}
 		else
 		{
-			return false;
+			return YINYUE200_TICKETREFUSERESON_NOTRAIN;
 		}
 	}
 	else
 	{
 		//不能预定过去的票
-		return false;
+		return YINYUE200_TICKETREFUSERESON_NOPASTTICKET;
 	}
 
 }
@@ -423,9 +426,9 @@ int32_t Yinyue200_TicketManage_GetPrice(YINYUE200_TRAINPLANRECORD_PTR train, PWS
 	YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR end = Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, endstation);
 	if (start == NULL || end == NULL)
 		return -1;
-	if (end->Distance > start->Distance)
+	if (end->Distance < start->Distance)
 		return -1;
-	uint64_t dis = end->Distance > start->Distance;
+	uint64_t dis = end->Distance - start->Distance;
 	double disdouble = dis / 1000.0;
 	double baseprice;
 	switch (seatLevel)
@@ -546,7 +549,7 @@ int32_t Yinyue200_GetUseableSeatsNumber(YINYUE200_TRAINPLANRECORD_PTR train, BIT
 		bool canuse = BitVector_GetBit(seatusability, i) == 0;
 		if (canuse)
 		{
-			return seatscount++; //座位号从1开始
+			seatscount++; //座位号从1开始
 		}
 	}
 
@@ -589,7 +592,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 
 	uint64_t localstationstarttime = localtrainstarttime + spantime;
 
-	uint64_t thistrainstationstarttime = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(year, month, day)) + GetTimePartUINT64OFUINT64(localstationstarttime);
+	uint64_t thistrainstationstarttime = localdateuint64 + GetTimePartUINT64OFUINT64(localstationstarttime);
 	ticket->TrainTime = Yinyue200_ConvertLocalUint64ToUtcUint64(thistrainstationstarttime);
 
 	uint64_t thistrainstarttime = thistrainstationstarttime - spantime;
@@ -618,7 +621,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 
 	ticket->SeatLevel = seatLevel;
 
-	YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(train, thistrainstarttimedate);
+	YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(train, localdateuint64);
 	BITVECTOR seatuse = Yinyue200_GetSeatUsability(train, thistrainstarttimedate, startstation, endstation, seatinfo);
 	ticket->SeatNumber = Yinyue200_AllocSeatNumber(train, &seatuse, seatLevel, seatinfo);
 

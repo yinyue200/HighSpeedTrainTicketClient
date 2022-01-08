@@ -19,6 +19,7 @@
 #include "ControlsCommonOperation.h"
 #include "DpiHelper.h"
 #include "RoutePointEditWindow.h"
+#include "TicketsManage.h"
 #include <commctrl.h>
 #define EDITITEMWINDOW_COLUMNCOUNT 4
 #define ID_EDIT_NAME 1
@@ -49,6 +50,9 @@
 #define ID_EDIT_BUSINESSCLASSSEATCOUNT 32
 #define ID_LABEL_BUSINESSCLASSSEATCOUNT 33
 #define ID_LABEL_TICKETINFO 34
+#define ID_EDIT_BOOKTICKETDATESELECTION 35 //订票日期选择控件
+#define ID_BUTTON_SEARCHTICKETS 36 //搜索余票
+#define ID_LABEL_TICKETDATA 37
 
 typedef struct Yinyue200_EditItemWindowData
 {
@@ -121,7 +125,7 @@ void Yinyue200_EditItemWindow_UpdateTicketInfo(HWND hwnd, YINYUE200_EDITITEMWIND
     {
         size_t count = 100 + wcslen(windata->startstation) + wcslen(windata->endstation);
         LPWSTR buffer = CreateWSTR(count);
-        swprintf(buffer, count, L"你当前的订单信息\r\n%s → %s", windata->startstation, windata->endstation);
+        swprintf(buffer, count, L"你当前的订单信息\r\n%s → %s\r\n\r\n开车日期：", windata->startstation, windata->endstation);
         SendMessage(ticketinfohwnd, WM_SETTEXT, 0, buffer);
         free(buffer);
     }
@@ -129,7 +133,7 @@ void Yinyue200_EditItemWindow_UpdateTicketInfo(HWND hwnd, YINYUE200_EDITITEMWIND
     {
         size_t count = 100 + wcslen(windata->startstation);
         LPWSTR buffer = CreateWSTR(count);
-        swprintf(buffer, count, L"你当前的订单信息\r\n%s →（未设置）", windata->startstation);
+        swprintf(buffer, count, L"你当前的订单信息\r\n%s →（未设置）\r\n\r\n开车日期：", windata->startstation);
         SendMessage(ticketinfohwnd, WM_SETTEXT, 0, buffer);
         free(buffer);
     }
@@ -137,13 +141,13 @@ void Yinyue200_EditItemWindow_UpdateTicketInfo(HWND hwnd, YINYUE200_EDITITEMWIND
     {
         size_t count = 100 + wcslen(windata->endstation);
         LPWSTR buffer = CreateWSTR(count);
-        swprintf(buffer, count, L"你当前的订单信息\r\n（未设置）→ %s", windata->endstation);
+        swprintf(buffer, count, L"你当前的订单信息\r\n（未设置）→ %s\r\n\r\n开车日期：", windata->endstation);
         SendMessage(ticketinfohwnd, WM_SETTEXT, 0, buffer);
         free(buffer);
     }
     else
     {
-        SendMessage(ticketinfohwnd, WM_SETTEXT, 0, L"你当前的订单信息\r\n空（请先在左下方设置起点和终点）");
+        SendMessage(ticketinfohwnd, WM_SETTEXT, 0, L"你当前的订单信息\r\n空（请先在左下方设置起点和终点）\r\n\r\n开车日期：");
     }
 }
 
@@ -270,8 +274,11 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         if (windata->bookmode)
         {
             font = windata->largefont;
-            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETINFO, 520, 10, 400, 100);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETINFO, 520, 10, 450, 100);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_TICKETDATA, 520, 170, 450, 100);
             font = windata->lastfont;
+            YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_BOOKTICKETDATESELECTION, 520, 110, 200, 25);
+            YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SEARCHTICKETS, 520, 140, 100, 25);
         }
 
     }
@@ -616,6 +623,11 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 Yinyue200_FastCreateLabelControlWithoutContent(hwnd, ID_LABEL_TICKETINFO);
                 Yinyue200_EditItemWindow_UpdateTicketInfo(hwnd, windowdata);
+
+                Yinyue200_FastCreateDatePickControl(hwnd, ID_EDIT_BOOKTICKETDATESELECTION);
+
+                Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SEARCHTICKETS, L"查询可用的车票");
+                Yinyue200_FastCreateLabelControlWithoutContent(hwnd, ID_LABEL_TICKETDATA);
             }
         }
 
@@ -635,6 +647,71 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         {
             switch (LOWORD(wParam))
             {
+            case ID_BUTTON_SEARCHTICKETS:
+                //当前一定在bookmode下
+            {
+                YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+
+                if (windowdata->TrainPlanRecord->State &&wcscmp(windowdata->TrainPlanRecord->State, L"停运") == 0)
+                {
+                    MessageBox(hwnd, L"当前车次已停运，您无法预定本车次车票", NULL, 0);
+                }
+                else if(windowdata->startstation==NULL||windowdata->endstation==NULL)
+                {
+                    MessageBox(hwnd, L"请先在左侧设置订单的起点和终点信息", NULL, 0);
+                }
+                else
+                {
+                    SYSTEMTIME date;
+                    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
+                    enum Yinyue200_TicketRefuseReason reason = Yinyue200_CheckTrainPlanRecordDateWithBookLimit(windowdata->TrainPlanRecord, date.wYear, date.wMonth, date.wDay, windowdata->startstation, windowdata->endstation);
+                    switch (reason)
+                    {
+                    case YINYUE200_TICKETREFUSERESON_NOREFUSE:
+                    {
+                        double businessprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS) / 100.0;
+                        double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
+                        double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
+
+                        uint64_t uint64date = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+
+                        YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, uint64date);
+                        BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, uint64date, windowdata->startstation, windowdata->endstation, seatinfo);
+
+                        int32_t businesscount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_BUSINESSCLASS, seatinfo);
+                        int32_t firstcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_FIRSTCLASS, seatinfo);
+                        int32_t secondcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_SECONDCLASS, seatinfo);
+
+                        PWSTR buffer = CreateWSTR(300);
+
+                        swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
+                        SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
+
+                        free(buffer);
+                        BitVector_Free(&seatvec);
+
+                    }
+                        break;
+                    case YINYUE200_TICKETREFUSERESON_NOPASTTICKET:
+                        MessageBox(hwnd, L"不能购买过去的车票哦", NULL, 0);
+                        goto exitticketbooking;
+                    case YINYUE200_TICKETREFUSERESON_TOOLATE:
+                        MessageBox(hwnd, L"开车前10分钟停止售票哦", NULL, 0);
+                        goto exitticketbooking;
+                    case YINYUE200_TICKETREFUSERESON_TOOEARLY:
+                        MessageBox(hwnd, L"不可以预定两个月之后的车票哦", NULL, 0);
+                        goto exitticketbooking;
+                    case YINYUE200_TICKETREFUSERESON_NOTRAIN:
+                        MessageBox(hwnd, L"选定的日期不开行指定车次，请换一个日期再试", NULL, 0);
+                        goto exitticketbooking;
+                    default:
+                        MessageBox(hwnd, L"订票系统未知错误", NULL, 0);
+                        goto exitticketbooking;
+                    }
+                }
+            }
+        exitticketbooking:;
+                break;
             case ID_BUTTON_SAVEANDNEXT:
             case ID_BUTTON_SAVE:
             {

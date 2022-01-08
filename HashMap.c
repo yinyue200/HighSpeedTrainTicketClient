@@ -287,7 +287,7 @@ void* HashMap_RemoveByKey(HASHMAP* map, void* key)
 {
     return HashMap_Remove_Inner(map, key, NULL, false);
 }
-void HashMap_SetNode(HASHMAPNODE* node, int64_t hash)
+void HashMap_SetNode(HASHMAPNODE* node, uint64_t hash)
 {
     node->hashvalue = hash;
 }
@@ -376,7 +376,8 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
         {
             map->count++;
 
-            HashMap_SetNode(firstnode, hash);
+            firstnode->used = 1;
+            HashMap_SetNode(&firstnode->node, hash);
             return &firstnode->node.value;
         }
         else
@@ -494,7 +495,7 @@ void HashMap_Add(HASHMAP* map, void* item)
     }
     else
     {
-        HashMap_SetNode(firstnode, hash);
+        HashMap_SetNode(&firstnode->node, hash);
         firstnode->node.value = item;
         firstnode->used = 1;
     }

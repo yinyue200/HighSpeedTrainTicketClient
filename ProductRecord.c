@@ -406,9 +406,9 @@ void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record,
 int32_t GetSeatCountOfAllTypeOfSeat(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     int32_t sum = 0;
-    for (int i = 0; i < vector_total(&record->RoutePoints); i++)
+    for (int i = 0; i < vector_total(&record->TicketCount); i++)
     {
-        YINYUE200_PAIR_OF_int32_t_int32_t* pair = vector_get(&record->RoutePoints, i);
+        YINYUE200_PAIR_OF_int32_t_int32_t* pair = vector_get(&record->TicketCount, i);
         sum += pair->Item2;
     }
     return sum;
