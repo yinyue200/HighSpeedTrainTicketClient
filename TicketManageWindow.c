@@ -20,6 +20,7 @@
 #include "TicketManageWindow.h"
 #include "TicketsManage.h"
 #include "MainWindow.h"
+#include "LoginWindow.h"
 
 #define ID_LISTVIEW_DATA 1
 #define ID_BUTTON_DEL 2
@@ -165,8 +166,8 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
         {
             TCHAR ComboBoxItems[YINYUE200_COMBOBOXITEMSCOUNT][10] =
             {
-                TEXT("证件类型"), TEXT("证件号"), TEXT("姓名"), TEXT("创建人"),
-                TEXT("手机号"), TEXT("紧急联系人姓名"), TEXT("紧急联系人手机号")
+                TEXT("姓名"), TEXT("证件号"), TEXT("乘车日期"),
+                TEXT("车次"), TEXT("起点"), TEXT("终点"), TEXT("证件类型")
             };
 
             TCHAR A[16];
@@ -256,11 +257,11 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                 if (yinyue200_LoganUserInfo == NULL || wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN") == 0)
                 {
                     //加载所有乘客数据
-                    tobesearch = GetFullListOfPassengerInfo();
+                    tobesearch = Yinyue200_GetFullListOfTicketInfo();
                 }
                 else
                 {
-                    tobefree = CreateFullListOfPassengerInfoRefWithOwner(GetNowLoginedUserName());
+                    tobefree = Yinyue200_CreateFullListOfTicketInfoRefWithOwner(GetNowLoginedUserName());
                     tobesearch = &tobefree;
                 }
                 if (windata->UnsortedNowList.capacity == 0)
@@ -291,7 +292,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                             YINYUE200_SEARCH_IMPL(PassengerName, 0);//todo
                             YINYUE200_SEARCH_IMPL(PassengerIDType, 1);
                             YINYUE200_SEARCH_IMPL(PassengerID, 2);
-                            YINYUE200_SEARCH_IMPL(CreatedDate, 3);
+                            YINYUE200_SEARCH_IMPL(CreatedTime, 3);
                             YINYUE200_SEARCH_IMPL(TrainName, 4);
                             YINYUE200_SEARCH_IMPL(TrainTime, 5);
                             YINYUE200_SEARCH_IMPL(StartStation, 6);
@@ -381,6 +382,67 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
+#define LISTVIEWNOTIFTLOADCOLPAIROFINT64(caseid,membername) case caseid:\
+{\
+    YINYUE200_PAIR_OF_uint64_t_uint64_t _temp_pair = record->##membername;\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%llu;%llu"),\
+        _temp_pair.Item1,_temp_pair.Item2);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLDATE(caseid,membername) case caseid:\
+{\
+    FILETIME _temp_filetime = Yinyue200_ConvertToFileTimeFromUINT64(record->##membername);\
+    FILETIME _temp_local_filetime;\
+    Yinyue200_FileTimeToLocalFileTime(&_temp_filetime, &_temp_local_filetime);\
+    SYSTEMTIME _temp_systemtime;\
+    FileTimeToSystemTime(&_temp_local_filetime,&_temp_systemtime);\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%d/%d/%d %d:%d"),\
+        _temp_systemtime.wYear,_temp_systemtime.wMonth,_temp_systemtime.wDay,_temp_systemtime.wHour,_temp_systemtime.wMinute);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLPREICE(caseid,membername) case caseid:\
+{\
+    double tempprice = record->##membername;\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%.2lf"),\
+        tempprice / 100.0);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLINT32(caseid,membername) case caseid:\
+{\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%d"),\
+        record->##membername);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLINT(caseid,membername) case caseid:\
+{\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%lld"),\
+        record->##membername);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
+#define LISTVIEWNOTIFTLOADCOLDOUBLE(caseid,membername) case caseid:\
+{\
+    swprintf_s(szString, _countof(szString),\
+        TEXT("%lf"),\
+        record->##membername);\
+    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
+        szString, _TRUNCATE);\
+    break;\
+}
 #define LISTVIEWNOTIFTLOADCOLWSTR(caseid,membername) case caseid:\
 {\
     if(record->##membername!=NULL)\
@@ -411,13 +473,43 @@ LRESULT Yinyue200_TicketManageWindow_InsertListViewItems_ListViewNotify(HWND hWn
             {
                 switch (lpdi->item.iSubItem)
                 {
-                    //LISTVIEWNOTIFTLOADCOLWSTR(0, IDType)
-                    //    LISTVIEWNOTIFTLOADCOLWSTR(1, IDNumber)
-                    //    LISTVIEWNOTIFTLOADCOLWSTR(2, FullName)
-                    //    LISTVIEWNOTIFTLOADCOLWSTR(3, Owner)
-                    //    LISTVIEWNOTIFTLOADCOLWSTR(4, PhoneNum)
-                    //    LISTVIEWNOTIFTLOADCOLWSTR(5, EmergencyContactPersonFullName)
-                    //    LISTVIEWNOTIFTLOADCOLWSTR(6, EmergencyContactPhoneNumber)
+                    LISTVIEWNOTIFTLOADCOLWSTR(0, PassengerIDType);
+                    LISTVIEWNOTIFTLOADCOLWSTR(1, PassengerID);
+                    LISTVIEWNOTIFTLOADCOLWSTR(2, PassengerName);
+                    LISTVIEWNOTIFTLOADCOLWSTR(3, Owner);
+                    LISTVIEWNOTIFTLOADCOLDATE(4, CreatedTime);
+                    LISTVIEWNOTIFTLOADCOLWSTR(5, TrainName);
+                    LISTVIEWNOTIFTLOADCOLDATE(6, TrainTime);
+                    LISTVIEWNOTIFTLOADCOLWSTR(7, StartStation);
+                    LISTVIEWNOTIFTLOADCOLWSTR(8, EndStation);
+                    LISTVIEWNOTIFTLOADCOLPREICE(9, Price);
+                case 10:
+                {
+                    PWSTR label;
+                    enum TrainSeatType type = record->SeatLevel;
+                    switch (type)
+                    {
+                    case TRAINTICKETTYPE_FIRSTCLASS:
+                        label = L"一等座";
+                        break;
+                    case TRAINTICKETTYPE_SECONDCLASS:
+                        label = L"二等座";
+                        break;
+                    case TRAINTICKETTYPE_BUSINESSCLASS:
+                        label = L"商务座";
+                        break;
+                    case TRAINTICKETTYPE_UNKNOWN:
+                    default:
+                        label = L"UNKNOWN";
+                        break;
+                    }
+                    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, label, _TRUNCATE);
+                    break;
+                }
+                    LISTVIEWNOTIFTLOADCOLINT32(11, SeatNumber);
+                    LISTVIEWNOTIFTLOADCOLPAIROFINT64(12, ID);
+                    LISTVIEWNOTIFTLOADCOLPAIROFINT64(13, TrainID);
+                    LISTVIEWNOTIFTLOADCOLDATE(14, TrainStartTime);
                 default:
                     {
                         swprintf_s(szString, _countof(szString),
@@ -491,7 +583,7 @@ LRESULT Yinyue200_TicketManageWindow_InsertListViewItems_ListViewNotify(HWND hWn
                 YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_TicketManageWindow_PassengerAddOrEdit_Callback_Context();
                 callbackcontext->hwnd = hWnd;
 
-                CreatePassengerRecordEditWindow(ptr, TicketManageWindow_addoreditcallback, callbackcontext);
+                //CreatePassengerRecordEditWindow(ptr, TicketManageWindow_addoreditcallback, callbackcontext);
             }
 
         }
@@ -501,10 +593,10 @@ LRESULT Yinyue200_TicketManageWindow_InsertListViewItems_ListViewNotify(HWND hWn
 
     return 0;
 }
-#define ITEM_COMPAREIMPL(casenum,name)  case casenum: \
+#define ITEM_COMPAREIMPL(casenum,tail,name)  case casenum: \
 {\
-    qsortcontext.GetCompareObject = yinyue200_GetPassengerInfo##name;\
-    vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_PWSTRCompare, &qsortcontext);\
+    qsortcontext.GetCompareObject = yinyue200_GetTicketInfo##name;\
+    vector_qsort(&windata->NowList, Yinyue200_Main_UpdateListViewData_##tail##Compare, &qsortcontext);\
     break;\
 }
 BOOL Yinyue200_TicketManageWindow_InsertListViewItems(HWND hwndListView, size_t count)
@@ -518,7 +610,7 @@ BOOL Yinyue200_TicketManageWindow_InsertListViewItems(HWND hwndListView, size_t 
     return TRUE;
 }
 #define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ↑",TEXT(name) L" ↓" }
-#define MAINWINDOW_COLUMNCOUNT 7
+#define MAINWINDOW_COLUMNCOUNT 15
 void Yinyue200_TicketManageWindow_SetListViewColumn(HWND hwnd, BOOL first)
 {
     UINT dpi = yinyue200_GetDpiForWindow(hwnd);
@@ -528,10 +620,18 @@ void Yinyue200_TicketManageWindow_SetListViewColumn(HWND hwnd, BOOL first)
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("证件类型"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("证件号码"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("姓名"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("创建者"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("手机号"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("紧急联系人姓名"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("紧急联系人电话"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("订票人"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("订票时间"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("车次"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("开车时间"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("起点"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("终点"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("票价"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("座位等级"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("座号"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("ID"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("车次ID"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("列车始发时间")
     };//二维数组，存储不同列在不同排序状态下的列头字符串
     LV_COLUMN   lvColumn;
     int         i;
@@ -593,14 +693,21 @@ void Yinyue200_TicketManageWindow_UpdateListViewData(HWND hwnd)
                 break;
             }
             //以下是不同字段排序代码实现
-            ITEM_COMPAREIMPL(0, IDType)
-                ITEM_COMPAREIMPL(1, IDNumber)
-                ITEM_COMPAREIMPL(2, FullName)
-                ITEM_COMPAREIMPL(3, Owner)
-                ITEM_COMPAREIMPL(4, PhoneNum)
-                ITEM_COMPAREIMPL(5, EmergencyContactPersonFullName)
-                ITEM_COMPAREIMPL(6, EmergencyContactPhoneNumber)
-
+            ITEM_COMPAREIMPL(0, PWSTR,PassengerIDType);
+            ITEM_COMPAREIMPL(1, PWSTR,PassengerID);
+            ITEM_COMPAREIMPL(2, PWSTR, PassengerName);
+            ITEM_COMPAREIMPL(3, PWSTR, Owner);
+            ITEM_COMPAREIMPL(4, uint64, CreatedTime);
+            ITEM_COMPAREIMPL(5, PWSTR, TrainName);
+            ITEM_COMPAREIMPL(6, uint64, TrainTime);
+            ITEM_COMPAREIMPL(7, PWSTR, StartStation);
+            ITEM_COMPAREIMPL(8, PWSTR, EndStation);
+            ITEM_COMPAREIMPL(9, uint64, Price);
+            ITEM_COMPAREIMPL(10,int32, SeatLevel);
+            ITEM_COMPAREIMPL(11,int32, SeatNumber);
+            ITEM_COMPAREIMPL(12, pairofuint64, ID);
+            ITEM_COMPAREIMPL(13, pairofuint64, TrainID);
+            ITEM_COMPAREIMPL(14, uint64, TrainStartTime);
             default:
                 break;
             }

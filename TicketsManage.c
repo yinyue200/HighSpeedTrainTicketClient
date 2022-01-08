@@ -87,7 +87,7 @@ vector* LoadTicketsInfoFromFile(PWSTR path)
 							LOADWSTRDATATOVECTOR(PassengerName, 1);
 							LOADWSTRDATATOVECTOR(PassengerIDType, 2);
 							LOADWSTRDATATOVECTOR(PassengerID, 3);
-							LOADUINTDATATOVECTOR(CreatedDate, 4);
+							LOADUINTDATATOVECTOR(CreatedTime, 4);
 							LOADWSTRDATATOVECTOR(TrainName, 5);
 							LOADWPAIRINTDATATOVECTOR(TrainID, 6);
 							LOADUINTDATATOVECTOR(TrainTime, 7);
@@ -169,7 +169,7 @@ bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec)
 		SAVEWSTRDATATOVECTOR(PassengerName);
 		SAVEWSTRDATATOVECTOR(PassengerIDType);
 		SAVEWSTRDATATOVECTOR(PassengerID);
-		SAVEUINTDATATOVECTOR(CreatedDate);
+		SAVEUINTDATATOVECTOR(CreatedTime);
 		SAVEWSTRDATATOVECTOR(TrainName);
 		SAVEPAIRINTDATATOVECTOR(TrainID);
 		SAVEUINTDATATOVECTOR(TrainTime);
@@ -653,11 +653,9 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 
 	ticket->TrainID = train->ID;
 	ticket->TrainName = CreateWstrFromWstr(train->Name);
-	FILETIME nowtime;
-	GetSystemTimeAsFileTime(&nowtime);
 	FILETIME nowutctime;
-	Yinyue200_LocalFileTimeToFileTime(&nowtime, &nowutctime);
-	ticket->CreatedDate = Yinyue200_ConvertToUINT64FromFileTime(nowutctime);
+	GetSystemTimeAsFileTime(&nowutctime);
+	ticket->CreatedTime = Yinyue200_ConvertToUINT64FromFileTime(nowutctime);
 
 	ticket->StartStation = CreateWstrFromWstr(startstation);
 	ticket->EndStation = CreateWstrFromWstr(endstation);
@@ -795,4 +793,29 @@ YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECO
 	{
 		return *result;
 	}
+}
+
+vector Yinyue200_CreateFullListOfTicketInfoRefWithOwner(PWCHAR owner)
+{
+	Yinyue200_InitTicketBookingSystemIfNeed();
+	size_t maxposs;
+	HASHMAPNODE* node = HashMap_GetPointersByKey(&Yinyue200_TicketInfo_OwnerIndexed, owner, NULL, &maxposs);
+	vector vec;
+	vector_initwithcap(&vec, maxposs);
+	while (node)
+	{
+		YINYUE200_PASSENGERINFO_PTR record = vector_get(Yinyue200_AllTickets, node->value);
+		if (record->deled == false)
+		{
+			vector_add(&vec, record);
+		}
+		node = HashMap_GetPointersByKey(&Yinyue200_TicketInfo_OwnerIndexed, owner, node, NULL);//get next node
+	}
+	return vec;
+}
+
+vector* Yinyue200_GetFullListOfTicketInfo()
+{
+	Yinyue200_InitTicketBookingSystemIfNeed();
+	return Yinyue200_AllTickets;
 }

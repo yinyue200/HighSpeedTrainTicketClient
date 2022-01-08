@@ -27,6 +27,7 @@
 #include "PassengersManageWindow.h"
 #include "PassengersManage.h"
 #include "TicketsManage.h"
+#include "TicketManageWindow.h"
 
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
@@ -52,6 +53,7 @@
 #define ID_MENU_IMPORT 20
 #define ID_MENU_PASSMANAGE 21 //乘客管理菜单
 #define ID_BUTTON_BOOKTICKET 22
+#define ID_MENU_TICKETSMANAGE 23
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
@@ -436,7 +438,7 @@ BOOL Yinyue200_Main_InitListView(HWND hwnd,HWND hwndListView, UINT dpi)
     return TRUE;
 }
 
-int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right)
+int __cdecl Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right)
 {
     //宽字符串排序比较函数
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
@@ -450,7 +452,7 @@ int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* l
     else
         return result;
 }
-int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
+int __cdecl Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right)
 {
     //整型排序比较函数
     YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
@@ -478,11 +480,105 @@ int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* l
     else
         return result;
 }
-int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
+int __cdecl Yinyue200_Main_UpdateListViewData_pairofuint64Compare(void* pcontext, void const* left, void const* right)
+{
+    void** leftrecord = left;
+    void** rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    YINYUE200_PAIR_OF_uint64_t_uint64_t const* l = context->GetCompareObject(*leftrecord);
+    YINYUE200_PAIR_OF_uint64_t_uint64_t li = *l;
+    YINYUE200_PAIR_OF_uint64_t_uint64_t const* r = context->GetCompareObject(*rightrecord);
+    YINYUE200_PAIR_OF_uint64_t_uint64_t ri = *r;
+    int result;
+    if (li.Item1 == ri.Item1)
+    {
+        if (li.Item2 == ri.Item2)
+        {
+            result = 0;
+        }
+        else if (li.Item2 > ri.Item2)
+        {
+            result = 1;
+        }
+        else
+        {
+            result = -1;
+        }
+    }
+    else if (li.Item1 > ri.Item1)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
+int __cdecl Yinyue200_Main_UpdateListViewData_int32Compare(void* pcontext, void const* left, void const* right)
+{
+    //整型排序比较函数
+    void** leftrecord = left;
+    void** rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    int32_t const* l = context->GetCompareObject(*leftrecord);
+    int32_t li = *l;
+    int32_t const* r = context->GetCompareObject(*rightrecord);
+    int32_t ri = *r;
+    int result;
+    if (li == ri)
+    {
+        result = 0;
+    }
+    else if (li > ri)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
+int __cdecl Yinyue200_Main_UpdateListViewData_uint64Compare(void* pcontext, void const* left, void const* right)
+{
+    //整型排序比较函数
+    void** leftrecord = left;
+    void** rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    uint64_t const* l = context->GetCompareObject(*leftrecord);
+    uint64_t li = *l;
+    uint64_t const* r = context->GetCompareObject(*rightrecord);
+    uint64_t ri = *r;
+    int result;
+    if (li == ri)
+    {
+        result = 0;
+    }
+    else if (li > ri)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
+int __cdecl Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
 {
     //浮点排序比较函数
-    YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
-    YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
+    void** leftrecord = left;
+    void** rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     double const* l = context->GetCompareObject(*leftrecord);
     double const* r = context->GetCompareObject(*rightrecord);
@@ -492,15 +588,23 @@ int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* 
     else
         return result;
 }
-int Yinyue200_Main_UpdateListViewData_localTimeCompare(void* pcontext, void const* left, void const* right)
+int __cdecl Yinyue200_Main_UpdateListViewData_localTimeCompare(void* pcontext, void const* left, void const* right)
 {
     //本地时间排序比较函数
-    YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
-    YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
+    void** leftrecord = left;
+    void** rightrecord = right;
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     uint64_t const* l = context->GetCompareObject(*leftrecord);
     uint64_t const* r = context->GetCompareObject(*rightrecord);
-    int result = GetLocalDatePartUINT64OFUINT64(*l) - GetLocalDatePartUINT64OFUINT64(*r);
+    uint64_t l1 = GetLocalTimePartUINT64OFUINT64(*l);
+    uint64_t l2 = GetLocalTimePartUINT64OFUINT64(*r);
+    int result;
+    if (l1 == l2)
+        result = 0;
+    else if (l1 > l2)
+        result = 1;
+    else
+        result = -1;
     if (context->IS_REV_RESULT)
         return -result;
     else
@@ -1025,6 +1129,8 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"重设用户密码和权限");
         AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
         AppendMenu(hBookTicket, MF_STRING, ID_MENU_PASSMANAGE, L"乘客管理");
+        AppendMenu(hBookTicket, MF_STRING, ID_MENU_TICKETSMANAGE, L"已购车票管理");
+
 
         UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
@@ -1148,6 +1254,9 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             free(buf);
             break;
         }
+        case ID_MENU_TICKETSMANAGE:
+            CreateTicketManageWindow();
+            break;
         default:
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);

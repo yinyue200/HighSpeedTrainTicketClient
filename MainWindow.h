@@ -36,6 +36,10 @@ typedef struct Yinyue200_Main_ListViewSortContext
     //是否反转比较结果
     BOOL IS_REV_RESULT;
 } YINYUE200_MAINLISTVIEWSORTCONTEXT;
-int Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right);
-int Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right);
-int Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_int64Compare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_localTimeCompare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_uint64Compare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_int32Compare(void* pcontext, void const* left, void const* right);
+int __cdecl Yinyue200_Main_UpdateListViewData_pairofuint64Compare(void* pcontext, void const* left, void const* right);
