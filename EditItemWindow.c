@@ -376,7 +376,6 @@ int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
         case LVN_GETDISPINFO:
         {
             LV_DISPINFO* lpdi = (LV_DISPINFO*)lParam;
-            TCHAR szString[MAX_PATH];
             YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR record = VECTOR_GET(windata->Route, YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR, lpdi->item.iItem);
             if (record)
             {
