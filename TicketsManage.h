@@ -33,7 +33,7 @@ typedef struct Yinyue200_Ticket
 	uint64_t TrainTime;//UTC 发车时间和日期
 	PWSTR StartStation;
 	PWSTR EndStation;
-	uint64_t Price;//票价，以分为单位
+	int32_t Price;//票价，以分为单位
 	int32_t SeatNumber;//座号
 	int32_t SeatLevel;//座位等级
 	uint64_t TrainStartTime;//UTC 起点站开车时间和日期

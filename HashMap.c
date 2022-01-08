@@ -233,6 +233,7 @@ void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
                     if (firstnode->node.next == NULL)
                     {
                         firstnode->used = 0;
+                        goto endfordel;
                     }
                     else
                     {
@@ -263,6 +264,7 @@ void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
             node = node->next;
         skipround:;
         } while (node);
+        endfordel:
         return NULL;
     }
     else

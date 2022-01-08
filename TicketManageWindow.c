@@ -137,8 +137,23 @@ void TicketManageWindow_addoreditcallback(YINYUE200_TICKET_PTR data, void* conte
     free(context);
 }
 #define YINYUE200_SEARCH_IMPL(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
-#define YINYUE200_SEARCH_IMPL_DATE(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
-#define YINYUE200_COMBOBOXITEMSCOUNT 7
+#define YINYUE200_SEARCH_IMPL_DATE(name, id) case id:\
+{\
+int _temp_year = 0;\
+int _temp_month = 0;\
+int _temp_day = 0;\
+int _temp_ret=swscanf(searchtext, L"%d/%d/%d",&_temp_year,&_temp_month,&_temp_day);\
+uint64_t _temp_localdatepart=GetLocalDatePartUINT64OFUINT64(record->name);\
+FILETIME _temp_filetime= Yinyue200_ConvertToFileTimeFromUINT64(_temp_localdatepart);\
+SYSTEMTIME _temp_systime; \
+FileTimeToSystemTime(&_temp_filetime,&_temp_systime);\
+rev=_temp_systime.wYear==_temp_year;\
+if(_temp_month!=0) rev&= _temp_systime.wMonth==_temp_month;\
+if(_temp_day!=0) rev&= _temp_systime.wDay==_temp_day;\
+}\
+break
+#define YINYUE200_SEARCH_IMPL_DATETIME(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
+#define YINYUE200_COMBOBOXITEMSCOUNT 8
 LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -166,7 +181,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
         {
             TCHAR ComboBoxItems[YINYUE200_COMBOBOXITEMSCOUNT][10] =
             {
-                TEXT("姓名"), TEXT("证件号"), TEXT("乘车日期"),
+                TEXT("姓名"), TEXT("证件号"), TEXT("乘车日期"), TEXT("购买日期"),
                 TEXT("车次"), TEXT("起点"), TEXT("终点"), TEXT("证件类型")
             };
 
@@ -290,17 +305,28 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                             rev = true;
                             break;
                             YINYUE200_SEARCH_IMPL(PassengerName, 0);//todo
-                            YINYUE200_SEARCH_IMPL(PassengerIDType, 1);
-                            YINYUE200_SEARCH_IMPL(PassengerID, 2);
-                            YINYUE200_SEARCH_IMPL(CreatedTime, 3);
+                            YINYUE200_SEARCH_IMPL(PassengerID, 1);
+                        //case 2:
+                        //{
+                        //    int _temp_year = 0; 
+                        //    int _temp_month = 0; 
+                        //    int _temp_day = 0; 
+                        //    int _temp_ret = swscanf(searchtext, L"%d/%d/%d", &_temp_year, &_temp_month, &_temp_day); 
+                        //    uint64_t _temp_localdatepart = GetLocalDatePartUINT64OFUINT64(record->TrainTime); 
+                        //    FILETIME _temp_filetime = Yinyue200_ConvertToFileTimeFromUINT64(_temp_localdatepart); 
+                        //    SYSTEMTIME _temp_systime; 
+                        //    FileTimeToSystemTime(&_temp_filetime, &_temp_systime); 
+                        //    rev = _temp_systime.wYear == _temp_year; 
+                        //    if (_temp_month != 0) rev &= _temp_systime.wMonth == _temp_month; 
+                        //        if (_temp_day != 0) rev &= _temp_systime.wDay == _temp_day; 
+                        //}
+                        //    break;
+                            YINYUE200_SEARCH_IMPL_DATE(TrainTime, 2);
+                            YINYUE200_SEARCH_IMPL_DATE(CreatedTime, 3);
                             YINYUE200_SEARCH_IMPL(TrainName, 4);
-                            YINYUE200_SEARCH_IMPL(TrainTime, 5);
-                            YINYUE200_SEARCH_IMPL(StartStation, 6);
-                            YINYUE200_SEARCH_IMPL(EndStation, 7);
-                            YINYUE200_SEARCH_IMPL(Price, 8);
-                            YINYUE200_SEARCH_IMPL(SeatNumber, 9);
-                            YINYUE200_SEARCH_IMPL(SeatLevel, 10);
-                            YINYUE200_SEARCH_IMPL(TrainStartTime, 13);
+                            YINYUE200_SEARCH_IMPL(StartStation, 5);
+                            YINYUE200_SEARCH_IMPL(EndStation, 6);
+                            YINYUE200_SEARCH_IMPL(PassengerIDType, 7);
                         default:
                             break;
                         }
@@ -346,15 +372,34 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                         iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
                     }
                     wchar_t warningmsg[50];
-                    swprintf(warningmsg, 50, L"你确定要删除 %d 条记录吗？", vector_total_int(vec));
+                    swprintf(warningmsg, 50, L"你确定要退票这 %d 张车票吗？", vector_total_int(vec));
                     if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
                     {
+                        int32_t price = 0;
+                        int succcount = 0;
+                        int failedcount = 0;
+
                         for (int i = vector_total(vec) - 1; i >= 0; i--)
                         {
                             int tobedelindex = vector_get_int(vec, i);
                             YINYUE200_TICKETMANAGEWINDOWDATA* tobedel = vector_get(&windata->NowList, tobedelindex);
-                            DeletePassenger(tobedel);
+                            int32_t thisprice = 0;
+                            if (Yinyue200_RefundTicket(tobedel,&thisprice))
+                            {
+                                price += thisprice;
+                                succcount++;
+                            }
+                            else
+                            {
+                                failedcount++;
+                            }
                         }
+
+                        double doubleprice = price / 100.0;
+                        PWSTR buffer = CreateWSTR(100);
+                        swprintf(buffer, 100, L"操作完成，退票成功 %d 张，退票失败 %d 张，共 %.2lf 元", succcount, failedcount, doubleprice);
+                        MessageBox(hwnd, buffer, L"提示", 0);
+                        free(buffer);
                     }
                     vector_free_int(vec);
                     free(vec);

@@ -93,7 +93,7 @@ vector* LoadTicketsInfoFromFile(PWSTR path)
 							LOADUINTDATATOVECTOR(TrainTime, 7);
 							LOADWSTRDATATOVECTOR(StartStation, 8);
 							LOADWSTRDATATOVECTOR(EndStation, 9);
-							LOADUINTDATATOVECTOR(Price, 10);
+							LOADINT32DATATOVECTOR(Price, 10);
 							LOADINT32DATATOVECTOR(SeatNumber, 11);
 							LOADINT32DATATOVECTOR(SeatLevel, 12);
 							LOADUINTDATATOVECTOR(TrainStartTime, 13);
@@ -175,7 +175,7 @@ bool yinyue200_TicketsInfoSaveToFile(LPWSTR path, vector* vec)
 		SAVEUINTDATATOVECTOR(TrainTime);
 		SAVEWSTRDATATOVECTOR(StartStation);
 		SAVEWSTRDATATOVECTOR(EndStation);
-		SAVEUINTDATATOVECTOR(Price);
+		SAVEINT32DATATOVECTOR(Price);
 		SAVEINT32DATATOVECTOR(SeatNumber);
 		SAVEINT32DATATOVECTOR(SeatLevel);
 		SAVEUINTDATATOVECTOR(TrainStartTime);
@@ -682,6 +682,48 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 
 	Yinyue200_AddTicketInfo(ticket);
 	return ticket;
+}
+bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
+{
+	FILETIME utcnowtime;
+	GetSystemTimeAsFileTime(&utcnowtime);
+	uint64_t utcnowtimeuint64 = Yinyue200_ConvertToUINT64FromFileTime(utcnowtime);
+	if (utcnowtimeuint64 > ticket->TrainTime)
+	{
+		*refundprice = 0;
+		return false;
+	}
+	else
+	{
+		if (utcnowtimeuint64 + Yinyue200_ConvertToTotalSecondFromUINT64(2 * 3600) > ticket->TrainTime)
+		{
+			//ÊÕÍËÆ±·Ñ
+			double price = ticket->Price;
+			price *= 0.05;
+			*refundprice =  price;
+			
+		}
+		else
+		{
+			*refundprice = 0;
+		}
+		
+		for (size_t i = 0; i < VECTOR_TOTAL(Yinyue200_AllTickets); i++)
+		{
+			YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(Yinyue200_AllTickets, YINYUE200_TRAINPLANRECORD_PTR, i);
+			if (allproduct == ticket)
+			{
+				VECTOR_DELETE(Yinyue200_AllTickets, i);
+				break;
+			}
+		}
+
+		HashMap_RemoveItem(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, ticket);
+		HashMap_RemoveItem(&Yinyue200_TicketInfo_OwnerIndexed, ticket);
+		HashMap_RemoveItem(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, ticket);
+
+		return true;
+	}
 }
 void Yinyue200_SetCacheInfoForNewTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train)
 {
