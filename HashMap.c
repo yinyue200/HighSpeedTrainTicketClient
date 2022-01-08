@@ -71,7 +71,7 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
             {
                 HASHMAPNODE *next = map->item[i].node.next;
                 if (next == NULL)
-                {      
+                {
 #if _DEBUG
                     if (firstnode->used != 1)//此时firstnode->used应该为1
                     {
@@ -224,7 +224,9 @@ void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
                     }
                     else
                     {
-                        memcpy(firstnode, firstnode->node.next, sizeof(HASHMAPNODE));
+                        HASHMAPNODE *secondnode = firstnode->node.next;
+                        memcpy(firstnode, secondnode, sizeof(HASHMAPNODE));
+                        free(secondnode);
                     }
 
                     map->count--;
