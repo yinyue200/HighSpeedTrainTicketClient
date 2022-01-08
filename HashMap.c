@@ -199,6 +199,14 @@ void* HashMap_GetByKey(HASHMAP* map, void* key)
         return NULL;
     return *ret;
 }
+/// <summary>
+/// 删除一个元素
+/// </summary>
+/// <param name="map">哈希表</param>
+/// <param name="key">要删除元素的key</param>
+/// <param name="item">要删除的元素</param>
+/// <param name="checkitem">是否使用item参数</param>
+/// <returns>被删除的元素</returns>
 void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
 {
     uint64_t hash = map->parHashKeyFunc(key);
@@ -442,6 +450,11 @@ HASHMAPNODE* HashMap_GetPointersByKey(HASHMAP* map, void* key, HASHMAPNODE *last
         return NULL;
     }
 }
+/// <summary>
+/// 重新计算该结点的哈希值
+/// </summary>
+/// <param name="map">哈希表</param>
+/// <param name="node">要计算哈希值的结点</param>
 void HashMap_RehashNode(HASHMAP* map, HASHMAPNODE* node)
 {
     node->hashvalue = map->hashKeyFunc(map->getKeyFunc(node->value));
