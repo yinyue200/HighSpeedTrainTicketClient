@@ -331,9 +331,9 @@ void Yinyue200_adjustDateTime(int* year, int* month, int* day)
 enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation)
 {
 	SYSTEMTIME systime;
-	GetSystemTime(&systime);//获取本地时间
+	GetLocalTime(&systime);//获取本地时间
 	FILETIME localfiletime;
-	GetSystemTimeAsFileTime(&localfiletime);
+	SystemTimeToFileTime(&systime, &localfiletime);
 	uint64_t localtime = Yinyue200_ConvertToUINT64FromFileTime(localfiletime);
 
 	uint64_t localtrainstarttime = Yinyue200_GetLocalTrainStartTimePoint(Train);
