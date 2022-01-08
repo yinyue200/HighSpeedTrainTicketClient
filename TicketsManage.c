@@ -567,7 +567,6 @@ int32_t Yinyue200_GetUseableSeatsNumber(YINYUE200_TRAINPLANRECORD_PTR train, BIT
 /// <returns>∑µªÿ NULL ±Ì æ∂©∆± ß∞‹</returns>
 YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train, 
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo, 
-	size_t count, 
 	int year, int month, int day, 
 	PWSTR startstation,
 	PWSTR endstation,
@@ -625,7 +624,6 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	BITVECTOR seatuse = Yinyue200_GetSeatUsability(train, thistrainstarttimedate, startstation, endstation, seatinfo);
 	ticket->SeatNumber = Yinyue200_AllocSeatNumber(train, &seatuse, seatLevel, seatinfo);
 
-	free_Yinyue200_SeatInfoCache(seatinfo);
 	BitVector_Free(&seatuse);
 
 	ticket->Owner = CreateWstrFromWstr(owner);

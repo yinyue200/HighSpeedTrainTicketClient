@@ -80,7 +80,7 @@ typedef struct Yinyue200_EditItemWindowData
 void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context);
 YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enablesave, bool bookmode)
+void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord, bool enablesave, bool bookmode)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
@@ -129,7 +129,7 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord,bool enabl
 
     return;
 }
-void Yinyue200_EditItemWindow_UpdateTicketInfo(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA *windata)
+void Yinyue200_EditItemWindow_UpdateTicketInfo(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windata)
 {
     HWND ticketinfohwnd = Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETINFO);
     if (windata->startstation && windata->endstation)
@@ -266,7 +266,7 @@ void LayoutControls_EditItemWindow(HWND hwnd, UINT dpi, YINYUE200_EDITITEMWINDOW
         lasty += 200;
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEADD, 10, lasty, 100, 25);
         YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ROUTEDELETE, 10 + 100, lasty, 100, 25);
-        lasty += 35;      
+        lasty += 35;
         //座位label
         YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_BUSINESSCLASSSEATCOUNT, 10, lasty, 100, 25);
         YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_FIRSTCLASSSEATCOUNT, 20 + 100, lasty, 100, 25);
@@ -311,7 +311,7 @@ void setidtoeditcontrol(HWND hwnd, YINYUE200_PAIR_OF_uint64_t_uint64_t pair)
     SendMessage(GetDlgItem(hwnd, ID_EDIT_ID), WM_SETTEXT, 0, _temp_buffer);
 }
 //设置编辑控件初值
-void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrecord, YINYUE200_EDITITEMWINDOWDATA *windata)
+void edititemwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_PTR productrecord, YINYUE200_EDITITEMWINDOWDATA* windata)
 {
     freeTrainPlanRecord_RoutePoints(&windata->Route);
 
@@ -506,7 +506,7 @@ int __cdecl CompareRoutePoint(void* context, void const* left, void const* right
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR* rightobj = right;
     return (*rightobj)->RouteRunTimeSpan - (*leftobj)->RouteRunTimeSpan;
 }
-YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRouted(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA *windata)
+YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRouted(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windata)
 {
     HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_ROUTE);
     int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
@@ -531,6 +531,8 @@ YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRou
 }
 void Yinyue200_EditItemWindow_SetPasss(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windata)
 {
+    // Add string to combobox.
+    SendMessage(hwnd, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)L"不选");
     for (int k = 0; k < vector_total(&windata->passengers); k += 1)
     {
         YINYUE200_PASSENGERINFO_PTR passinfo = vector_get(&windata->passengers, k);
@@ -547,6 +549,46 @@ void Yinyue200_EditItemWindow_SetPasss(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* 
         free(buffer);
     }
 }
+bool Yinyue200_EditItemWindow_BeforeTicketCheck(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windowdata, SYSTEMTIME date)
+{
+    if (windowdata->TrainPlanRecord->State && wcscmp(windowdata->TrainPlanRecord->State, L"停运") == 0)
+    {
+        MessageBox(hwnd, L"当前车次已停运，您无法预定本车次车票", NULL, 0);
+        return false;
+    }
+    else if (windowdata->startstation == NULL || windowdata->endstation == NULL)
+    {
+        MessageBox(hwnd, L"请先在左侧设置订单的起点和终点信息", NULL, 0);
+        return false;
+    }
+    else
+    {
+        enum Yinyue200_TicketRefuseReason reason = Yinyue200_CheckTrainPlanRecordDateWithBookLimit(windowdata->TrainPlanRecord, date.wYear, date.wMonth, date.wDay, windowdata->startstation, windowdata->endstation);
+        switch (reason)
+        {
+        case YINYUE200_TICKETREFUSERESON_NOREFUSE:
+        {
+            return true;
+        }
+        break;
+        case YINYUE200_TICKETREFUSERESON_NOPASTTICKET:
+            MessageBox(hwnd, L"不能购买过去的车票哦", NULL, 0);
+            return false;
+        case YINYUE200_TICKETREFUSERESON_TOOLATE:
+            MessageBox(hwnd, L"开车前10分钟停止售票哦", NULL, 0);
+            return false;
+        case YINYUE200_TICKETREFUSERESON_TOOEARLY:
+            MessageBox(hwnd, L"不可以预定两个月之后的车票哦", NULL, 0);
+            return false;
+        case YINYUE200_TICKETREFUSERESON_NOTRAIN:
+            MessageBox(hwnd, L"选定的日期不开行指定车次，请换一个日期再试", NULL, 0);
+            return false;
+        default:
+            MessageBox(hwnd, L"订票系统未知错误", NULL, 0);
+            return false;
+        }
+    }
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -554,7 +596,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_CREATE:
     {
         AddWindowCount();
-
         {
             CREATESTRUCT* cs = lParam;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
@@ -568,10 +609,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         ADDLABELANDEDIT(NAME, L"车次");
         ADDLABELANDEDIT(ID, L"ID");
-        ADDLABELANDEDIT(TYPE,L"类型");
+        ADDLABELANDEDIT(TYPE, L"类型");
         HWND Hwnd_STATE_Label = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STATE, L"状态");
         HWND hwnd_STATE_Edit = Yinyue200_FastCreateComboBoxControl(hwnd, ID_EDIT_STATE);
-        do{
+        do {
             TCHAR States[2][10] =
             {
                 TRAUBPLANSTATEWSTR_NORMAL, TRAUBPLANSTATEWSTR_STOP
@@ -631,7 +672,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
 
         YINYUE200_TRAINPLANRECORD_PTR productrecord = windowdata->TrainPlanRecord;
-        
+
         edititemwindow_initctrl(hwnd, productrecord, windowdata);
 
         if (!windowdata->enablesave)
@@ -669,7 +710,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 HWND hwnd_BOOKTICKETTYPE_Edit = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_BOOKTICKETTYPE);
 
-                do 
+                do
                 {
                     TCHAR States[3][10] =
                     {
@@ -716,7 +757,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         SIZE winsize = Yinyue200_GetWindowClientAreaSize(hwnd);
         LayoutControls_EditItemWindow(hwnd, dpi, windowdata);
-        
+
     }
     return 0;
     case WM_COMMAND:
@@ -732,84 +773,151 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             {
                 YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
-                if (windowdata->TrainPlanRecord->State &&wcscmp(windowdata->TrainPlanRecord->State, L"停运") == 0)
+                SYSTEMTIME date;
+                DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
+
+                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, date))
                 {
-                    MessageBox(hwnd, L"当前车次已停运，您无法预定本车次车票", NULL, 0);
+                    double businessprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS) / 100.0;
+                    double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
+                    double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
+
+                    uint64_t uint64date = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+
+                    YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, uint64date);
+                    BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, uint64date, windowdata->startstation, windowdata->endstation, seatinfo);
+
+                    int32_t businesscount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_BUSINESSCLASS, seatinfo);
+                    int32_t firstcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_FIRSTCLASS, seatinfo);
+                    int32_t secondcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_SECONDCLASS, seatinfo);
+
+                    PWSTR buffer = CreateWSTR(300);
+
+                    swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张\r\n\r\n请选择你要预定的座位类别", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
+                    SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
+
+                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
+
+                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), SW_SHOW);
+                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), SW_SHOW);
+                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), SW_SHOW);
+                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
+                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
+
+
+
+                    free(buffer);
+                    BitVector_Free(&seatvec);
                 }
-                else if(windowdata->startstation==NULL||windowdata->endstation==NULL)
-                {
-                    MessageBox(hwnd, L"请先在左侧设置订单的起点和终点信息", NULL, 0);
-                }
-                else
-                {
-                    SYSTEMTIME date;
-                    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
-                    enum Yinyue200_TicketRefuseReason reason = Yinyue200_CheckTrainPlanRecordDateWithBookLimit(windowdata->TrainPlanRecord, date.wYear, date.wMonth, date.wDay, windowdata->startstation, windowdata->endstation);
-                    switch (reason)
-                    {
-                    case YINYUE200_TICKETREFUSERESON_NOREFUSE:
-                    {
-                        double businessprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS) / 100.0;
-                        double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
-                        double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
-
-                        uint64_t uint64date = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
-
-                        YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, uint64date);
-                        BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, uint64date, windowdata->startstation, windowdata->endstation, seatinfo);
-
-                        int32_t businesscount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_BUSINESSCLASS, seatinfo);
-                        int32_t firstcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_FIRSTCLASS, seatinfo);
-                        int32_t secondcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_SECONDCLASS, seatinfo);
-
-                        PWSTR buffer = CreateWSTR(300);
-
-                        swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张\r\n\r\n请选择你要预定的座位类别", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
-                        SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
-
-                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
-
-                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), SW_SHOW);
-                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), SW_SHOW);
-                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), SW_SHOW);
-                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
-                        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
-
-
-
-                        free(buffer);
-                        BitVector_Free(&seatvec);
-
-                    }
-                        break;
-                    case YINYUE200_TICKETREFUSERESON_NOPASTTICKET:
-                        MessageBox(hwnd, L"不能购买过去的车票哦", NULL, 0);
-                        goto exitticketbooking;
-                    case YINYUE200_TICKETREFUSERESON_TOOLATE:
-                        MessageBox(hwnd, L"开车前10分钟停止售票哦", NULL, 0);
-                        goto exitticketbooking;
-                    case YINYUE200_TICKETREFUSERESON_TOOEARLY:
-                        MessageBox(hwnd, L"不可以预定两个月之后的车票哦", NULL, 0);
-                        goto exitticketbooking;
-                    case YINYUE200_TICKETREFUSERESON_NOTRAIN:
-                        MessageBox(hwnd, L"选定的日期不开行指定车次，请换一个日期再试", NULL, 0);
-                        goto exitticketbooking;
-                    default:
-                        MessageBox(hwnd, L"订票系统未知错误", NULL, 0);
-                        goto exitticketbooking;
-                    }
-                }
-            }
-        exitticketbooking:;
                 break;
             case ID_BUTTON_BOOKTICKETS:
             {
-                //首先检查乘客信息
-                //vector selectindexs;
-                //vector_init_int(&selectindexs);
+                YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+
+                SYSTEMTIME date;
+                DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
+
+                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, date))
+                {
+                    //首先检查乘客信息
+                    vector selectindexs;
+                    vector_init_int(&selectindexs);
+                    int sel1 = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    int sel2 = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    int sel3 = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    int seatlevel = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    enum TrainSeatType seattype = TRAINTICKETTYPE_UNKNOWN;
+                    switch (seatlevel)
+                    {
+                    case 0:
+                        seattype = TRAINTICKETTYPE_BUSINESSCLASS;
+                        break;
+                    case 1:
+                        seattype = TRAINTICKETTYPE_FIRSTCLASS;
+                        break;
+                    case 2:
+                        seattype = TRAINTICKETTYPE_SECONDCLASS;
+                        break;
+                    default:
+                        break;
+                    }
+                    int sels[3] = { sel1,sel2,sel3 };
+                    for (int i = 0; i < 3; i++)
+                    {
+                        int one = sels[i];
+                        if (sels[i] != -1 && sels[i] != 0)
+                        {
+                            for (int j = 0; j < vector_total_int(&selectindexs); j++)
+                            {
+                                int innerone = vector_get_int(&selectindexs, j);
+                                if (innerone == one)
+                                {
+                                    MessageBox(hwnd, L"乘客不能相同", NULL, 0);
+                                    goto exitbookticket;
+                                }
+                            }
+                            vector_add_int(&selectindexs, one);
+                        }
+                    }
+                    for (int j = 0; j < vector_total_int(&selectindexs); j++)
+                    {
+                        (*vector_getPointer_int(&selectindexs, j))--;
+                    }
+
+                    if (vector_total_int(&selectindexs) > 0)
+                    {
+                        uint64_t uint64date = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+                        YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, uint64date);
+                        BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, uint64date, windowdata->startstation, windowdata->endstation, seatinfo);
+
+                        int32_t seatcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, seattype, seatinfo);
+
+                        if (seatcount >= vector_total_int(&selectindexs))//检查余票是否能订这么多张
+                        {
+                            int succcount = 0;
+                            int failedcount = 0;
+                            int32_t price = 0;
+                            for (int i = 0; i < vector_total_int(&selectindexs); i++)
+                            {
+                                int one = vector_get_int(&selectindexs, i);
+                                YINYUE200_PASSENGERINFO_PTR passinfo = vector_get(&windowdata->passengers, one);
+                                YINYUE200_TICKET_PTR ticket =
+                                    Yinyue200_BookTickets(windowdata->TrainPlanRecord, passinfo, date.wYear, date.wMonth, date.wDay,
+                                        windowdata->startstation, windowdata->endstation, seattype, GetNowLoginedUserName());
+
+                                if (ticket == NULL)
+                                {
+                                    failedcount++;
+                                }
+                                else
+                                {
+                                    succcount++;
+                                    price += ticket->Price;
+                                }
+                            }
+                            double doubleprice = price / 100.0;
+                            PWSTR buffer = CreateWSTR(100);
+                            swprintf(buffer, 100, L"操作完成，购买成功 %d 张，购买失败 %d 张，共 %.2lf 元", succcount, failedcount, doubleprice);
+                            MessageBox(hwnd, buffer, L"提示", 0);
+                            free(buffer);
+                        }
+                        else
+                        {
+                            MessageBox(hwnd, seatcount == 1 ? L"好像没票了" : L"余票不足", NULL, 0);
+                        }
+
+                        BitVector_Free(&seatvec);
+                    }
+                    else
+                    {
+                        MessageBox(hwnd, L"请先选择乘客", NULL, 0);
+                    }
+                exitbookticket:;
+                    vector_free_int(&selectindexs);
+                }
 
             }
-                break;
+            break;
             case ID_BUTTON_SAVEANDNEXT:
             case ID_BUTTON_SAVE:
             {
@@ -894,7 +1002,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 }
 
             }
-                break;
+            break;
             case ID_BUTTON_ROUTEDELETE:
             {
                 YINYUE200_EDITITEMWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
@@ -953,62 +1061,62 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             default:
                 break;
             }
-        }
+            }
             break;
         }
-    }
-    return 0;
-    case WM_DESTROY:
-    {
-        YINYUE200_EDITITEMWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-
-        freeTrainPlanRecord_RoutePoints(&windowdata->Route);
-
-        yinyue200_DeleteFont(windowdata->largefont);
-        yinyue200_DeleteFont(windowdata->lastfont);
-        if (windowdata != NULL)
-        {
-            free(windowdata->startstation);
-            free(windowdata->endstation);
-            free(windowdata);
         }
-        RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
-        DecreaseWindowCount();
-        CheckIfNoWindowAndQuit();
         return 0;
     }
-    case WM_DPICHANGED:
-    {
-        YINYUE200_EDITITEMWINDOWDATA *windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-        if (windowdata && windowdata->lastfont)
+        case WM_DESTROY:
         {
+            YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+
+            freeTrainPlanRecord_RoutePoints(&windowdata->Route);
+
+            yinyue200_DeleteFont(windowdata->largefont);
             yinyue200_DeleteFont(windowdata->lastfont);
-            windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
-            LayoutControls_EditItemWindow(hwnd, HIWORD(wParam), windowdata);
+            if (windowdata != NULL)
+            {
+                free(windowdata->startstation);
+                free(windowdata->endstation);
+                free(windowdata);
+            }
+            RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
+            DecreaseWindowCount();
+            CheckIfNoWindowAndQuit();
+            return 0;
         }
-        break;
-    }
-    case WM_NOTIFY:
-    {
-        if (LOWORD(wParam) == ID_LISTVIEW_ROUTE)
+        case WM_DPICHANGED:
         {
-            return EditItemWindow_RouteListViewNotify(hwnd, lParam);
+            YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            if (windowdata && windowdata->lastfont)
+            {
+                yinyue200_DeleteFont(windowdata->lastfont);
+                windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
+                LayoutControls_EditItemWindow(hwnd, HIWORD(wParam), windowdata);
+            }
+            break;
+        }
+        case WM_NOTIFY:
+        {
+            if (LOWORD(wParam) == ID_LISTVIEW_ROUTE)
+            {
+                return EditItemWindow_RouteListViewNotify(hwnd, lParam);
+            }
+            return 0;
+        }
+        case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+
+
+
+            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+
+            EndPaint(hwnd, &ps);
         }
         return 0;
-    }
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hwnd, &ps);
-
-
-
-        FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-
-        EndPaint(hwnd, &ps);
-    }
-    return 0;
-
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }

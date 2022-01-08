@@ -36,7 +36,7 @@ bool BitVector_GetBit(BITVECTOR* vector, int pos)
 	int index = pos / 64;
 	int bitindex = pos % 64;
 
-	uint64_t value = vector_get_uint64_t(&vector->data, pos);
+	uint64_t value = vector_get_uint64_t(&vector->data, index);
 
 	value = value >> bitindex;
 	value &= 0X0000000000000001ul;//取最后一位

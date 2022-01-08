@@ -47,7 +47,7 @@ void HashMap_PlaceItem(HASHMAP* map, HASHMAPNODE* node, size_t placeto)
 
 bool HashMap_RePlaceItem(HASHMAP* map, HASHMAPNODE *node, size_t nowplace)
 {
-    int64_t hash = node->hashvalue;
+    uint64_t hash = node->hashvalue;
     size_t newplace = hash % map->listsize;
     if (newplace != nowplace)
     {
@@ -67,7 +67,7 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
         HASHMAPNODEBASIC* firstnode = &map->item[i];
         if (firstnode->used)
         {
-            while (HashMap_RePlaceItem(map, firstnode, i))
+            while (HashMap_RePlaceItem(map, &firstnode->node, i))
             {
                 HASHMAPNODE *next = map->item[i].node.next;
                 if (next == NULL)
@@ -301,6 +301,8 @@ void HashMap_CheckAndResize(HASHMAP* map)
         HASHMAPNODEBASIC* nblock = realloc(map->item, sizeof(HASHMAPNODEBASIC) * map->listsize);
         if (nblock)
         {
+            void* newposstart = ((char*)nblock) + olistsize * sizeof(HASHMAPNODEBASIC);
+            memset(newposstart, 0, olistsize * sizeof(HASHMAPNODEBASIC));
             map->item = nblock;
             HashMap_RePlace(map, olistsize);
         }
@@ -349,13 +351,14 @@ void** HashMap_GetPointerByKey(HASHMAP* map, void* key, bool allowadd)
                 //×öÎ²²å·¨
                 onode->next = nnode;
                 nnode->next = NULL;
-                HashMap_SetNode(&firstnode->node, hash);
+                HashMap_SetNode(nnode, hash);
 
                 firstnode->used++;
 
                 map->count++;
 
                 nnode->value = NULL;
+                nnode->next = NULL;
 
                 return &nnode->value;
             }

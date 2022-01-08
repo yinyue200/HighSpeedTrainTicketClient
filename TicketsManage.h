@@ -92,7 +92,6 @@ int32_t Yinyue200_TicketManage_GetPrice(YINYUE200_TRAINPLANRECORD_PTR train, PWS
 enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, int year, int month, int day, PWSTR startstation, PWSTR endstation);
 YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo,
-	size_t count,
 	int year, int month, int day,
 	PWSTR startstation,
 	PWSTR endstation,
