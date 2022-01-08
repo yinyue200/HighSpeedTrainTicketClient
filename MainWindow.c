@@ -899,6 +899,8 @@ void removeusernameinputed(void* context, LPWSTR username)
         }
         vector_free(vec);
         free(vec);
+
+        EnableWindow(context, true);
     }
     else
     {
