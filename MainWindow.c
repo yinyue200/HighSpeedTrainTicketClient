@@ -1235,10 +1235,10 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"关于");
         AppendMenu(hAdd, MF_STRING, ID_MENU_ADDRECORD, L"添加车次");
         AppendMenu(hFile, MF_STRING, ID_MENU_SAVE, L"保存");
-        AppendMenu(hFile, MF_STRING, ID_MENU_IMPORT, L"导入数据");
-        AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有");
-        AppendMenu(hFind, MF_STRING, ID_MENU_FLITER, L"筛选现有数据");
-        AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询");
+        AppendMenu(hFile, MF_STRING, ID_MENU_IMPORT, L"导入车次数据");
+        AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有车次");
+        AppendMenu(hFind, MF_STRING, ID_MENU_FLITER, L"筛选现有车次");
+        AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询车次");
         AppendMenu(hUsr, MF_STRING, ID_MENU_REMOVEUSER, L"删除用户");
         AppendMenu(hUsr, MF_STRING, ID_MENU_ADDUSER, L"添加用户");
         AppendMenu(hUsr, MF_STRING, ID_MENU_CHANGEPWD, L"重设用户密码和权限");
