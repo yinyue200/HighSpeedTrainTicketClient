@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#define YINYUE200_SKIP_LOGINCHECK 1 //调试时是否跳过登录
+#define YINYUE200_SKIP_LOGINCHECK 0 //调试时是否跳过登录
 #define YINYUE200_SETLOCATIMEASSTANDARDTIME 0 //是否不区分本地时间和UTC时间
 #define YINYUE200_ROUTEPOINTEDITWINDOW_ALWAYS_PERFORMCHANGES_ON_NEWOBJECT 0
 #include "UserManage.h"
