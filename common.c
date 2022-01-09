@@ -434,3 +434,13 @@ bool PWSTRContainChar(PWSTR str, WCHAR one)
     }
     return false;
 }
+PWSTR Yinyue200_ReplacePWSTR(PWSTR str, WCHAR old,WCHAR newone)
+{
+    size_t len = wcslen(str);
+    for (size_t i = 0; i < len; i++)
+    {
+        if (str[i] == old)
+            str[i] = newone;
+    }
+    return str;
+}

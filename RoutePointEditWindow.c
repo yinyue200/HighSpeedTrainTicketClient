@@ -134,7 +134,7 @@ void routepointeditwindow_initctrl(HWND hwnd, YINYUE200_TRAINPLANRECORD_ROUTEPOI
         PWSTR buffer = yinyue200_safemalloc(1000 * sizeof(WCHAR));
 
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_STATION), WM_SETTEXT, 0, productrecord->Station.DisplayName);
-        swprintf(buffer, 1000, L"%lf", productrecord->Distance / 1000.0);
+        swprintf(buffer, 1000, L"%.3lf", productrecord->Distance / 1000.0);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_DISTANCE), WM_SETTEXT, 0, buffer);
         swprintf(buffer, 1000, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(productrecord->RouteRunTimeSpan) / 60.0);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN), WM_SETTEXT, 0, buffer);
@@ -254,7 +254,7 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 {
                     ptr->Distance = disdouble * 1000.0;
                 }
-                _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN));
+                _temp_int64_str = Yinyue200_ReplacePWSTR(CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN)), L"£º", L":");
                 double timespan_double = 0.0;
                 if (PWSTRContainChar(_temp_int64_str, L':')==false)
                 {
@@ -280,7 +280,7 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                     }
                     free(_temp_int64_str);
                 }
-                _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RESIDENCETIME));
+                _temp_int64_str = Yinyue200_ReplacePWSTR(CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RESIDENCETIME)), L"£º", L":");
                 if (PWSTRContainChar(_temp_int64_str, L':') == false)
                 {
                     double restime_double = 0.0;
