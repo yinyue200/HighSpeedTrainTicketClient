@@ -42,6 +42,7 @@ void HashMap_PlaceItem(HASHMAP* map, HASHMAPNODE* node, size_t placeto)
         //无冲突
         item->node = *node;
         item->used = 1;
+        item->node.next = NULL;
     }
 }
 
@@ -87,7 +88,10 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
                     free(next);
                 }
 
-
+#if _DEBUG
+                free(NULL);
+#endif
+                
                 firstnode->used--;
             }
             //此时 firstnode 已不可能发生 replace
@@ -101,7 +105,14 @@ void HashMap_RePlace(HASHMAP* map, size_t size)
                     free(node);
                     node = onode->next;
 
-                    firstnode->used--;
+                    firstnode->used--;//不会减到0
+
+#if _DEBUG
+                    if (firstnode->used == 0)
+                    {
+                        ;
+                    }
+#endif
                 }
                 else
                 {
@@ -518,6 +529,7 @@ void HashMap_Add(HASHMAP* map, void* item)
     {
         HashMap_SetNode(&firstnode->node, hash);
         firstnode->node.value = item;
+        firstnode->node.next = NULL;//好像不要这一句也可以
         firstnode->used = 1;
     }
     map->count++;

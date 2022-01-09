@@ -190,6 +190,20 @@ void Yinyue200_InitFullListOfPassengersIfNeed()
         for (int i = 0; i < vector_total(yinyue200_FullListOfPassengers); i++)
         {
             HashMap_Add(yinyue200_Passengers_OwnerIndexed, i);
+#if _DEBUG
+            for (size_t j = 0; j < yinyue200_Passengers_OwnerIndexed->listsize; j++)
+            {
+                HASHMAPNODE* first = &yinyue200_Passengers_OwnerIndexed->item[j].node;
+                int c = 0;
+
+                while (first)
+                {
+                    c++;
+                    first = first->next;
+                }
+                free(NULL);
+            }
+#endif
         }
     }
 }
