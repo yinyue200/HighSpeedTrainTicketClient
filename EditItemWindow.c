@@ -22,7 +22,9 @@
 #include "TicketsManage.h"
 #include "LoginWindow.h"
 #include <commctrl.h>
-#define EDITITEMWINDOW_COLUMNCOUNT 4
+#define EDITITEMWINDOW_EDITMODE_COLUMNCOUNT 4
+#define EDITITEMWINDOW_BOOKMODE_COLUMNCOUNT 6
+
 #define ID_EDIT_NAME 1
 #define ID_BUTTON_SAVE 2
 #define ID_BUTTON_CANCEL 3
@@ -388,13 +390,51 @@ int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
                         wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, record->Station.DisplayName, _TRUNCATE);//站点信息显示
                         break;
                     case 1:
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%.3lf", record->Distance / 1000.0);//里程信息显示
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, windata->bookmode ? L"%.1lf 千米" : L"%.3lf", record->Distance / 1000.0);//里程信息显示
                         break;
                     case 2:
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->RouteRunTimeSpan) / 60.0);//运行时间信息显示
+                        if (windata->bookmode)
+                        {
+                            uint64_t arrlocaltime = record->RouteRunTimeSpan + Yinyue200_GetLocalTrainStartTimePoint(windata->TrainPlanRecord);
+                            FILETIME arrlocalfiletime = Yinyue200_ConvertToFileTimeFromUINT64(arrlocaltime);
+                            SYSTEMTIME systime;
+                            FileTimeToSystemTime(&arrlocalfiletime, &systime);
+                            swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%d:%02d", systime.wHour, systime.wMinute);//到达时间显示
+                        }
+                        else
+                        {
+                            goto RUNTIMESHOWLABEL;
+                        }
                         break;
                     case 3:
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->ResidenceTime) / 60.0);//停留时间信息显示
+                        if (windata->bookmode)
+                        {
+                            uint64_t startlocaltime = record->RouteRunTimeSpan + Yinyue200_GetLocalTrainStartTimePoint(windata->TrainPlanRecord) + record->ResidenceTime;
+                            FILETIME startlocalfiletime = Yinyue200_ConvertToFileTimeFromUINT64(startlocaltime);
+                            SYSTEMTIME systime;
+                            FileTimeToSystemTime(&startlocalfiletime, &systime);
+                            swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%d:%02d", systime.wHour, systime.wMinute);//到达时间显示
+                        }
+                        else
+                        {
+                            goto STAYSHOWLABEL;
+                        }
+                        break;
+                    case 4:
+                        if (windata->bookmode)
+                        {
+                            goto STAYSHOWLABEL;
+                        }
+                    RUNTIMESHOWLABEL:
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, windata->bookmode?L"%.0lf 分钟" : L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->RouteRunTimeSpan) / 60.0);//运行时间信息显示
+                        break;
+                    case 5:
+                        if (windata->bookmode)
+                        {
+                            goto RUNTIMESHOWLABEL;
+                        }
+                    STAYSHOWLABEL:
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, windata->bookmode ? L"%.0lf 分钟" : L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->ResidenceTime) / 60.0);//停留时间信息显示
                         break;
                     }
                 }
@@ -666,21 +706,58 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         HWND hwnd_ROUTE_Edit = Yinyue200_FastCreateListViewControl(hwnd, ID_LISTVIEW_ROUTE);
 
 
+        if(windowdata->bookmode) 
+        {
+            int cx120 = YINYUE200_LOGICTOPHYBYDPI(120, dpi);
+            int cx100 = YINYUE200_LOGICTOPHYBYDPI(100, dpi);
+
+            int cx60 = YINYUE200_LOGICTOPHYBYDPI(60, dpi);
+            LV_COLUMN   lvColumn;
+            //initialize the columns
+            lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+            lvColumn.fmt = LVCFMT_LEFT;
+            LPWSTR szStringbookmode[EDITITEMWINDOW_BOOKMODE_COLUMNCOUNT] = {
+                L"车站",
+                L"里程",
+                L"到达时间",
+                L"开车时间",
+                L"停留时间",
+                L"运行时间"
+            };
+            for (int i = 0; i < EDITITEMWINDOW_BOOKMODE_COLUMNCOUNT; i++)
+            {
+                if (i == 2 || i == 3|| i==4 )
+                {
+                    lvColumn.cx = cx60;
+                }
+                else if (i == 0|| i==1 || i == 5)
+                {
+                    lvColumn.cx = cx100;
+                }
+                else
+                {
+                    lvColumn.cx = cx120;
+                }
+                lvColumn.pszText = szStringbookmode[i];
+                ListView_InsertColumn(hwnd_ROUTE_Edit, i, &lvColumn);
+            }
+        }
+        else
         {
             LV_COLUMN   lvColumn;
             //initialize the columns
             lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
             lvColumn.fmt = LVCFMT_LEFT;
             lvColumn.cx = YINYUE200_LOGICTOPHYBYDPI(120, dpi);
-            LPWSTR szString[EDITITEMWINDOW_COLUMNCOUNT] = {
+            LPWSTR szStringbookmode[EDITITEMWINDOW_EDITMODE_COLUMNCOUNT] = {
                 L"车站",
                 L"里程（千米）",
-                L"到达时间（分钟）",
+                L"运行时间（分钟）",
                 L"停留时间（分钟）"
             };
-            for (int i = 0; i < EDITITEMWINDOW_COLUMNCOUNT; i++)
+            for (int i = 0; i < EDITITEMWINDOW_EDITMODE_COLUMNCOUNT; i++)
             {
-                lvColumn.pszText = szString[i];
+                lvColumn.pszText = szStringbookmode[i];
                 ListView_InsertColumn(hwnd_ROUTE_Edit, i, &lvColumn);
             }
         }
