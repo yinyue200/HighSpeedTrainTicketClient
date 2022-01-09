@@ -59,7 +59,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
 {
     // Register the window class.
-    const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.LoadDataFilterWindow";
+    const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.LoadDataFilterWindow";
 
     WNDCLASS wc = { 0 };
 

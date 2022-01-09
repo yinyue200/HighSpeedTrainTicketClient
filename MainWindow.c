@@ -154,7 +154,7 @@ HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE
 void CreateMainWindow()
 {
     // Register the window class.
-    const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.MainWindow";
+    const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.MainWindow";
 
     WNDCLASS wc = { 0 };
 

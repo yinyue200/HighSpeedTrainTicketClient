@@ -29,7 +29,7 @@ typedef struct InputBoxWindowData
 void CreateInputBoxWindow(LPWSTR msg, InputBoxCallbackFunc callback, void* callbackcontext,bool ispwd)
 {
     // Register the window class.
-    const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.InputBoxWindow";
+    const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.InputBoxWindow";
 
     WNDCLASS wc = { 0 };
 

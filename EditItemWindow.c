@@ -85,7 +85,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR train, bool enablesave, bool bookmode)
 {
     // Register the window class.
-    const wchar_t CLASS_NAME[] = L"yinyue200.SimpleStoreErp.EditItemWindow";
+    const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.EditItemWindow";
 
     WNDCLASS wc = { 0 };
 
