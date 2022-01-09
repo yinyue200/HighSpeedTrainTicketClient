@@ -54,9 +54,10 @@ typedef struct Yinyue200_LoadDataFilterWindowData
 {
     YINYUE200_MAINWINDOWDATA* mainwindowdata;
     HFONT lastfont;
+    vector* source;
 } YINYUE200_LOADDATAFILTERWINDOWDATA;
 LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
+void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata, int source)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.LoadDataFilterWindow";
@@ -75,6 +76,7 @@ void CreateLoadDataFilterWindow(YINYUE200_MAINWINDOWDATA *mainwindowdata)
     YINYUE200_LOADDATAFILTERWINDOWDATA* windata = yinyue200_safemallocandclear(sizeof(YINYUE200_LOADDATAFILTERWINDOWDATA));
     memset(windata, 0, sizeof(YINYUE200_LOADDATAFILTERWINDOWDATA));
     windata->mainwindowdata = mainwindowdata;
+    windata->source = source == 1 ? &yinyue200_ProductList : &mainwindowdata->UnsortedNowList;
 
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
@@ -419,11 +421,11 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 uint64_t FieldRuntimeInt_Top = Yinyue200_ConvertToUINT64FromTotalSecond(FieldRuntimeDouble_Bottom * 60);
 
                 vector nnowlist;
-                vector_initwithcap(&nnowlist,mainwindow->UnsortedNowList.total);
+                vector_initwithcap(&nnowlist, ldfwindow->source->total);
 
-                for (int i = 0; i < VECTOR_TOTAL(mainwindow->UnsortedNowList); i++)
+                for (int i = 0; i < VECTOR_TOTAL(*ldfwindow->source); i++)
                 {
-                    YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(mainwindow->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
+                    YINYUE200_TRAINPLANRECORD_PTR record = VECTOR_GET(*ldfwindow->source, YINYUE200_TRAINPLANRECORD_PTR, i);
                     bool SHOULDREV = true;
                     LOADDATAFILTERPROC_FLITER_WSTR(Name);
                     LOADDATAFILTERPROC_FLITER_PAIRINT(ID);
@@ -556,7 +558,10 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                         vector_add(&nnowlist, record);
                     }
                 }
-                vector_free(&mainwindow->UnsortedNowList);
+                if (ldfwindow == &mainwindow->UnsortedNowList)
+                {
+                    vector_free(&mainwindow->UnsortedNowList);
+                }
                 mainwindow->UnsortedNowList = nnowlist;
                 FreeVectorOfString(&StationsVec);
                 FREE_LOADDATAFILTERPROC_FLITER_WSTR(Name);

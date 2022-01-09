@@ -28,6 +28,7 @@
 #include "PassengersManage.h"
 #include "TicketsManage.h"
 #include "TicketManageWindow.h"
+#include "FastSearchingTrainWindow.h"
 
 #define MAIN_DISPLAYPAGESIZE 10
 #define MAIN_STATUSBAR_COM 4
@@ -54,6 +55,7 @@
 #define ID_MENU_PASSMANAGE 21 //乘客管理菜单
 #define ID_BUTTON_BOOKTICKET 22
 #define ID_MENU_TICKETSMANAGE 23
+#define ID_MENU_FASTSEARCHTICKET 24
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void configstatusbar(HWND hwndParent,HWND  hwndStatus)
@@ -195,7 +197,7 @@ void CreateMainWindow()
 }
 void edititemlogined(void* context)
 {
-    CreateEditItemWindow(context, yinyue200_LoganUserInfo == NULL ? false : wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN") == 0, false);
+    CreateEditItemWindow(context, yinyue200_LoganUserInfo == NULL ? false : wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN") == 0, false, NULL, NULL, 0);
 }
 #define LISTVIEWNOTIFTLOADCOLINT(caseid,membername) case caseid:\
 {\
@@ -1129,7 +1131,7 @@ void logincheckmsg(void* context)
         }
         case ID_MENU_ADDRECORD:
         {
-            CreateEditItemWindow(NULL, true, false);
+            CreateEditItemWindow(NULL, true, false, NULL, NULL, 0);
             break;
         }
         default:
@@ -1219,24 +1221,22 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         HMENU hMenubar = CreateMenu();
         HMENU hFile = CreateMenu();
         HMENU hFind = CreateMenu();
-        HMENU hAdd = CreateMenu();
         HMENU hBookTicket = CreateMenu();
         HMENU hUsr = CreateMenu();
         HMENU hHelp = CreateMenu();
 
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFile, L"文件");
-        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFind, L"查询");
-        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAdd, L"新增");
-        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hUsr, L"用户管理");
-        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hBookTicket, L"订票");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hFind, L"车次");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hUsr, L"用户");
+        AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hBookTicket, L"票务");
         AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hHelp, L"帮助");
 
         AppendMenu(hHelp, MF_STRING, ID_MENU_VWS, L"GitHub");
         AppendMenu(hHelp, MF_STRING, ID_MENU_ABOUT, L"关于");
-        AppendMenu(hAdd, MF_STRING, ID_MENU_ADDRECORD, L"添加车次");
+        AppendMenu(hFind, MF_STRING, ID_MENU_ADDRECORD, L"添加车次");
         AppendMenu(hFile, MF_STRING, ID_MENU_SAVE, L"保存");
         AppendMenu(hFile, MF_STRING, ID_MENU_IMPORT, L"导入车次数据");
-        AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"查询所有车次");
+        AppendMenu(hFind, MF_STRING, ID_MENU_LOADALL, L"显示所有车次");
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITER, L"筛选现有车次");
         AppendMenu(hFind, MF_STRING, ID_MENU_FLITERLOADALL, L"条件查询车次");
         AppendMenu(hUsr, MF_STRING, ID_MENU_REMOVEUSER, L"删除用户");
@@ -1245,6 +1245,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         AppendMenu(hUsr, MF_STRING, ID_MENU_SHOWUSERSLIST, L"显示用户名单");
         AppendMenu(hBookTicket, MF_STRING, ID_MENU_PASSMANAGE, L"乘客管理");
         AppendMenu(hBookTicket, MF_STRING, ID_MENU_TICKETSMANAGE, L"已购车票管理");
+        AppendMenu(hBookTicket, MF_STRING, ID_MENU_FASTSEARCHTICKET, L"快速查询车次");
 
 
         UINT dpi = yinyue200_GetDpiForWindow(hwnd);
@@ -1320,8 +1321,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
             {
-                yinyue200_main_loadnowlist(hwnd, windata);
-                CreateLoadDataFilterWindow(windata);
+                CreateLoadDataFilterWindow(windata, 1);
             }
             break;
         }
@@ -1330,7 +1330,16 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
             {
-                CreateLoadDataFilterWindow(windata);
+                CreateLoadDataFilterWindow(windata, 0);
+            }
+            break;
+        }
+        case ID_MENU_FASTSEARCHTICKET:
+        {
+            YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+            if (windata)
+            {
+                CreateFastSearchingTrainWindow(windata);
             }
             break;
         }
@@ -1413,7 +1422,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             {
                                 if (CheckIfThereAreAnyPassengerInfoRefWithOwner(GetNowLoginedUserName()))
                                 {
-                                    CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos), false, true);
+                                    CreateEditItemWindow(VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos), false, true, windata->startstation, windata->endstation, windata->searchdate);
                                 }
                                 else
                                 {
@@ -1519,6 +1528,12 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         if (windata)
         {
             yinyue200_DeleteFont(windata->Font);
+            free(windata->startstation);
+            free(windata->endstation);
+            VECTOR_FREE(windata->NowList);
+            vector_free(&windata->UnsortedNowList);
+            vector_free(&windata->PagedNowList);
+
             free(windata);
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);

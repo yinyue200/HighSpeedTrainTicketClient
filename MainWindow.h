@@ -26,6 +26,10 @@ typedef struct Yinyue200_MainWindowData
     int sortstate;//是否已经应用排序
     int sortmethod;//升降序
     HWND Font;
+
+    PWSTR startstation;
+    PWSTR endstation;
+    uint64_t searchdate;
 } YINYUE200_MAINWINDOWDATA;
 void CreateMainWindow();
 void Yinyue200_Main_UpdateListViewData(HWND hwnd, UINT dpi);

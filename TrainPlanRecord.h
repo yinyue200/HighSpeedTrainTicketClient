@@ -74,7 +74,7 @@ typedef struct Yinyue200_TrainPlanRecord
                          //目前的设计是一种简化设计
                          //实际票价计算规则以中国国家铁路集团有限公司及有关单位相关规定为准
                          //参考资料： 中国铁道出版社 （2021新版）铁路客运运价里程表
-                         //中国铁道出版社 全国铁路客运运价里程接算站示意图 
+                         //中国铁道出版社 全国铁路客运运价里程接算站示意图
 } YINYUE200_TRAINPLANRECORD;
 typedef YINYUE200_TRAINPLANRECORD* YINYUE200_TRAINPLANRECORD_PTR;
 YINYUE200_TRAINPLANRECORD_PTR Yinyue200_GetTrainPlanRecordByTrainID(YINYUE200_PAIR_OF_uint64_t_uint64_t ID);

@@ -78,11 +78,13 @@ typedef struct Yinyue200_EditItemWindowData
     PWSTR endstation;
 
     vector passengers;
+
+    uint64_t defaultlocaldate;
 } YINYUE200_EDITITEMWINDOWDATA;
 void editwindowaddoreditroutepointcallback(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR data, void* context);
 YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR train, bool enablesave, bool bookmode)
+void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR train, bool enablesave, bool bookmode, PWSTR startstation, PWSTR endstation, uint64_t localdate)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.EditItemWindow";
@@ -100,6 +102,17 @@ void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR train, bool enablesave, 
     windowdata->TrainPlanRecord = train;
     windowdata->enablesave = enablesave;
     windowdata->bookmode = bookmode;
+    
+    if (endstation != NULL && startstation != NULL)
+    {
+        if (Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, endstation) != NULL && Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(train, startstation) != NULL)
+        {
+            windowdata->endstation = CreateWstrFromWstr(endstation);
+            windowdata->startstation = CreateWstrFromWstr(startstation);
+        }
+    }
+
+    windowdata->defaultlocaldate = localdate;
 
     // Create the window.
 
@@ -650,6 +663,62 @@ bool Yinyue200_EditItemWindow_BeforeTicketCheck(HWND hwnd, YINYUE200_EDITITEMWIN
         }
     }
 }
+void EditItemWindow_SearchTicketButtonClick(HWND hwnd)
+{
+    YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+
+    SYSTEMTIME date;
+    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
+    uint64_t localdateint64 = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+    uint64_t localthistrainstartdatetime;
+    if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, localdateint64, &localthistrainstartdatetime))
+    {
+        int32_t businesspriceint = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS);
+        if (businesspriceint <= 0)
+        {
+            MessageBox(hwnd, L"请按列车运行方向正确选择起点和终点", L"错误", 0);
+            goto endsearchticket;
+        }
+        double businessprice = businesspriceint / 100.0;
+        double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
+        double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
+
+        uint64_t localthistrainstartdate = GetDatePartUINT64OFUINT64(localthistrainstartdatetime);
+
+        YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, localthistrainstartdate);
+        BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, localthistrainstartdate, windowdata->startstation, windowdata->endstation, seatinfo);
+
+        int32_t businesscount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_BUSINESSCLASS, seatinfo);
+        int32_t firstcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_FIRSTCLASS, seatinfo);
+        int32_t secondcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_SECONDCLASS, seatinfo);
+
+        PWSTR buffer = CreateWSTR(300);
+
+        swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张\r\n\r\n请选择你要预定的座位类别", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
+        SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
+
+        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
+
+        HWND pass1 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1);
+        HWND pass2 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2);
+        HWND pass3 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3);
+
+        ShowWindow(pass1, SW_SHOW);
+        ShowWindow(pass2, SW_SHOW);
+        ShowWindow(pass3, SW_SHOW);
+
+        Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
+        Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
+        Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
+
+        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
+        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
+
+        free(buffer);
+        BitVector_Free(&seatvec);
+    }
+endsearchticket:;
+}
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -853,6 +922,18 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         SIZE winsize = Yinyue200_GetWindowClientAreaSize(hwnd);
         LayoutControls_EditItemWindow(hwnd, dpi, windowdata);
 
+        if (windowdata->bookmode)
+        {
+            if (windowdata->startstation != NULL&&windowdata->endstation!=NULL)
+            {
+                FILETIME localdate = Yinyue200_ConvertToFileTimeFromUINT64(windowdata->defaultlocaldate);
+                SYSTEMTIME systime;
+                FileTimeToSystemTime(&localdate, &systime);
+                DateTime_SetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), GDT_VALID, &systime);
+
+                EditItemWindow_SearchTicketButtonClick(hwnd);
+            }
+        }
     }
     return 0;
     case WM_COMMAND:
@@ -866,59 +947,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
             case ID_BUTTON_SEARCHTICKETS:
                 //当前一定在bookmode下
             {
-                YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-
-                SYSTEMTIME date;
-                DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_BOOKTICKETDATESELECTION), &date);
-                uint64_t localdateint64 = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
-                uint64_t localthistrainstartdatetime;
-                if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, localdateint64, &localthistrainstartdatetime))
-                {
-                    int32_t businesspriceint = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS);
-                    if (businesspriceint <= 0)
-                    {
-                        MessageBox(hwnd, L"请按列车运行方向正确选择起点和终点", L"错误", 0);
-                        goto endsearchticket;
-                    }
-                    double businessprice = businesspriceint / 100.0;
-                    double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
-                    double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
-
-                    uint64_t localthistrainstartdate = GetDatePartUINT64OFUINT64(localthistrainstartdatetime);
-
-                    YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, localthistrainstartdate);
-                    BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, localthistrainstartdate, windowdata->startstation, windowdata->endstation, seatinfo);
-
-                    int32_t businesscount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_BUSINESSCLASS, seatinfo);
-                    int32_t firstcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_FIRSTCLASS, seatinfo);
-                    int32_t secondcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_SECONDCLASS, seatinfo);
-
-                    PWSTR buffer = CreateWSTR(300);
-
-                    swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张\r\n\r\n请选择你要预定的座位类别", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
-                    SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
-
-                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
-
-                    HWND pass1 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1);
-                    HWND pass2 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2);
-                    HWND pass3 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3);
-
-                    ShowWindow(pass1, SW_SHOW);
-                    ShowWindow(pass2, SW_SHOW);
-                    ShowWindow(pass3, SW_SHOW);
-
-                    Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
-                    Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
-                    Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
-
-                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
-                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
-
-                    free(buffer);
-                    BitVector_Free(&seatvec);
-                }
-            endsearchticket:;
+                EditItemWindow_SearchTicketButtonClick(hwnd);
                 break;
             }
             case ID_BUTTON_BOOKTICKETS:
