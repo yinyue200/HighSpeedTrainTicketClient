@@ -240,14 +240,15 @@ void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem,boo
                 {
                     map->delKeyFunc(firstnode->node.value);
 
-                    if (firstnode->node.next == NULL)
+                    HASHMAPNODE* secondnode = firstnode->node.next;
+
+                    if (secondnode == NULL)
                     {
                         firstnode->used = 0;
                         goto endfordel;
                     }
                     else
                     {
-                        HASHMAPNODE *secondnode = firstnode->node.next;
                         memcpy(&firstnode->node, secondnode, sizeof(HASHMAPNODE));
                         free(secondnode);
 
