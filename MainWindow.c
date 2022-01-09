@@ -1180,10 +1180,12 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ShellExecute(NULL, L"Open", L"https://github.com/yinyue200/SimpleStoreErp", NULL, NULL, SW_SHOWNORMAL);
             break;
         case ID_MENU_ABOUT:
-            MessageBox(hwnd, L"版本 0.0.1\r\nA GUI program\r\nold fashion design\n\nCopyright (C) 2022 殷越\n"
+            MessageBox(hwnd, L"HighSpeedTrainTicketClient\r\n版本 0.0.1\r\nA GUI program\r\nold fashion design\n\nCopyright (C) 2022 殷越\n"
                 L"This program comes with ABSOLUTELY NO WARRANTY.\n"
                 L"This is free software, and you are welcome to redistribute it under certain conditions.\n"
-                L"See https://github.com/yinyue200/SimpleStoreErp for more details.", L"关于", 0);
+                L"See https://github.com/yinyue200/HighSpeedTrainTicketClient for more details.\r\n\r\n车票的背景图片是以网友 N509FZ 拍摄的照片 由北京南站发出的复兴号CR400AF-BZ型电力动车组"
+                L"https://zh.wikipedia.org/wiki/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E9%AB%98%E9%80%9F%E9%93%81%E8%B7%AF#/media/File:CR400AF-BZ-2250@BJN_(20210627120056).jpg 为蓝本制作的，在此特别感谢\r\n"
+                L"车票的背景图片在 Attribution-ShareAlike 4.0 International(CC BY-SA 4.0) 协议下许可使用，详见 https://creativecommons.org/licenses/by-sa/4.0/", L"关于", 0);
             break;
         case ID_MENU_SAVE:
             yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(), &yinyue200_ProductList);
