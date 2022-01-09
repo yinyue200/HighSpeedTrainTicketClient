@@ -207,6 +207,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                             FreeNowLoganUserInfo();
                         }
                         yinyue200_LoganUserInfo = NULL;
+                        MessageBox(hwnd, L"µÇÂ½Ê§°Ü", L"´íÎó", 0);
                     }
                     vector_free(vec);
                     free(vec);
