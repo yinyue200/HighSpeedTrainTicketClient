@@ -15,6 +15,9 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "InputBoxWindow.h"
 #include "common.h"
+#include "ControlsCommonOperation.h"
+#include "DpiHelper.h"
+#define ID_LABEL_STR 2
 #define ID_EDIT_STR 1
 #define ID_BUTTON_SAVE 3
 #define ID_BUTTON_CANCEL 4
@@ -25,6 +28,7 @@ typedef struct InputBoxWindowData
     LPWSTR MSG;
     InputBoxCallbackFunc callback;
     void* callbackcontext;
+    HFONT lastfont;
 } INPUTBOXWINDOWDATA;
 void CreateInputBoxWindow(LPWSTR msg, InputBoxCallbackFunc callback, void* callbackcontext,bool ispwd)
 {
@@ -55,7 +59,7 @@ void CreateInputBoxWindow(LPWSTR msg, InputBoxCallbackFunc callback, void* callb
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 600, 300,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -76,6 +80,18 @@ void CreateInputBoxWindow(LPWSTR msg, InputBoxCallbackFunc callback, void* callb
 
     return;
 }
+void LayoutControls_InputBoxWindow(HWND hwnd, UINT dpi, INPUTBOXWINDOWDATA *windata)
+{
+    HFONT font = windata->lastfont;
+    int lasty = 10;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_LABEL_STR, 10, lasty, 500, 25);
+    lasty += 25;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_EDIT_STR, 10, lasty, 500, 25);
+    lasty += 35;
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_SAVE, 10, lasty, 100, 50);
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_CANCEL, 10 + 100 + 10, lasty, 100, 50);
+    lasty += 50;
+}
 LRESULT CALLBACK InputBoxWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -83,46 +99,28 @@ LRESULT CALLBACK InputBoxWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_CREATE:
     {
         AddWindowCount();
-        int lasty = 10;
 
         {
             CREATESTRUCT* cs = lParam;
             SetProp(hwnd, YINYUE200_WINDOW_DATA, cs->lpCreateParams);
         }
+        UINT dpi = yinyue200_GetDpiForWindow(hwnd);
 
         INPUTBOXWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
 
-        HWND NameLabelHwnd = CreateWindow(L"STATIC", NULL, WS_CHILD | WS_VISIBLE, 10, lasty, 500, 25
-            , hwnd, NULL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 25;
-        HWND hwndEdit_Name = CreateWindow(
-            L"EDIT",   // predefined class 
-            NULL,         // no window title 
-            WS_BORDER | WS_CHILD | WS_VISIBLE |
-            ES_LEFT,
-            10, lasty, 500, 25,   //MAYBE set size in WM_SIZE message 
-            hwnd,         // parent window 
-            (HMENU)ID_EDIT_STR,   // edit control ID 
-            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-            NULL);        // pointer not needed 
-        lasty += 25;
-        HWND hwndButton_Save = CreateWindow(//see https://docs.microsoft.com/en-us/windows/win32/controls/buttons
-            L"BUTTON",
-            L"保存",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10, lasty, 100, 50,
-            hwnd, (HMENU)ID_BUTTON_SAVE, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        HWND hwndButton_Cancel = CreateWindow(
-            L"BUTTON",
-            L"取消",      // Button text 
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,  // Styles 
-            10 + 100 + 10, lasty, 100, 50,
-            hwnd, (HMENU)ID_BUTTON_CANCEL, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
-        lasty += 50;
+        windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
+
+        HWND NameLabelHwnd = Yinyue200_FastCreateLabelControl(hwnd, ID_LABEL_STR, windowdata->MSG);
+        HWND hwndEdit_Name = Yinyue200_FastCreateEditControl(hwnd, ID_EDIT_STR);
+        HWND hwndButton_Save = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
+        HWND hwndButton_Cancel = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
+
+        Yinyue200_SetWindowSize(hwnd, 600, 300, dpi);
+
         if(windowdata->ispwd)
             Edit_SetPasswordChar(hwndEdit_Name, L'*');
-        SendMessage(NameLabelHwnd, WM_SETTEXT, 0, windowdata->MSG);
 
+        LayoutControls_InputBoxWindow(hwnd, dpi, windowdata);
     }
     return 0;
     case WM_COMMAND:
@@ -148,11 +146,25 @@ LRESULT CALLBACK InputBoxWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         }
     }
     return 0;
+    case WM_DPICHANGED:
+    {
+        INPUTBOXWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        if (windowdata && windowdata->lastfont)
+        {
+            yinyue200_DeleteFont(windowdata->lastfont);
+            windowdata->lastfont = yinyue200_CreateDefaultFont(hwnd);
+            LayoutControls_InputBoxWindow(hwnd, yinyue200_GetDpiForWindow(hwnd), windowdata);
+        }
+        break;
+    }
     case WM_DESTROY:
     {
-        HANDLE windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+        INPUTBOXWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         if (windowdata != NULL)
+        {
             free(windowdata);
+            yinyue200_DeleteFont(windowdata->lastfont);
+        }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
         return 0;

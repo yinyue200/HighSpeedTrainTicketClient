@@ -199,9 +199,11 @@ LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_DESTROY:
     {
         YINYUE200_PASSENGERSMANAGEWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-        yinyue200_DeleteFont(windowdata->lastfont);
         if (windowdata != NULL)
+        {
+            yinyue200_DeleteFont(windowdata->lastfont);
             free(windowdata);
+        }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
         CheckIfNoWindowAndQuit();
