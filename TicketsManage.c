@@ -112,7 +112,7 @@ vector* LoadTicketsInfoFromFile(PWSTR path)
 					if (!lastisbl)
 					{
 						VECTOR_ADD(*vec, p);
-						p = CreatePassengerInfo();
+						p = Create_Yinyue200_Ticket();
 						if (p == NULL)
 						{
 							UnrecoveryableFailed();
@@ -304,7 +304,7 @@ void Yinyue200_InitTicketBookingSystemIfNeed()
 
 		for (size_t i = 0; i < ticketcounts; i++)//建立日期车次的车票索引
 		{
-			void* one = vector_get(Yinyue200_AllTickets, i);
+			YINYUE200_TICKET_PTR* one = vector_get(Yinyue200_AllTickets, i);
 			HashMap_Add(&Yinyue200_TicketInfo_TrainIdAndLocalDateIndexed, one);
 			HashMap_Add(&Yinyue200_TicketInfo_OwnerIndexed, one);
 			HashMap_Add(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, one);
