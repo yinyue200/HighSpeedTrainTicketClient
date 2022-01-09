@@ -551,6 +551,7 @@ YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_EditItemWindow_GetSelectedRou
 }
 void Yinyue200_EditItemWindow_SetPasss(HWND hwnd, YINYUE200_EDITITEMWINDOWDATA* windata)
 {
+    ComboBox_ResetContent(hwnd);
     // Add string to combobox.
     SendMessage(hwnd, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)L"不选");
     for (int k = 0; k < vector_total(&windata->passengers); k += 1)
@@ -763,9 +764,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 ShowWindow(pass2, SW_HIDE);
                 ShowWindow(pass3, SW_HIDE);
                 ShowWindow(passlabel, SW_HIDE);
-                Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
-                Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
-                Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
 
                 HWND bookticketbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_BOOKTICKETS, L"下单");
                 ShowWindow(bookticketbutton, SW_HIDE);
@@ -803,10 +801,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
                     double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
 
-                    uint64_t uint64date = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
+                    uint64_t localthistrainstartdate = GetDatePartUINT64OFUINT64(localthistrainstartdatetime);
 
-                    YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, uint64date);
-                    BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, uint64date, windowdata->startstation, windowdata->endstation, seatinfo);
+                    YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, localthistrainstartdate);
+                    BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, localthistrainstartdate, windowdata->startstation, windowdata->endstation, seatinfo);
 
                     int32_t businesscount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_BUSINESSCLASS, seatinfo);
                     int32_t firstcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, TRAINTICKETTYPE_FIRSTCLASS, seatinfo);
@@ -819,13 +817,20 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                     ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
 
-                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), SW_SHOW);
-                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), SW_SHOW);
-                    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), SW_SHOW);
+                    HWND pass1 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1);
+                    HWND pass2 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2);
+                    HWND pass3 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3);
+
+                    ShowWindow(pass1, SW_SHOW);
+                    ShowWindow(pass2, SW_SHOW);
+                    ShowWindow(pass3, SW_SHOW);
+
+                    Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
+                    Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
+                    Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
+
                     ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
                     ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
-
-
 
                     free(buffer);
                     BitVector_Free(&seatvec);
@@ -844,13 +849,22 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 {
                     uint64_t localthistrainstartdate = GetDatePartUINT64OFUINT64(localthistrainstartdatetime);
 
+                    HWND pass1 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1);
+                    HWND pass2 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2);
+                    HWND pass3 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3);
+
                     //首先检查乘客信息
                     vector selectindexs;
                     vector_init_int(&selectindexs);
-                    int sel1 = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-                    int sel2 = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-                    int sel3 = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    int sel1 = SendMessage(pass1, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    int sel2 = SendMessage(pass2, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+                    int sel3 = SendMessage(pass3, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
                     int seatlevel = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+                    Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
+                    Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
+                    Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
+
                     enum TrainSeatType seattype = TRAINTICKETTYPE_UNKNOWN;
                     switch (seatlevel)
                     {
@@ -901,9 +915,8 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                     if (vector_total_int(&selectindexs) > 0)
                     {
-                        uint64_t uint64date = Yinyue200_ConvertToUINT64FromFileTime(ConvertDateToLocalFILETIME(date.wYear, date.wMonth, date.wDay));
-                        YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, uint64date);
-                        BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, uint64date, windowdata->startstation, windowdata->endstation, seatinfo);
+                        YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(windowdata->TrainPlanRecord, localthistrainstartdate);
+                        BITVECTOR seatvec = Yinyue200_GetSeatUsability(windowdata->TrainPlanRecord, localthistrainstartdate, windowdata->startstation, windowdata->endstation, seatinfo);
 
                         int32_t seatcount = Yinyue200_GetUseableSeatsNumber(windowdata->TrainPlanRecord, &seatvec, seattype, seatinfo);
 

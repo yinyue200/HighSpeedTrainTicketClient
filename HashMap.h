@@ -60,7 +60,7 @@ typedef struct HashMap
 /// <param name="delfunc">析构元素的函数指针</param>
 /// <returns>创建的 hashmap</returns>
 HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_HashKeyFunc parhash, HashMap_IsKeyEqualFunc equal, HashMap_GetKeyFunc getkey, HashMap_FreeItemFunc delfunc);
-HASHMAP HashMap_SetCoefficient(HASHMAP* map, int coefficient);
+void HashMap_SetCoefficient(HASHMAP* map, int coefficient);
 /// <summary>
 /// 析构一个 hashmap
 /// </summary>

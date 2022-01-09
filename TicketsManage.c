@@ -683,6 +683,18 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	Yinyue200_AddTicketInfo(ticket);
 	return ticket;
 }
+void Yinyue200_freeTicket(YINYUE200_TICKET_PTR ticket)
+{
+	free(ticket->StartStation);
+	free(ticket->EndStation);
+	free(ticket->PassengerID);
+	free(ticket->PassengerIDType);
+	free(ticket->PassengerName);
+	free(ticket->Owner);
+	free(ticket->TrainName);
+	free(ticket);
+
+}
 bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
 {
 	FILETIME utcnowtime;
@@ -708,12 +720,12 @@ bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
 			*refundprice = 0;
 		}
 		
-		for (size_t i = 0; i < VECTOR_TOTAL(Yinyue200_AllTickets); i++)
+		for (size_t i = 0; i < vector_total(Yinyue200_AllTickets); i++)
 		{
-			YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(Yinyue200_AllTickets, YINYUE200_TRAINPLANRECORD_PTR, i);
+			YINYUE200_TICKET_PTR allproduct = vector_get(Yinyue200_AllTickets, i);
 			if (allproduct == ticket)
 			{
-				VECTOR_DELETE(Yinyue200_AllTickets, i);
+				vector_delete(Yinyue200_AllTickets, i);
 				break;
 			}
 		}
@@ -722,6 +734,7 @@ bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
 		HashMap_RemoveItem(&Yinyue200_TicketInfo_OwnerIndexed, ticket);
 		HashMap_RemoveItem(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, ticket);
 
+		//Yinyue200_freeTicket(&ticket);//刻意如此做的
 		return true;
 	}
 }

@@ -157,7 +157,7 @@ HASHMAP HashMap_Create(size_t size, HashMap_HashKeyFunc hash, HashMap_HashKeyFun
     }
     return map;
 }
-HASHMAP HashMap_SetCoefficient(HASHMAP* map, int coefficient)
+void HashMap_SetCoefficient(HASHMAP* map, int coefficient)
 {
     map->coefficient = coefficient;
 }
@@ -221,9 +221,9 @@ void* HashMap_GetByKey(HASHMAP* map, void* key)
 /// <param name="key">要删除元素的key</param>
 /// <param name="item">要删除的元素</param>
 /// <param name="checkitem">是否使用item参数</param>
-void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
+void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem,bool checkkey)
 {
-    uint64_t hash = map->parHashKeyFunc(key);
+    uint64_t hash = checkkey ? map->parHashKeyFunc(key) : map->hashKeyFunc(item);
     size_t place = hash % map->listsize;
     HASHMAPNODEBASIC* firstnode = &map->item[place];
     if (firstnode->used)
@@ -233,7 +233,7 @@ void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
         do
         {
             onode = node;
-            if (node->hashvalue == hash && map->equalFunc(map->getKeyFunc(node->value), key) && (checkitem==false||item == node->value))
+            if (node->hashvalue == hash && (checkkey==false || map->equalFunc(map->getKeyFunc(node->value), key)) && (checkitem==false||item == node->value))
             {
                 //node is the node to be del
                 if (node == &firstnode->node)
@@ -289,7 +289,7 @@ void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
 /// <param name="item">要删除的元素</param>
 void HashMap_RemoveItem(HASHMAP* map, void* item)
 {
-    HashMap_Remove_Inner(map, map->getKeyFunc(item), item, true);
+    HashMap_Remove_Inner(map, NULL, item, true, false);
 }
 /// <summary>
 /// 从 hashmap 中删除指定 key 的元素
@@ -299,7 +299,7 @@ void HashMap_RemoveItem(HASHMAP* map, void* item)
 /// <param name="item"></param>
 void HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item)
 {
-    HashMap_Remove_Inner(map, key, item, true);
+    HashMap_Remove_Inner(map, key, item, true, true);
 }
 /// <summary>
 /// 从 hashmap 中删除所有指定 key 的元素
@@ -309,7 +309,7 @@ void HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item)
 /// <returns></returns>
 void HashMap_RemoveByKey(HASHMAP* map, void* key)
 {
-    HashMap_Remove_Inner(map, key, NULL, false);
+    HashMap_Remove_Inner(map, key, NULL, false, true);
 }
 void HashMap_SetNode(HASHMAPNODE* node, uint64_t hash)
 {

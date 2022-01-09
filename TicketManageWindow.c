@@ -131,6 +131,92 @@ if(_temp_day!=0) rev&= _temp_systime.wDay==_temp_day;\
 break
 #define YINYUE200_SEARCH_IMPL_DATETIME(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
 #define YINYUE200_COMBOBOXITEMSCOUNT 8
+void TicketManageWindow_SearchButtonClick(HWND hwnd)
+{
+    PWSTR searchtext = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_SEARCH));
+    size_t searchtextlen = wcslen(searchtext);
+    YINYUE200_TICKETMANAGEWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+    vector tobefree = { 0 };
+    vector* tobesearch = NULL;
+    if (yinyue200_LoganUserInfo == NULL || wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN") == 0)
+    {
+        //加载所有乘客数据
+        tobesearch = Yinyue200_GetFullListOfTicketInfo();
+    }
+    else
+    {
+        tobefree = Yinyue200_CreateFullListOfTicketInfoRefWithOwner(GetNowLoginedUserName());
+        tobesearch = &tobefree;
+    }
+    if (windata->UnsortedNowList.capacity == 0)
+    {
+        vector_init(&windata->UnsortedNowList);
+    }
+    vector_clear(&windata->UnsortedNowList);
+
+    int ItemIndex = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_COMBOBOX_SEARCH), (UINT)CB_GETCURSEL,
+        (WPARAM)0, (LPARAM)0);
+
+    for (int i = 0; i < vector_total(tobesearch); i++)
+    {
+        YINYUE200_TICKET_PTR record = vector_get(tobesearch, i);
+
+        bool rev = false;
+        if (searchtextlen == 0)
+        {
+            rev = true;
+        }
+        else
+        {
+            switch (ItemIndex)
+            {
+            case -1:
+                rev = true;
+                break;
+                YINYUE200_SEARCH_IMPL(PassengerName, 0);//todo
+                YINYUE200_SEARCH_IMPL(PassengerID, 1);
+                //case 2:
+                //{
+                //    int _temp_year = 0; 
+                //    int _temp_month = 0; 
+                //    int _temp_day = 0; 
+                //    int _temp_ret = swscanf(searchtext, L"%d/%d/%d", &_temp_year, &_temp_month, &_temp_day); 
+                //    uint64_t _temp_localdatepart = GetLocalDatePartUINT64OFUINT64(record->TrainTime); 
+                //    FILETIME _temp_filetime = Yinyue200_ConvertToFileTimeFromUINT64(_temp_localdatepart); 
+                //    SYSTEMTIME _temp_systime; 
+                //    FileTimeToSystemTime(&_temp_filetime, &_temp_systime); 
+                //    rev = _temp_systime.wYear == _temp_year; 
+                //    if (_temp_month != 0) rev &= _temp_systime.wMonth == _temp_month; 
+                //        if (_temp_day != 0) rev &= _temp_systime.wDay == _temp_day; 
+                //}
+                //    break;
+                YINYUE200_SEARCH_IMPL_DATE(TrainTime, 2);
+                YINYUE200_SEARCH_IMPL_DATE(CreatedTime, 3);
+                YINYUE200_SEARCH_IMPL(TrainName, 4);
+                YINYUE200_SEARCH_IMPL(StartStation, 5);
+                YINYUE200_SEARCH_IMPL(EndStation, 6);
+                YINYUE200_SEARCH_IMPL(PassengerIDType, 7);
+            default:
+                break;
+            }
+        }
+        if (rev)
+        {
+            vector_add(&windata->UnsortedNowList, record);
+        }
+    }
+
+    if (tobefree.capacity > 0)
+    {
+        //此处不需要释放vector的内容，因为所有权没有被转移
+        vector_free(&tobefree);
+    }
+
+    windata->sortstate = 0;
+    Yinyue200_TicketManageWindow_UpdateListViewData(hwnd);
+
+    free(searchtext);
+}
 LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -241,89 +327,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
             {
             case ID_BUTTON_SEARCH:
             {
-                PWSTR searchtext = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_SEARCH));
-                size_t searchtextlen = wcslen(searchtext);
-                YINYUE200_TICKETMANAGEWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-                vector tobefree = { 0 };
-                vector* tobesearch = NULL;
-                if (yinyue200_LoganUserInfo == NULL || wcscmp(yinyue200_LoganUserInfo->Type, L"ADMIN") == 0)
-                {
-                    //加载所有乘客数据
-                    tobesearch = Yinyue200_GetFullListOfTicketInfo();
-                }
-                else
-                {
-                    tobefree = Yinyue200_CreateFullListOfTicketInfoRefWithOwner(GetNowLoginedUserName());
-                    tobesearch = &tobefree;
-                }
-                if (windata->UnsortedNowList.capacity == 0)
-                {
-                    vector_init(&windata->UnsortedNowList);
-                }
-                vector_clear(&windata->UnsortedNowList);
-
-                int ItemIndex = SendMessage(Yinyue200_GetChildControlById(hwnd, ID_COMBOBOX_SEARCH), (UINT)CB_GETCURSEL,
-                    (WPARAM)0, (LPARAM)0);
-
-                for (int i = 0; i < vector_total(tobesearch); i++)
-                {
-                    YINYUE200_TICKET_PTR record = vector_get(tobesearch, i);
-
-                    bool rev = false;
-                    if (searchtextlen == 0)
-                    {
-                        rev = true;
-                    }
-                    else
-                    {
-                        switch (ItemIndex)
-                        {
-                        case -1:
-                            rev = true;
-                            break;
-                            YINYUE200_SEARCH_IMPL(PassengerName, 0);//todo
-                            YINYUE200_SEARCH_IMPL(PassengerID, 1);
-                        //case 2:
-                        //{
-                        //    int _temp_year = 0; 
-                        //    int _temp_month = 0; 
-                        //    int _temp_day = 0; 
-                        //    int _temp_ret = swscanf(searchtext, L"%d/%d/%d", &_temp_year, &_temp_month, &_temp_day); 
-                        //    uint64_t _temp_localdatepart = GetLocalDatePartUINT64OFUINT64(record->TrainTime); 
-                        //    FILETIME _temp_filetime = Yinyue200_ConvertToFileTimeFromUINT64(_temp_localdatepart); 
-                        //    SYSTEMTIME _temp_systime; 
-                        //    FileTimeToSystemTime(&_temp_filetime, &_temp_systime); 
-                        //    rev = _temp_systime.wYear == _temp_year; 
-                        //    if (_temp_month != 0) rev &= _temp_systime.wMonth == _temp_month; 
-                        //        if (_temp_day != 0) rev &= _temp_systime.wDay == _temp_day; 
-                        //}
-                        //    break;
-                            YINYUE200_SEARCH_IMPL_DATE(TrainTime, 2);
-                            YINYUE200_SEARCH_IMPL_DATE(CreatedTime, 3);
-                            YINYUE200_SEARCH_IMPL(TrainName, 4);
-                            YINYUE200_SEARCH_IMPL(StartStation, 5);
-                            YINYUE200_SEARCH_IMPL(EndStation, 6);
-                            YINYUE200_SEARCH_IMPL(PassengerIDType, 7);
-                        default:
-                            break;
-                        }
-                    }
-                    if (rev)
-                    {
-                        vector_add(&windata->UnsortedNowList, record);
-                    }
-                }
-
-                if (tobefree.capacity > 0)
-                {
-                    //此处不需要释放vector的内容，因为所有权没有被转移
-                    vector_free(&tobefree);
-                }
-
-                windata->sortstate = 0;
-                Yinyue200_TicketManageWindow_UpdateListViewData(hwnd);
-
-                free(searchtext);
+                TicketManageWindow_SearchButtonClick(hwnd);
             }
             break;
             case ID_BUTTON_DEL:
@@ -359,7 +363,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                         for (int i = vector_total(vec) - 1; i >= 0; i--)
                         {
                             int tobedelindex = vector_get_int(vec, i);
-                            YINYUE200_TICKETMANAGEWINDOWDATA* tobedel = vector_get(&windata->NowList, tobedelindex);
+                            YINYUE200_TICKET_PTR tobedel = vector_get(&windata->NowList, tobedelindex);
                             int32_t thisprice = 0;
                             if (Yinyue200_RefundTicket(tobedel,&thisprice))
                             {
@@ -382,7 +386,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                     free(vec);
                 }
 
-                Yinyue200_TicketManageWindow_InsertListViewItems(hListView, vector_total(&windata->NowList));
+                TicketManageWindow_SearchButtonClick(hwnd);
             }
             break;
             case ID_BUTTON_PRINT:
