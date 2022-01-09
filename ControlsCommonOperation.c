@@ -187,9 +187,9 @@ HWND Yinyue200_FastCreateComboBoxControl(HWND hwnd, HMENU id)
 }
 HWND Yinyue200_FastCreateComboBoxDropListControl(HWND hwnd, HMENU id)
 {
-    return Yinyue200_FastCreateControl(WC_COMBOBOX, hwnd, id, CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, L"");
+    return Yinyue200_FastCreateControl(WC_COMBOBOX, hwnd, id, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, L"");
 }
 HWND Yinyue200_FastCreateListBoxControl(HWND hwnd, HMENU id)
 {
-    return Yinyue200_FastCreateControl(WC_LISTBOX, hwnd, id, WS_VSCROLL|LBS_MULTIPLESEL | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, L"");
+    return Yinyue200_FastCreateControl(WC_LISTBOX, hwnd, id, WS_VSCROLL | LBS_MULTIPLESEL | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, L"");
 }
