@@ -47,10 +47,21 @@ void Yinyue200_InitTrainPlanRecordIndexs()
     }
 }
 
+/// <summary>
+/// 通过车次ID 获取车次信息
+/// </summary>
+/// <param name="ID">128位车次ID</param>
+/// <returns></returns>
 YINYUE200_TRAINPLANRECORD_PTR Yinyue200_GetTrainPlanRecordByTrainID(YINYUE200_PAIR_OF_uint64_t_uint64_t ID)
 {
     return HashMap_GetByKey(&Yinyue200_TrainIdIndexHashMap, &ID);
 }
+/// <summary>
+/// 通过车站名称获取车次路径点信息
+/// </summary>
+/// <param name="plan"></param>
+/// <param name="station"></param>
+/// <returns></returns>
 YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_GetTrainPlanRecordRoutePointFromStationDisplayName(YINYUE200_TRAINPLANRECORD_PTR plan, PWSTR station)
 {
     for (int i = 0; i < vector_total(&plan->RoutePoints); i++)
@@ -72,11 +83,19 @@ YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
     vector_init(&PT->TicketCount);
     return PT;
 }
+/// <summary>
+/// 添加一个车次
+/// </summary>
+/// <param name="record"></param>
 void AddTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     VECTOR_ADD(yinyue200_ProductList, record);
     HashMap_Add(&Yinyue200_TrainIdIndexHashMap, record);
 }
+/// <summary>
+/// 删除一个车次
+/// </summary>
+/// <param name="record"></param>
 void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     for (size_t i = 0; i < VECTOR_TOTAL(yinyue200_ProductList); i++)
@@ -91,6 +110,10 @@ void RemoveTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 
     HashMap_RemoveItem(&Yinyue200_TrainIdIndexHashMap, record);
 }
+/// <summary>
+/// 析构一个车次
+/// </summary>
+/// <param name="record"></param>
 void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     free(record->Name);
@@ -110,6 +133,10 @@ void freeTrainPlanRecord(YINYUE200_TRAINPLANRECORD_PTR record)
 
     free(record);
 }
+/// <summary>
+/// 析构路径点列表
+/// </summary>
+/// <param name="vec"></param>
 void freeTrainPlanRecord_RoutePoints(vector *vec)
 {
     for (int i = 0; i < vector_total(vec); i++)
@@ -279,6 +306,11 @@ vector* ProductRecordLoadToVector(LPWSTR path)
     return vec;
 }
 
+/// <summary>
+/// 序列化路径点
+/// </summary>
+/// <param name="routepoint"></param>
+/// <returns></returns>
 PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint)
 {
     size_t stationnamelen = wcslen(routepoint->Station.DisplayName);
@@ -294,6 +326,11 @@ PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_in
     swprintf(newstr, len, L"%d\t%d", routepoint->Item1, routepoint->Item2);
     return newstr;
 }
+/// <summary>
+/// 反序列化路径点信息
+/// </summary>
+/// <param name="str"></param>
+/// <returns></returns>
 YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR ConvertStringToYinyue200_TrainPlanRecord_RoutePoint(PWSTR str)
 {
     size_t len = wcslen(str);
@@ -371,6 +408,12 @@ bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, ui
         return false;
     }
 }
+/// <summary>
+/// 获取指向指定座位等级座位数量的指针
+/// </summary>
+/// <param name="record"></param>
+/// <param name=""></param>
+/// <returns></returns>
 int32_t* Yinyue200_GetTrainPlanRecordSeatCountPointer(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type)
 {
     for (int i = 0; i < vector_total(&record->TicketCount); i++)
@@ -386,6 +429,12 @@ int32_t* Yinyue200_GetTrainPlanRecordSeatCountPointer(YINYUE200_TRAINPLANRECORD_
     vector_add(&record->TicketCount, nn);
     return &nn->Item2;
 }
+/// <summary>
+/// 获取指定座位等级座位数量
+/// </summary>
+/// <param name="record"></param>
+/// <param name=""></param>
+/// <returns></returns>
 int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type)
 {
     for (int i = 0; i < vector_total(&record->TicketCount); i++)
@@ -398,11 +447,22 @@ int32_t Yinyue200_GetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR reco
     }
     return 0;
 }
+/// <summary>
+/// 设置指定座位等级座位数量
+/// </summary>
+/// <param name="record"></param>
+/// <param name=""></param>
+/// <param name="value"></param>
 void Yinyue200_SetTrainPlanRecordSeatCount(YINYUE200_TRAINPLANRECORD_PTR record, enum TrainSeatType type, int32_t value)
 {
     *Yinyue200_GetTrainPlanRecordSeatCountPointer(record, type) = value;
 }
 
+/// <summary>
+/// 获取座位数量的总和
+/// </summary>
+/// <param name="record"></param>
+/// <returns></returns>
 int32_t GetSeatCountOfAllTypeOfSeat(YINYUE200_TRAINPLANRECORD_PTR record)
 {
     int32_t sum = 0;
@@ -414,6 +474,11 @@ int32_t GetSeatCountOfAllTypeOfSeat(YINYUE200_TRAINPLANRECORD_PTR record)
     return sum;
 }
 
+/// <summary>
+/// 获取列车首次发车时间，用本地时间表示
+/// </summary>
+/// <param name="train"></param>
+/// <returns></returns>
 uint64_t Yinyue200_GetLocalTrainStartTimePoint(YINYUE200_TRAINPLANRECORD_PTR train)
 {
     uint64_t utctrainstarttime = train->StartTimePoint;

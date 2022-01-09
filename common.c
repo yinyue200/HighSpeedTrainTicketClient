@@ -33,6 +33,7 @@ PWCHAR CreateWSTR(size_t length)
 {
     return malloc(length * sizeof(wchar_t));
 }
+
 PWCHAR CreateWstrForWindowText(HWND hwnd)
 {
     size_t size = GetWindowTextLength(hwnd) + 1;
@@ -263,6 +264,12 @@ PWSTR Yinyue200_ConvertVectorToString(vector* vec, PWSTR(*func)(void* ptr))
     vector_set_wchar_t(&ret, vector_total_wchar_t(&ret)-1, 0);
     return ret.items;
  }
+/// <summary>
+/// 反序列化一个列表
+/// </summary>
+/// <param name="str"></param>
+/// <param name="func"></param>
+/// <returns></returns>
 vector Yinyue200_ConvertStringToVector(PWSTR str, void* (*func)(PWSTR str))
 {
     size_t len = wcslen(str);
@@ -305,6 +312,11 @@ uint64_t ConvertTimeToUINT64(UINT hour, UINT minute, UINT second)
 {
     return Yinyue200_ConvertToUINT64FromTotalSecond(hour * 3600llu + minute * 60llu + second);
 }
+/// <summary>
+/// 获取一个日期时间的时间部分
+/// </summary>
+/// <param name="time">日期时间</param>
+/// <returns></returns>
 uint64_t GetTimePartUINT64OFUINT64(uint64_t time)
 {
     FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
@@ -331,6 +343,11 @@ uint64_t GetLocalDatePartUINT64OFUINT64(uint64_t time)
     SystemTimeToFileTime(&systime, &localfiletime);
     return Yinyue200_ConvertToUINT64FromFileTime(localfiletime);
 }
+/// <summary>
+/// 获取一个日期时间的日期部分
+/// </summary>
+/// <param name="time">日期时间</param>
+/// <returns></returns>
 uint64_t GetDatePartUINT64OFUINT64(uint64_t time)
 {
     FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
@@ -343,6 +360,11 @@ uint64_t GetDatePartUINT64OFUINT64(uint64_t time)
     SystemTimeToFileTime(&systime, &filetime);
     return Yinyue200_ConvertToUINT64FromFileTime(filetime);
 }
+/// <summary>
+/// 将一个UTC日期时间转换为本地时间，并获取其时间部分
+/// </summary>
+/// <param name="time"></param>
+/// <returns></returns>
 uint64_t GetLocalTimePartUINT64OFUINT64(uint64_t time)
 {
     FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
@@ -352,6 +374,11 @@ uint64_t GetLocalTimePartUINT64OFUINT64(uint64_t time)
     FileTimeToSystemTime(&localfiletime, &systime);
     return ConvertTimeToUINT64(systime.wHour, systime.wMinute, systime.wSecond) + systime.wMilliseconds * 10000;
 }
+/// <summary>
+/// 将本地日期时间转换为UTC日期时间
+/// </summary>
+/// <param name="time"></param>
+/// <returns></returns>
 uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time)
 {
     FILETIME filetime = Yinyue200_ConvertToFileTimeFromUINT64(time);
@@ -359,6 +386,12 @@ uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time)
     Yinyue200_LocalFileTimeToFileTime(&filetime, &utcfiletime);
     return Yinyue200_ConvertToUINT64FromFileTime(utcfiletime);
 }
+/// <summary>
+/// 将字符串分割为列表
+/// </summary>
+/// <param name="str">要分割的字符串</param>
+/// <param name="spl">分割字符串的子串</param>
+/// <returns></returns>
 vector SplitStringToVectorOfString(PWSTR str, PWSTR spl)
 {
     VECTOR_INIT(vec);
@@ -371,6 +404,10 @@ vector SplitStringToVectorOfString(PWSTR str, PWSTR spl)
     }
     return vec;
 }
+/// <summary>
+/// 析构一个字符串列表
+/// </summary>
+/// <param name="vec"></param>
 void FreeVectorOfString(vector *vec)
 {
     for (int i = 0; i < vector_total(vec); i++)
@@ -380,6 +417,12 @@ void FreeVectorOfString(vector *vec)
     }
     vector_free(vec);
 }
+/// <summary>
+/// 以UTF-8编码写入宽字符串到文件
+/// </summary>
+/// <param name="str"></param>
+/// <param name="hFile"></param>
+/// <returns></returns>
 bool WritePWSTR(PCWSTR str, HANDLE hFile)
 {
     if (str == NULL)
@@ -406,7 +449,11 @@ bool WritePWSTR(PCWSTR str, HANDLE hFile)
         return false;
     }
 }
-
+/// <summary>
+/// 计算宽字符串的哈希值
+/// </summary>
+/// <param name="str"></param>
+/// <returns></returns>
 uint64_t xxHashPWSTR(PWSTR str)
 {
     if (str == NULL)
@@ -416,6 +463,12 @@ uint64_t xxHashPWSTR(PWSTR str)
         return 0;
     return xxhash_hash64_once(str, len * sizeof(WCHAR), 0);
 }
+/// <summary>
+/// 比较两个宽字符串
+/// </summary>
+/// <param name="left"></param>
+/// <param name="right"></param>
+/// <returns></returns>
 bool ComparePWSTR(PCWSTR left, PCWSTR right)
 {
     if (left == NULL)
@@ -424,6 +477,12 @@ bool ComparePWSTR(PCWSTR left, PCWSTR right)
         right = L"";
     return wcscmp(left, right) == 0;
 }
+/// <summary>
+/// 判断字符串中是否包含某个字符
+/// </summary>
+/// <param name="str"></param>
+/// <param name="one"></param>
+/// <returns></returns>
 bool PWSTRContainChar(PWSTR str, WCHAR one)
 {
     size_t len = wcslen(str);
@@ -434,6 +493,13 @@ bool PWSTRContainChar(PWSTR str, WCHAR one)
     }
     return false;
 }
+/// <summary>
+/// 替换一个字符串中的所有某个字符
+/// </summary>
+/// <param name="str">要处理的字符串</param>
+/// <param name="old">被替换的字符</param>
+/// <param name="newone">新字符</param>
+/// <returns></returns>
 PWSTR Yinyue200_ReplacePWSTR(PWSTR str, WCHAR old,WCHAR newone)
 {
     size_t len = wcslen(str);
