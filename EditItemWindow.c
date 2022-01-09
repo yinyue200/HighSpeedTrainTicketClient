@@ -388,7 +388,7 @@ int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
                         wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, record->Station.DisplayName, _TRUNCATE);//站点信息显示
                         break;
                     case 1:
-                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", record->Distance / 1000.0);//里程信息显示
+                        swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%.3lf", record->Distance / 1000.0);//里程信息显示
                         break;
                     case 2:
                         swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%lf", Yinyue200_ConvertToTotalSecondFromUINT64(record->RouteRunTimeSpan) / 60.0);//运行时间信息显示
