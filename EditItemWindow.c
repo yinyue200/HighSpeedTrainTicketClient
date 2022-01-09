@@ -797,7 +797,13 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 uint64_t localthistrainstartdatetime;
                 if (Yinyue200_EditItemWindow_BeforeTicketCheck(hwnd, windowdata, localdateint64, &localthistrainstartdatetime))
                 {
-                    double businessprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS) / 100.0;
+                    int32_t businesspriceint = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_BUSINESSCLASS);
+                    if (businesspriceint <= 0)
+                    {
+                        MessageBox(hwnd, L"请按列车运行方向正确选择起点和终点", L"错误", 0);
+                        goto endsearchticket;
+                    }
+                    double businessprice = businesspriceint / 100.0;
                     double firstprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_FIRSTCLASS) / 100.0;
                     double secondprice = Yinyue200_TicketManage_GetPrice(windowdata->TrainPlanRecord, windowdata->startstation, windowdata->endstation, TRAINTICKETTYPE_SECONDCLASS) / 100.0;
 
@@ -835,6 +841,7 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     free(buffer);
                     BitVector_Free(&seatvec);
                 }
+            endsearchticket:;
                 break;
             }
             case ID_BUTTON_BOOKTICKETS:
