@@ -265,7 +265,35 @@ LRESULT ListViewNotify(HWND hWnd, LPARAM lParam)
                     Yinyue200_FileTimeToLocalFileTime(&utcstarttime, &localstarttime);
                     SYSTEMTIME systime;
                     FileTimeToSystemTime(&localstarttime, &systime);
-                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%02d:%02d", systime.wHour, systime.wMinute);
+                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%d:%02d", systime.wHour, systime.wMinute);
+                    break;
+                }
+                case 6://到达时间
+                {
+                    FILETIME utcarrtime = Yinyue200_ConvertToFileTimeFromUINT64(record->StartTimePoint);
+                    int totalstations = vector_total(&record->RoutePoints);
+                    if (totalstations > 1)
+                    {
+                        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR endstation = vector_get(&record->RoutePoints, totalstations - 1);
+                        utcarrtime = Yinyue200_ConvertToFileTimeFromUINT64(Yinyue200_ConvertToUINT64FromFileTime(utcarrtime) + endstation->RouteRunTimeSpan);
+                    }
+                    FILETIME localarrtime;
+                    Yinyue200_FileTimeToLocalFileTime(&utcarrtime, &localarrtime);
+                    SYSTEMTIME systime;
+                    FileTimeToSystemTime(&localarrtime, &systime);
+                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%d:%02d", systime.wHour, systime.wMinute);
+                    break;
+                }
+                case 7://总里程
+                {
+                    double distance = yinyue200_GetTrainPlanRecordTotalDistance(record);
+                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%.3lf 千米", distance / 1000.0);
+                    break;
+                }
+                case 8://停靠车站数
+                {
+                    int count = yinyue200_GetTrainPlanRecordStationCount(record);
+                    swprintf(lpdi->item.pszText, lpdi->item.cchTextMax, L"%d", count);
                     break;
                 }
                 default:
@@ -381,7 +409,7 @@ BOOL InsertListViewItems(HWND hwndListView,size_t count)
     return TRUE;
 }
 #define DEFINE_NAMEANDTHEIRDISPLAYSORTORDER(name){ TEXT(name) ,TEXT(name) L" ↑",TEXT(name) L" ↓" }
-#define MAINWINDOW_COLUMNCOUNT 6
+#define MAINWINDOW_COLUMNCOUNT 9
 void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first,UINT dpi)
 {
     HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
@@ -391,7 +419,10 @@ void Yinyue200_Main_SetListViewColumn(HWND hwnd,BOOL first,UINT dpi)
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("状态"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("始发站"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("终点站"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("发车时间"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("始发站发车时间"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("终点站到达时间"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("总运行距离"),
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("停靠车站数"),
     };//二维数组，存储不同列在不同排序状态下的列头字符串
     LV_COLUMN   lvColumn;
     int         i;
@@ -520,6 +551,33 @@ int __cdecl Yinyue200_Main_UpdateListViewData_pairofuint64Compare(void* pcontext
     else
         return result;
 }
+int __cdecl Yinyue200_Main_UpdateListViewData_intNOREFCompare(void* pcontext, void const* left, void const* right)
+{
+    //整型排序比较函数
+    void** leftrecord = left;
+    void** rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    int(*getobj)(void*) = context->GetCompareObject;
+    int li = getobj(*leftrecord);
+    int ri = getobj(*rightrecord);
+    int result;
+    if (li == ri)
+    {
+        result = 0;
+    }
+    else if (li > ri)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
 int __cdecl Yinyue200_Main_UpdateListViewData_int32Compare(void* pcontext, void const* left, void const* right)
 {
     //整型排序比较函数
@@ -576,6 +634,33 @@ int __cdecl Yinyue200_Main_UpdateListViewData_uint64Compare(void* pcontext, void
     else
         return result;
 }
+int __cdecl Yinyue200_Main_UpdateListViewData_uint64NOREFCompare(void* pcontext, void const* left, void const* right)
+{
+    //整型排序比较函数
+    void** leftrecord = left;
+    void** rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    uint64_t(*getobj)(void*) = context->GetCompareObject;
+    uint64_t li = getobj(*leftrecord);
+    uint64_t ri = getobj(*rightrecord);
+    int result;
+    if (li == ri)
+    {
+        result = 0;
+    }
+    else if (li > ri)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = -1;
+    }
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
 int __cdecl Yinyue200_Main_UpdateListViewData_doubleCompare(void* pcontext, void const* left, void const* right)
 {
     //浮点排序比较函数
@@ -600,6 +685,29 @@ int __cdecl Yinyue200_Main_UpdateListViewData_localTimeCompare(void* pcontext, v
     uint64_t const* r = context->GetCompareObject(*rightrecord);
     uint64_t l1 = GetLocalTimePartUINT64OFUINT64(*l);
     uint64_t l2 = GetLocalTimePartUINT64OFUINT64(*r);
+    int result;
+    if (l1 == l2)
+        result = 0;
+    else if (l1 > l2)
+        result = 1;
+    else
+        result = -1;
+    if (context->IS_REV_RESULT)
+        return -result;
+    else
+        return result;
+}
+int __cdecl Yinyue200_Main_UpdateListViewData_localTimeNOREFCompare(void* pcontext, void const* left, void const* right)
+{
+    //本地时间排序比较函数
+    void** leftrecord = left;
+    void** rightrecord = right;
+    YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
+    uint64_t(*getobj)(void*) = context->GetCompareObject;
+    uint64_t l = getobj(*leftrecord);
+    uint64_t r = getobj(*rightrecord);
+    uint64_t l1 = GetLocalTimePartUINT64OFUINT64(l);
+    uint64_t l2 = GetLocalTimePartUINT64OFUINT64(r);
     int result;
     if (l1 == l2)
         result = 0;
@@ -649,6 +757,9 @@ void Yinyue200_Main_UpdateListViewData(HWND hwnd, UINT dpi)
             ITEM_COMPAREIMPL(3, PWSTR, StartStationForDisplay);
             ITEM_COMPAREIMPL(4, PWSTR, EndStationForDisplay);
             ITEM_COMPAREIMPL(5, localTime, StartTimePoint);
+            ITEM_COMPAREIMPL(6, uint64NOREF, LocalArrOnlyTimeUINT64);
+            ITEM_COMPAREIMPL(7, uint64NOREF, TotalDistance);
+            ITEM_COMPAREIMPL(8, intNOREF, StationCount);
                     
             default:
                 break;

@@ -159,5 +159,45 @@ inline PWSTR yinyue200_GetTrainPlanRecordEndStationForDisplay(YINYUE200_TRAINPLA
     }
 }
 
+inline uint64_t yinyue200_GetTrainPlanRecordTotalDistance(YINYUE200_TRAINPLANRECORD_PTR obj)
+{
+    vector* vec = &obj->RoutePoints;
+    int total = vector_total(vec);
+    if (total > 1)
+    {
+        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(vec, total - 1);
+        return routepoint->Distance;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+inline int yinyue200_GetTrainPlanRecordStationCount(YINYUE200_TRAINPLANRECORD_PTR obj)
+{
+    vector* vec = &obj->RoutePoints;
+    return vector_total(vec);
+}
+
+inline FILETIME yinyue200_GetTrainPlanRecordLocalArrTime(YINYUE200_TRAINPLANRECORD_PTR obj)
+{
+    FILETIME utcarrtime = Yinyue200_ConvertToFileTimeFromUINT64(obj->StartTimePoint);
+    int totalstations = vector_total(&obj->RoutePoints);
+    if (totalstations > 1)
+    {
+        YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR endstation = vector_get(&obj->RoutePoints, totalstations - 1);
+        utcarrtime = Yinyue200_ConvertToFileTimeFromUINT64(Yinyue200_ConvertToUINT64FromFileTime(utcarrtime) + endstation->RouteRunTimeSpan);
+    }
+    FILETIME localarrtime;
+    Yinyue200_FileTimeToLocalFileTime(&utcarrtime, &localarrtime);
+    return localarrtime;
+}
+
+inline uint64_t yinyue200_GetTrainPlanRecordLocalArrOnlyTimeUINT64(YINYUE200_TRAINPLANRECORD_PTR obj)
+{
+    return GetTimePartUINT64OFUINT64(Yinyue200_ConvertToUINT64FromFileTime(yinyue200_GetTrainPlanRecordLocalArrTime(obj)));
+}
+
 //========
 
