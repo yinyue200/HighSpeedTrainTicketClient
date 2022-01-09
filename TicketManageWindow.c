@@ -448,7 +448,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
     SYSTEMTIME _temp_systemtime;\
     FileTimeToSystemTime(&_temp_local_filetime,&_temp_systemtime);\
     swprintf_s(szString, _countof(szString),\
-        TEXT("%d/%d/%d %d:%d"),\
+        TEXT("%d/%d/%d %d:%02d"),\
         _temp_systemtime.wYear,_temp_systemtime.wMonth,_temp_systemtime.wDay,_temp_systemtime.wHour,_temp_systemtime.wMinute);\
     wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax,\
         szString, _TRUNCATE);\
