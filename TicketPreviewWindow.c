@@ -158,7 +158,7 @@ void Yinyue200_DrawTicket(HDC img,YINYUE200_TICKET_PTR ticket, int x, int y,UINT
     //rc.top -= d;
     SelectObject(img, smallfont);
 
-    swprintf(buffer, 1000, timezone > 0 ? L"   %d 年 %02d 月 %02d 日 %d:%d （UTC+%.0f）开" : L"   %d 年 %02d 月 %02d 日 %d:%d （UTC%.0f）开",
+    swprintf(buffer, 1000, timezone > 0 ? L"   %d 年 %02d 月 %02d 日 %02d:%02d （UTC+%.0f）开" : L"   %d 年 %02d 月 %02d 日 %02d:%02d （UTC%.0f）开",
         systime.wYear, systime.wMonth, systime.wDay, systime.wHour, systime.wMinute, timezone);
 
     rc.top += YINYUE200_LOGICTOPHYBYDPI(40 * 2, dpi);
