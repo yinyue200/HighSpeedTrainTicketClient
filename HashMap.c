@@ -28,7 +28,7 @@ void HashMap_PlaceItem(HASHMAP* map, HASHMAPNODE* node, size_t placeto)
         {
             memcpy(nnode, &item->node, sizeof(HASHMAPNODE));
             item->node = *node;
-            node->next = nnode;
+            item->node.next = nnode;
 
             item->used++;
         }
