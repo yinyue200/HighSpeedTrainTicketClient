@@ -166,3 +166,4 @@ inline PWSTR Yinyue200_GetPWSTRWithoutNull(PWSTR str)
 }
 
 uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time);
+bool PWSTRContainChar(PWSTR str, WCHAR one);

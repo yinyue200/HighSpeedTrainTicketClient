@@ -34,13 +34,23 @@ typedef struct Yinyue200_RoutePointEditWindowData
 {
     YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR RoutePoint;
     RoutePointEditFinishCallback callback;
+    uint64_t TrainStartDateTime;
+    uint64_t TrainStartLocalTime;
     void* callbackcontext;
     bool enablesave;
     HFONT lastfont;
     bool callbacksent;
 } YINYUE200_ROUTEPOINTEDITWINDOWDATA;
 LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint, bool enablesave, RoutePointEditFinishCallback callback, void *callbackcontext)
+/// <summary>
+/// 
+/// </summary>
+/// <param name="routepoint"></param>
+/// <param name="enablesave"></param>
+/// <param name="callback"></param>
+/// <param name="callbackcontext"></param>
+/// <param name="trainStartDateTime">本地时间</param>
+void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint, bool enablesave, RoutePointEditFinishCallback callback, void *callbackcontext, uint64_t trainStartLocalTime)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.RoutePointEditWindow";
@@ -59,6 +69,7 @@ void CreateRoutePointEditWindow(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepo
     windowdata->callback = callback;
     windowdata->enablesave = enablesave;
     windowdata->callbackcontext = callbackcontext;
+    windowdata->TrainStartLocalTime = GetTimePartUINT64OFUINT64(trainStartLocalTime);
 
     // Create the window.
 
@@ -245,23 +256,56 @@ LRESULT CALLBACK RoutePointEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
                 }
                 _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RUNTIMESPAN));
                 double timespan_double = 0.0;
-                if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &timespan_double) >= 0)
+                if (PWSTRContainChar(_temp_int64_str, L':')==false)
                 {
-                    ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double * 60.0);
+                    if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &timespan_double) >= 0)
+                    {
+                        ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(timespan_double * 60.0);
+                    }
+                    else
+                    {
+                        MessageBox(hwnd, L"运行时间格式错误", NULL, 0);
+                    }
                 }
                 else
                 {
-                    MessageBox(hwnd, L"运行时间格式错误", NULL, 0);
+                    int hours, minute;
+                    if (swscanf(_temp_int64_str, L"%d:%d", &hours,&minute) == 2)
+                    {
+                        ptr->RouteRunTimeSpan = Yinyue200_ConvertToUINT64FromTotalSecond(3600.0 * hours + minute * 60.0) - windowdata->TrainStartLocalTime;
+                    }
+                    else
+                    {
+                        MessageBox(hwnd, L"运行时间格式错误", NULL, 0);
+                    }
+                    free(_temp_int64_str);
                 }
                 _temp_int64_str = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_RESIDENCETIME));
-                double restime_double = 0.0;
-                if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &restime_double) >= 0)
+                if (PWSTRContainChar(_temp_int64_str, L':') == false)
                 {
-                    ptr->ResidenceTime = Yinyue200_ConvertToUINT64FromTotalSecond(restime_double * 60.0);
+                    double restime_double = 0.0;
+                    if (Yinyue200_EditWindowParseFromStringAndFree(_temp_int64_str, &restime_double) >= 0)
+                    {
+                        ptr->ResidenceTime = Yinyue200_ConvertToUINT64FromTotalSecond(restime_double * 60.0);
+                    }
+                    else
+                    {
+                        MessageBox(hwnd, L"停留时间格式错误", NULL, 0);
+                    }
                 }
                 else
                 {
-                    MessageBox(hwnd, L"停留时间格式错误", NULL, 0);
+                    int hours, minute;
+                    if (swscanf(_temp_int64_str, L"%d:%d", &hours, &minute) == 2)
+                    {
+                        ptr->ResidenceTime = Yinyue200_ConvertToUINT64FromTotalSecond(3600.0 * hours + minute * 60.0) - windowdata->TrainStartLocalTime;
+                        ptr->ResidenceTime -= ptr->RouteRunTimeSpan;
+                    }
+                    else
+                    {
+                        MessageBox(hwnd, L"停留时间格式错误", NULL, 0);
+                    }
+                    free(_temp_int64_str);
                 }
                 windowdata->callback(ptr, windowdata->callbackcontext);
                 windowdata->callbacksent = true;

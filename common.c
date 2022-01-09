@@ -424,3 +424,13 @@ bool ComparePWSTR(PCWSTR left, PCWSTR right)
         right = L"";
     return wcscmp(left, right) == 0;
 }
+bool PWSTRContainChar(PWSTR str, WCHAR one)
+{
+    size_t len = wcslen(str);
+    for (size_t i = 0; i < len; i++)
+    {
+        if (str[i] == one)
+            return true;
+    }
+    return false;
+}

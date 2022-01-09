@@ -446,7 +446,12 @@ int EditItemWindow_RouteListViewNotify(HWND hwnd, LPARAM lParam)
                     YINYUE200_EDITITEMWINDOW_ROUTEPOINTADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context();
                     callbackcontext->hwnd = hwnd;
 
-                    CreateRoutePointEditWindow(ptr, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext);
+                    SYSTEMTIME time;
+                    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTTIME), &time);
+                    FILETIME filetime;
+                    SystemTimeToFileTime(&time, &filetime);
+
+                    CreateRoutePointEditWindow(ptr, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext, Yinyue200_ConvertToUINT64FromFileTime(filetime));
                 }
 
             }
@@ -1027,7 +1032,11 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     callbackcontext->hwnd = hwnd;
                     callbackcontext->add = true;
 
-                    CreateRoutePointEditWindow(NULL, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext);
+                    SYSTEMTIME time;
+                    DateTime_GetSystemtime(GetDlgItem(hwnd, ID_EDIT_STARTTIME), &time);
+                    FILETIME filetime;
+                    SystemTimeToFileTime(&time, &filetime);
+                    CreateRoutePointEditWindow(NULL, windata->enablesave, editwindowaddoreditroutepointcallback, callbackcontext, Yinyue200_ConvertToUINT64FromFileTime(filetime));
                 }
 
             }
