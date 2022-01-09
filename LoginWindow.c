@@ -161,7 +161,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
                 LPWSTR username = CreateWstrForWindowText(GetDlgItem(hwnd,ID_EDIT_NAME));
 
-                if (vector_total(&vec) == 0)
+                if (vector_total(vec) == 0)
                 {
                     if (yinyue200_LoganUserInfo != NULL)
                     {
