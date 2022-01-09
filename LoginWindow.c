@@ -49,7 +49,7 @@ void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcon
     yinyue200_LoganUserInfo = yinyue200_safemalloc(sizeof(USERDATAINFO));
     yinyue200_LoganUserInfo->Name= yinyue200_safemalloc(2);
     yinyue200_LoganUserInfo->Name[0] = 0;
-    yinyue200_LoganUserInfo->Type = L"ADMIN";
+    yinyue200_LoganUserInfo->Type = CreateWstrFromWstr(L"ADMIN");
     yinyue200_LoganUserInfo->PasswordHash = NULL;
     callback(callbackcontext);
 #else
@@ -169,7 +169,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     }
                     yinyue200_LoganUserInfo = yinyue200_safemalloc(sizeof(USERDATAINFO));
                     yinyue200_LoganUserInfo->Name = username;
-                    yinyue200_LoganUserInfo->Type = L"ADMIN";
+                    yinyue200_LoganUserInfo->Type = CreateWstrFromWstr(L"ADMIN");
                     yinyue200_LoganUserInfo->PasswordHash = NULL;
                 }
                 else
