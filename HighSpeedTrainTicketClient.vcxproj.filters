@@ -36,7 +36,7 @@
     <ClCompile Include="vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProductRecord.c">
+    <ClCompile Include="TrainPlanRecord.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="common.c">
@@ -103,6 +103,9 @@
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
     <ClCompile Include="TicketPreviewWindow.c">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="FastSearchingTrainWindow.c">
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
   </ItemGroup>

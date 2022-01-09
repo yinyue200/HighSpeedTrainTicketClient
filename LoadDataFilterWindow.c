@@ -17,7 +17,7 @@
 #include "ControlsCommonOperation.h"
 #include "MainWindow.h"
 #include "EditItemWindow.h"
-#include "ProductRecord.h"
+#include "TrainPlanRecord.h"
 #include "UserSetting.h"
 #include "DpiHelper.h"
 #define ID_EDIT_NAME 1

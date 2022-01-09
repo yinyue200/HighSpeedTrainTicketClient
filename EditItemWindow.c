@@ -15,7 +15,7 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
 #include "EditItemWindow.h"
-#include "ProductRecord.h"
+#include "TrainPlanRecord.h"
 #include "ControlsCommonOperation.h"
 #include "DpiHelper.h"
 #include "RoutePointEditWindow.h"

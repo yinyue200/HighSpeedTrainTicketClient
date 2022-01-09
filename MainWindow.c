@@ -16,7 +16,7 @@
 #include "common.h"
 #include "MainWindow.h"
 #include "EditItemWindow.h"
-#include "ProductRecord.h"
+#include "TrainPlanRecord.h"
 #include "UserSetting.h"
 #include "LoadDataFilterWindow.h"
 #include "LoginWindow.h"

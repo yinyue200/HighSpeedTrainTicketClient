@@ -16,7 +16,7 @@
 #include "RoutePointEditWindow.h"
 #include "common.h"
 #include "ControlsCommonOperation.h"
-#include "ProductRecord.h"
+#include "TrainPlanRecord.h"
 #include "DpiHelper.h"
 #define ID_EDIT_STATION 1
 #define ID_LABEL_STATION 2

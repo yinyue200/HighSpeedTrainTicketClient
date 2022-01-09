@@ -19,7 +19,7 @@
 #include "common.h"
 #include "stdatomic.h"
 #include "vector.h"
-#include "ProductRecord.h"
+#include "TrainPlanRecord.h"
 #include "UserSetting.h"
 #include "LoginWindow.h"
 #include "DpiHelper.h"

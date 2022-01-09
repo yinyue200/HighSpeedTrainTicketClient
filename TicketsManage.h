@@ -16,7 +16,7 @@
 #pragma once
 #include "common.h"
 #include "PassengersManage.h"
-#include "ProductRecord.h"
+#include "TrainPlanRecord.h"
 #include "BitVector.h"
 typedef struct Yinyue200_Ticket
 {
