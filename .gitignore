@@ -361,6 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/data.tsv
+
+
 /passengerinfo.tsv
 /ticketsinfo.tsv
