@@ -354,7 +354,7 @@ LRESULT CALLBACK LoadDataFilterWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         CREATECTRL(STARTTIME, L"发车时间")
         CREATECTRL(STARTSTATION, L"始发站")
         CREATECTRL(ENDSTATION, L"终到站")
-        CREATECTRL(STATIONS, L"途径站（多个途径站用分号分隔）")
+        CREATECTRL(STATIONS, L"途径站（多个途径站用英文分号分隔）")
         CREATECTRL(REPEAT, L"发车间隔天数")
         CREATECTRL(FIRSTDATE, L"首次开车日期")
         CREATECTRL(DISTANCE, L"总里程（千米）")
