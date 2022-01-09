@@ -110,6 +110,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	enum TrainSeatType seatLevel,
 	PWSTR owner
 );
+void Yinyue200_SetCacheInfoForRemovingTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train);
 bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice);
 YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date);
 vector Yinyue200_CreateFullListOfTicketInfoRefWithOwner(PWCHAR owner);

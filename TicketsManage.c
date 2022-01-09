@@ -734,8 +734,55 @@ bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
 		HashMap_RemoveItem(&Yinyue200_TicketInfo_OwnerIndexed, ticket);
 		HashMap_RemoveItem(&Yinyue200_TicketInfo_TrainIdAndPassengerIndexed, ticket);
 
+		YINYUE200_TRAINIDAANDDATE pair;
+		pair.TrainId = ticket->TrainID;
+		pair.LocalDate = GetLocalDatePartUINT64OFUINT64(ticket->TrainStartTime);
+
+		YINYUE200_SEATINFOCACHE_PTR seatinfocache = HashMap_GetByKey(&Yinyue200_TicketCountHashMap, &pair);
+
+		if (seatinfocache)
+		{
+			YINYUE200_TRAINPLANRECORD_PTR train = Yinyue200_GetTrainPlanRecordByTrainID(ticket->TrainID);
+			
+			if (train)
+			{
+				//该车次存在
+				Yinyue200_SetCacheInfoForRemovingTicket(seatinfocache, ticket, train);
+			}
+		}
+
 		//Yinyue200_freeTicket(&ticket);//刻意如此做的
+
 		return true;
+	}
+}
+void Yinyue200_SetCacheInfoForRemovingTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train)
+{
+	if (ticket->SeatNumber > 0)
+	{
+		bool start = false;
+		for (int i = 0; i < vector_total(&train->RoutePoints); i++)
+		{
+			YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint = vector_get(&train->RoutePoints, i);
+			if (start)
+			{
+				int routespanindex = i - 1;
+
+				BitVector_SetBit(&cache->seatinfo[routespanindex], ticket->SeatNumber - 1, false);//座号从 1 开始
+
+				if (wcscmp(routepoint->Station.DisplayName, ticket->EndStation) == 0)
+				{
+					break;
+				}
+			}
+			else
+			{
+				if (wcscmp(routepoint->Station.DisplayName, ticket->StartStation) == 0)
+				{
+					start = true;
+				}
+			}
+		}
 	}
 }
 void Yinyue200_SetCacheInfoForNewTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train)
