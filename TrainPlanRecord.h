@@ -18,13 +18,13 @@
 #include <stdint.h>
 #include "vector.h"
 #include "common.h"
-//构造获取 ProductRecord 成员的函数定义的宏
+//构造获取 TrainPlanRecord 成员的函数定义的宏
 #define YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERMETHOD(name) inline void* yinyue200_GetTrainPlanRecord##name(void* obj)\
 {\
 YINYUE200_TRAINPLANRECORD_PTR p = obj;\
 return p->name;\
 }
-//构造获取 ProductRecord 成员的地址的函数定义的宏
+//构造获取 TrainPlanRecord 成员的地址的函数定义的宏
 #define YINYUE200_TRAINPLANRECORD_DEFINE_GETMEMBERADDRMETHOD(name) inline void* yinyue200_GetTrainPlanRecord##name(void* obj)\
 {\
 YINYUE200_TRAINPLANRECORD_PTR p = obj;\
@@ -89,9 +89,9 @@ void freeTrainPlanRecord_RoutePoints(vector* vec);
 // 假定 srcvec 是未初始化的 vector
 void deepcopy_TrainPlanRecord_RoutePoints(vector* srcvec, vector* orivec);
 //读取记录信息
-vector* ProductRecordLoadToVector(LPWSTR path);
+vector* TrainPlanRecordLoadToVector(LPWSTR path);
 //写入记录到文件
-bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec);
+bool yinyue200_TrainPlanRecordSaveToFile(LPWSTR path, vector* vec);
 
 PWSTR ConvertToStringFrom_Yinyue200_TrainPlanRecord_RoutePoint(YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR routepoint);
 PWSTR ConvertToStringFrom_YINYUE200_PAIR_OF_int32_t_int32_t(YINYUE200_PAIR_OF_int32_t_int32_t *routepoint);

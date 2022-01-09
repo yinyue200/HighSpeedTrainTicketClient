@@ -17,7 +17,7 @@
 #include "TrainPlanRecord.h"
 
 //创建并打开编辑单个记录信息窗体
-void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR productrecord, bool enablesave, bool bookmode);
+void CreateEditItemWindow(YINYUE200_TRAINPLANRECORD_PTR train, bool enablesave, bool bookmode);
 typedef struct Yinyue200_EditItemWindow_RoutePointAddOrEdit_Callback_Context
 {
     HWND hwnd;//窗口句柄

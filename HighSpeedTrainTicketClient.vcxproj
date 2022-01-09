@@ -197,7 +197,7 @@
     <ClInclude Include="LoadDataFilterWindow.h" />
     <ClInclude Include="LoginWindow.h" />
     <ClInclude Include="MainWindow.h" />
-    <ClInclude Include="ProductRecord.h" />
+    <ClInclude Include="TrainPlanRecord.h" />
     <ClInclude Include="sha256.h" />
     <ClInclude Include="stdatomic.h" />
     <ClInclude Include="TicketManageWindow.h" />

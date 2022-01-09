@@ -165,7 +165,7 @@ void deepcopy_TrainPlanRecord_RoutePoints(vector *srcvec,vector *orivec)
 #include "FileDataLoad.h"
 
 //写入记录到文件
-bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
+bool yinyue200_TrainPlanRecordSaveToFile(LPWSTR path, vector* vec)
 {
     HANDLE hFile = CreateFile(path,               // file to open
         GENERIC_READ|GENERIC_WRITE,          // open for reading
@@ -198,7 +198,7 @@ bool yinyue200_ProductRecordSaveToFile(LPWSTR path, vector* vec)
     return true;
 }
 //读取记录信息
-vector* ProductRecordLoadToVector(LPWSTR path)
+vector* TrainPlanRecordLoadToVector(LPWSTR path)
 {
     //FILE SHOULD BE UTF-8 ENCODED
     vector* vec = yinyue200_safemalloc(sizeof(vector));

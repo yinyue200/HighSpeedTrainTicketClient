@@ -64,7 +64,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 #endif
 {
     {
-        vector* p = ProductRecordLoadToVector(yinyue200_GetConfigFilePath());
+        vector* p = TrainPlanRecordLoadToVector(yinyue200_GetConfigFilePath());
         VECTOR_MOVE(yinyue200_ProductList, *p);
 
         Yinyue200_InitTrainPlanRecordIndexs();

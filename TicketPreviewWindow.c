@@ -11,7 +11,7 @@ typedef struct Yinyue200_TicketPreviewWindowData
     HFONT lastfont;
 } YINYUE200_TICKETPREVIEWWINDOWDATA;
 LRESULT CALLBACK TicketPreviewWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreateTicketPreviewWindow(YINYUE200_TICKET_PTR productrecord)
+void CreateTicketPreviewWindow(YINYUE200_TICKET_PTR record)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.TicketPreviewWindow";
@@ -26,7 +26,7 @@ void CreateTicketPreviewWindow(YINYUE200_TICKET_PTR productrecord)
     //printf("%d", result);
 
     YINYUE200_TICKETPREVIEWWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(YINYUE200_TICKETPREVIEWWINDOWDATA));
-    windowdata->TicketInfo = productrecord;
+    windowdata->TicketInfo = record;
 
     // Create the window.
 
@@ -81,12 +81,7 @@ void LayoutControls_TicketPreviewWindow(HWND hwnd, UINT dpi, YINYUE200_TICKETPRE
     }
 
 }
-#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
-//初始化编辑框初值
-void TicketPreviewwindow_initctrl(HWND hwnd, YINYUE200_PASSENGERINFO_PTR productrecord)
-{
-
-}
+#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, record==NULL?L"":record->##member);
 #define SAVEPASSENGERINFOMEMBERDATA(memberid,member) do\
 {\
     free(ptr->##member);\
@@ -314,8 +309,6 @@ LRESULT CALLBACK TicketPreviewWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
         HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_PRINT, L"打印");
         HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"关闭");
-
-        TicketPreviewwindow_initctrl(hwnd, windata->TicketInfo);//初始化编辑框初值
 
         LayoutControls_TicketPreviewWindow(hwnd, yinyue200_GetDpiForWindow(hwnd), windata);
     }

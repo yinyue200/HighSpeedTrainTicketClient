@@ -45,7 +45,7 @@ typedef struct Yinyue200_PassengerInfoEditWindowData
     bool callbacksent;
 } YINYUE200_PASSENGERINFOEDITWINDOWDATA;
 LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CreatePassengerRecordEditWindow(YINYUE200_PASSENGERINFO_PTR productrecord, PassengerInfoEditFinishCallback callback, void* callbackcontext)
+void CreatePassengerRecordEditWindow(YINYUE200_PASSENGERINFO_PTR passenger, PassengerInfoEditFinishCallback callback, void* callbackcontext)
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"yinyue200.HighSpeedTrainTicketClient.PassengerRecordEditWindow";
@@ -60,7 +60,7 @@ void CreatePassengerRecordEditWindow(YINYUE200_PASSENGERINFO_PTR productrecord, 
     //printf("%d", result);
 
     YINYUE200_PASSENGERINFOEDITWINDOWDATA* windowdata = yinyue200_safemallocandclear(sizeof(YINYUE200_PASSENGERINFOEDITWINDOWDATA));
-    windowdata->PassengerInfo = productrecord;
+    windowdata->PassengerInfo = passenger;
     windowdata->callback = callback;
     windowdata->callbackcontext = callbackcontext;
 
@@ -123,9 +123,9 @@ void LayoutControls_PassengerRecordEditWindow(HWND hwnd, UINT dpi, YINYUE200_PAS
     }
 
 }
-#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, productrecord==NULL?L"":productrecord->##member);
+#define SETNULLORPRODUCTINFOMEMBERDATA(chwnd,member) SendMessage(GetDlgItem(hwnd,chwnd), WM_SETTEXT, 0, passenger==NULL?L"":passenger->##member);
 //≥ı ºªØ±‡º≠øÚ≥ı÷µ
-void passengerrecordeditwindow_initctrl(HWND hwnd, YINYUE200_PASSENGERINFO_PTR productrecord)
+void passengerrecordeditwindow_initctrl(HWND hwnd, YINYUE200_PASSENGERINFO_PTR passenger)
 {
     
     SETNULLORPRODUCTINFOMEMBERDATA(ID_EDIT_IDTYPE, IDType);

@@ -1116,7 +1116,7 @@ void logincheckmsg(void* context)
             ofn.Flags = OFN_FILEMUSTEXIST;
             if (GetOpenFileName(&ofn))   //strFile得到用户所选择文件的路径和文件名 ; 
             {
-                vector* vec = ProductRecordLoadToVector(strFile);
+                vector* vec = TrainPlanRecordLoadToVector(strFile);
                 for (size_t i = 0; i < vector_total(vec); i++)
                 {
                     YINYUE200_TRAINPLANRECORD_PTR one = vector_get(vec, i);
@@ -1144,12 +1144,12 @@ void logincheckmsg(void* context)
                     YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        YINYUE200_TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
-                        RemoveTrainPlanRecord(productrecord);
+                        YINYUE200_TRAINPLANRECORD_PTR train = vector_get(ycontext->vec, i);
+                        RemoveTrainPlanRecord(train);
                         for (size_t i = 0; i < VECTOR_TOTAL(windata->UnsortedNowList); i++)
                         {
                             YINYUE200_TRAINPLANRECORD_PTR allproduct = VECTOR_GET(windata->UnsortedNowList, YINYUE200_TRAINPLANRECORD_PTR, i);
-                            if (allproduct == productrecord)
+                            if (allproduct == train)
                             {
                                 VECTOR_DELETE(windata->UnsortedNowList, i);
                                 break;
@@ -1159,8 +1159,8 @@ void logincheckmsg(void* context)
                     UpdateCheckBoxInfo(hwnd, windata);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
                     {
-                        YINYUE200_TRAINPLANRECORD_PTR productrecord = vector_get(ycontext->vec, i);
-                        freeTrainPlanRecord(productrecord);
+                        YINYUE200_TRAINPLANRECORD_PTR train = vector_get(ycontext->vec, i);
+                        freeTrainPlanRecord(train);
                     }
                     vector_free(ycontext->vec);
                     free(ycontext->vec);
@@ -1301,7 +1301,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 L"车票的背景图片在 Attribution-ShareAlike 4.0 International(CC BY-SA 4.0) 协议下许可使用，详见 https://creativecommons.org/licenses/by-sa/4.0/", L"关于", 0);
             break;
         case ID_MENU_SAVE:
-            yinyue200_ProductRecordSaveToFile(yinyue200_GetConfigFilePath(), &yinyue200_ProductList);
+            yinyue200_TrainPlanRecordSaveToFile(yinyue200_GetConfigFilePath(), &yinyue200_ProductList);
             yinyue200_MemoryPassengerInfoSaveToFile();
             yinyue200_TicketsInfoSave();
             MessageBox(hwnd, L"保存成功", L"消息", 0);
@@ -1444,8 +1444,8 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             while (iPos != -1) {
                                 // iPos is the index of a selected item
                                 // do whatever you want with it
-                                YINYUE200_TRAINPLANRECORD_PTR productrecord = VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos);
-                                vector_add(vec, productrecord);
+                                YINYUE200_TRAINPLANRECORD_PTR train = VECTOR_GET(windata->PagedNowList, YINYUE200_TRAINPLANRECORD_PTR, iPos);
+                                vector_add(vec, train);
 
                                 // Get the next selected item
                                 iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
