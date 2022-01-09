@@ -228,11 +228,11 @@ void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem,boo
     HASHMAPNODEBASIC* firstnode = &map->item[place];
     if (firstnode->used)
     {
-        HASHMAPNODE* onode;
         HASHMAPNODE* node = &firstnode->node;
+        HASHMAPNODE* onode = node;
+
         do
         {
-            onode = node;
             if (node->hashvalue == hash && (checkkey==false || map->equalFunc(map->getKeyFunc(node->value), key)) && (checkitem==false||item == node->value))
             {
                 //node is the node to be del
@@ -273,6 +273,7 @@ void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem,boo
                     goto skipround;
                 }
             }
+            onode = node;
             node = node->next;
         skipround:;
         } while (node);
