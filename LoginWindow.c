@@ -25,6 +25,7 @@
 #define ID_LABEL_USERNAME 5
 #define ID_LABEL_PWD 6
 LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void FreeNowLoganUserInfo();
 LPWSTR GetNowLoginedUserName()
 {
     if (yinyue200_LoganUserInfo == NULL)
@@ -41,6 +42,10 @@ typedef struct LoginWindowData
 void CreateLoginWindow(LPWSTR username,void (*callback)(void*),void* callbackcontext)
 {
 #if YINYUE200_SKIP_LOGINCHECK
+    if (yinyue200_LoganUserInfo != NULL)
+    {
+        FreeNowLoganUserInfo();
+    }
     yinyue200_LoganUserInfo = yinyue200_safemalloc(sizeof(USERDATAINFO));
     yinyue200_LoganUserInfo->Name= yinyue200_safemalloc(2);
     yinyue200_LoganUserInfo->Name[0] = 0;
@@ -155,49 +160,59 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             {
                 vector* vec = UserRecordLoadToVector(yinyue200_GetUserConfigFilePath());
                 LPWSTR username = CreateWstrForWindowText(GetDlgItem(hwnd,ID_EDIT_NAME));
-                LPWSTR password = CreateWstrForWindowText(GetDlgItem(hwnd, ID_EDIT_PWD));
-                wchar_t pwdhash[65];
-                Hash256LPWSTR(password, pwdhash);
-                free(password);
-                bool SUCC = false;
-                for (size_t i = 0; i < vector_total(vec); i++)
-                {
-                    USERDATAINFO_PTR item = vector_get(vec, i);
-                    if (wcscmp(username, item->Name) == 0 && wcscmp(pwdhash, item->PasswordHash) == 0)
-                    {
-                        if (yinyue200_LoganUserInfo != NULL)
-                        {
-                            free(yinyue200_LoganUserInfo->Name);
-                            free(yinyue200_LoganUserInfo->PasswordHash);
-                            free(yinyue200_LoganUserInfo->Type);
-                            free(yinyue200_LoganUserInfo);
-                        }
-                        yinyue200_LoganUserInfo = item;
-                        SUCC = true;
-                        break;
-                    }
-                    else
-                    {
-                        free(item->Name);
-                        free(item->PasswordHash);
-                        free(item->Type);
-                        free(item);
-                    }
-                }
-                if (!SUCC)
+
+                if (vector_total(&vec) == 0)
                 {
                     if (yinyue200_LoganUserInfo != NULL)
                     {
-                        free(yinyue200_LoganUserInfo->Name);
-                        free(yinyue200_LoganUserInfo->PasswordHash);
-                        free(yinyue200_LoganUserInfo->Type);
-                        free(yinyue200_LoganUserInfo);
+                        FreeNowLoganUserInfo();
                     }
-                    yinyue200_LoganUserInfo = NULL;
+                    yinyue200_LoganUserInfo = yinyue200_safemalloc(sizeof(USERDATAINFO));
+                    yinyue200_LoganUserInfo->Name = username;
+                    yinyue200_LoganUserInfo->Type = L"ADMIN";
+                    yinyue200_LoganUserInfo->PasswordHash = NULL;
                 }
-                vector_free(vec);
-                free(vec);
-                free(username);
+                else
+                {
+                    LPWSTR password = CreateWstrForWindowText(GetDlgItem(hwnd, ID_EDIT_PWD));
+                    wchar_t pwdhash[65];
+                    Hash256LPWSTR(password, pwdhash);
+                    free(password);
+                    bool SUCC = false;
+                    for (size_t i = 0; i < vector_total(vec); i++)
+                    {
+                        USERDATAINFO_PTR item = vector_get(vec, i);
+                        if (wcscmp(username, item->Name) == 0 && wcscmp(pwdhash, item->PasswordHash) == 0)
+                        {
+                            if (yinyue200_LoganUserInfo != NULL)
+                            {
+                                FreeNowLoganUserInfo();
+                            }
+                            yinyue200_LoganUserInfo = item;
+                            SUCC = true;
+                            break;
+                        }
+                        else
+                        {
+                            free(item->Name);
+                            free(item->PasswordHash);
+                            free(item->Type);
+                            free(item);
+                        }
+                    }
+                    if (!SUCC)
+                    {
+                        if (yinyue200_LoganUserInfo != NULL)
+                        {
+                            FreeNowLoganUserInfo();
+                        }
+                        yinyue200_LoganUserInfo = NULL;
+                    }
+                    vector_free(vec);
+                    free(vec);
+                    free(username);
+                }
+                
                 windowdata->callback(windowdata->callbackcontext);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
@@ -252,4 +267,12 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+void FreeNowLoganUserInfo()
+{
+    free(yinyue200_LoganUserInfo->Name);
+    free(yinyue200_LoganUserInfo->PasswordHash);
+    free(yinyue200_LoganUserInfo->Type);
+    free(yinyue200_LoganUserInfo);
 }
