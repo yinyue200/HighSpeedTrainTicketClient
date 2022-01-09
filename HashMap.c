@@ -248,8 +248,10 @@ void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem,boo
                     else
                     {
                         HASHMAPNODE *secondnode = firstnode->node.next;
-                        memcpy(firstnode, secondnode, sizeof(HASHMAPNODE));
+                        memcpy(&firstnode->node, secondnode, sizeof(HASHMAPNODE));
                         free(secondnode);
+
+                        firstnode->used--;
                     }
 
                     map->count--;

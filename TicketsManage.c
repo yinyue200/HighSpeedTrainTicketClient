@@ -670,7 +670,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 
 	ticket->SeatLevel = seatLevel;
 
-	YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(train, localdateuint64);
+	YINYUE200_SEATINFOCACHE_PTR seatinfo = Yinyue200_GetUsedTicketCount(train, thistrainstarttimedate);
 	BITVECTOR seatuse = Yinyue200_GetSeatUsability(train, thistrainstarttimedate, startstation, endstation, seatinfo);
 	ticket->SeatNumber = Yinyue200_AllocSeatNumber(train, &seatuse, seatLevel, seatinfo);
 

@@ -207,7 +207,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                             FreeNowLoganUserInfo();
                         }
                         yinyue200_LoganUserInfo = NULL;
-                        MessageBox(hwnd, L"µÇÂ½Ê§°Ü", L"´íÎó", 0);
+                        MessageBox(NULL, L"µÇÂ½Ê§°Ü", L"´íÎó", 0);
                     }
                     vector_free(vec);
                     free(vec);
@@ -219,7 +219,7 @@ LRESULT CALLBACK LoginWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             }
             else if (LOWORD(wParam) == ID_BUTTON_CANCEL)
             {
-                yinyue200_LoganUserInfo = NULL;
+                //yinyue200_LoganUserInfo = NULL;
                 windowdata->callback(windowdata->callbackcontext);
                 SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             }
