@@ -113,6 +113,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, uint64_t* refundprice);
 YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date);
 vector Yinyue200_CreateFullListOfTicketInfoRefWithOwner(PWCHAR owner);
+PWSTR Yinyue200_GetSeatLevelName(int32_t level);
 vector* Yinyue200_GetFullListOfTicketInfo();
 
 //构造获取 YINYUE200_TICKET 成员的函数定义的宏

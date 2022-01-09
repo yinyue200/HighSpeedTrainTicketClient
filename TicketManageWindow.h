@@ -16,9 +16,3 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "common.h"
 void CreateTicketManageWindow();
-typedef struct Yinyue200_TicketManageWindow_TicketAddOrEdit_Callback_Context
-{
-    HWND hwnd;//´°¿Ú¾ä±ú
-    bool add;
-
-} YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT;

@@ -861,3 +861,25 @@ vector* Yinyue200_GetFullListOfTicketInfo()
 	Yinyue200_InitTicketBookingSystemIfNeed();
 	return Yinyue200_AllTickets;
 }
+PWSTR Yinyue200_GetSeatLevelName(int32_t level)
+{
+	enum TrainSeatType type = level;
+	PWSTR label;
+	switch (type)
+	{
+	case TRAINTICKETTYPE_FIRSTCLASS:
+		label = L"一等座";
+		break;
+	case TRAINTICKETTYPE_SECONDCLASS:
+		label = L"二等座";
+		break;
+	case TRAINTICKETTYPE_BUSINESSCLASS:
+		label = L"商务座";
+		break;
+	case TRAINTICKETTYPE_UNKNOWN:
+	default:
+		label = L"UNKNOWN";
+		break;
+	}
+	return label;
+}

@@ -21,10 +21,11 @@
 #include "TicketsManage.h"
 #include "MainWindow.h"
 #include "LoginWindow.h"
+#include "TicketPreviewWindow.h"
 
 #define ID_LISTVIEW_DATA 1
 #define ID_BUTTON_DEL 2
-#define ID_BUTTON_ADD 3
+#define ID_BUTTON_PRINT 3
 #define ID_EDIT_SEARCH 4
 #define ID_BUTTON_SEARCH 5
 #define ID_COMBOBOX_SEARCH 6
@@ -107,35 +108,11 @@ void LayoutControls_TicketManageWindow(HWND hwnd, UINT dpi, YINYUE200_TICKETMANA
 
     double buttony = ly - 30;
 
-    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_ADD, 10, buttony, 50, 25);
+    YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_PRINT, 10, buttony, 50, 25);
     YINYUE200_SETCONTROLPOSANDFONT(ID_BUTTON_DEL, 70, buttony, 50, 25);
 
 }
-YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* CreateYinyue200_TicketManageWindow_PassengerAddOrEdit_Callback_Context()
-{
-    return yinyue200_safemallocandclear(sizeof(YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT));
-}
-void TicketManageWindow_addoreditcallback(YINYUE200_TICKET_PTR data, void* context)
-{
-    YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = context;
-    HWND hwnd = callbackcontext->hwnd;
-    if (data != NULL)
-    {
-        YINYUE200_TICKETMANAGEWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
-        if (windowdata)
-        {
-            if (callbackcontext->add)
-            {
-                AddPassenger(data);
-            }
-        }
-        else
-        {
-            FreePassengerInfo(data);
-        }
-    }
-    free(context);
-}
+
 #define YINYUE200_SEARCH_IMPL(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
 #define YINYUE200_SEARCH_IMPL_DATE(name, id) case id:\
 {\
@@ -174,8 +151,8 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
         HWND HWND_SEARCH_EDIT = Yinyue200_FastCreateEditControl(hwnd, ID_EDIT_SEARCH);
         HWND HWND_SEARCH_BUTTON = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SEARCH, L"查询");
         HWND HWND_SEARCH_COMBOBOX = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_COMBOBOX_SEARCH);
-        HWND HWND_ADD_BUTTON = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_ADD, L"添加");
-        HWND HWND_DEL_BUTTON = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_DEL, L"删除");
+        HWND HWND_ADD_BUTTON = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_PRINT, L"打印");
+        HWND HWND_DEL_BUTTON = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_DEL, L"退票");
 
 
         {
@@ -408,15 +385,37 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
                 Yinyue200_TicketManageWindow_InsertListViewItems(hListView, vector_total(&windata->NowList));
             }
             break;
-            case ID_BUTTON_ADD:
+            case ID_BUTTON_PRINT:
             {
                 YINYUE200_TICKETMANAGEWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
+                HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_DATA);
+                int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
+                if (iPos == -1)
+                {
+                    MessageBox(hwnd, L"当前没有选择任何项", NULL, 0);
+                }
+                else
+                {
+                    vector* vec = yinyue200_safemalloc(sizeof(vector));
+                    vector_init(vec);
 
-                YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_TicketManageWindow_PassengerAddOrEdit_Callback_Context();
-                callbackcontext->hwnd = hwnd;
-                callbackcontext->add = true;
+                    while (iPos != -1) {
+                        // iPos is the index of a selected item
+                        // do whatever you want with it
+                        vector_add(vec, vector_get(&windata->NowList, iPos));
 
-                CreatePassengerRecordEditWindow(NULL, TicketManageWindow_addoreditcallback, callbackcontext);
+                        // Get the next selected item
+                        iPos = ListView_GetNextItem(hListView, iPos, LVNI_SELECTED);
+                    }
+                    wchar_t warningmsg[50];
+                    swprintf(warningmsg, 50, L"这将通过打印机打印 %d 张车票，你确定要继续吗？", vector_total_int(vec));
+                    if (MessageBox(hwnd, warningmsg, L"提示", MB_OKCANCEL | MB_ICONQUESTION) == IDOK)
+                    {
+                        Yinyue200_PrintTickets(hwnd, vec->items, vector_total(vec));
+                    }
+                    vector_free(vec);
+                    free(vec);
+                }
                 break;
             }
             }
@@ -530,25 +529,7 @@ LRESULT Yinyue200_TicketManageWindow_InsertListViewItems_ListViewNotify(HWND hWn
                     LISTVIEWNOTIFTLOADCOLPREICE(9, Price);
                 case 10:
                 {
-                    PWSTR label;
-                    enum TrainSeatType type = record->SeatLevel;
-                    switch (type)
-                    {
-                    case TRAINTICKETTYPE_FIRSTCLASS:
-                        label = L"一等座";
-                        break;
-                    case TRAINTICKETTYPE_SECONDCLASS:
-                        label = L"二等座";
-                        break;
-                    case TRAINTICKETTYPE_BUSINESSCLASS:
-                        label = L"商务座";
-                        break;
-                    case TRAINTICKETTYPE_UNKNOWN:
-                    default:
-                        label = L"UNKNOWN";
-                        break;
-                    }
-                    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, label, _TRUNCATE);
+                    wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, Yinyue200_GetSeatLevelName(record->SeatLevel), _TRUNCATE);
                     break;
                 }
                     LISTVIEWNOTIFTLOADCOLINT32(11, SeatNumber);
@@ -625,10 +606,8 @@ LRESULT Yinyue200_TicketManageWindow_InsertListViewItems_ListViewNotify(HWND hWn
             {
                 ptr = vector_get(&windata->NowList, iPos);
 
-                YINYUE200_TICKETMANAGEWINDOW_PASSENGERADDOREDIT_CALLBACK_CONTEXT* callbackcontext = CreateYinyue200_TicketManageWindow_PassengerAddOrEdit_Callback_Context();
-                callbackcontext->hwnd = hWnd;
-
                 //CreatePassengerRecordEditWindow(ptr, TicketManageWindow_addoreditcallback, callbackcontext);
+                CreateTicketPreviewWindow(ptr);
             }
 
         }

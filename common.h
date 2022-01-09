@@ -114,6 +114,12 @@ inline bool Yinyue200_FileTimeToLocalFileTime(const FILETIME* lpFileTime, FILETI
 {
 	return FileTimeToLocalFileTime(lpFileTime, lpLocalFileTime);
 }
+inline int Yinyue200_GetTimeZone()
+{
+	TIME_ZONE_INFORMATION timezoneinfo;
+	GetTimeZoneInformation(&timezoneinfo);
+	return -timezoneinfo.Bias;
+}
 inline size_t Yinyue200_wcslenWithNull(PWSTR str)
 {
 	if (str == NULL)return 0;
@@ -125,4 +131,5 @@ inline PWSTR Yinyue200_GetPWSTRWithoutNull(PWSTR str)
 		return L"";
 	return str;
 }
+
 uint64_t Yinyue200_ConvertLocalUint64ToUtcUint64(uint64_t time);

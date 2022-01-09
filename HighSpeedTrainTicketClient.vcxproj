@@ -172,6 +172,7 @@
     <ClCompile Include="HighSpeedTrainTicketClient.c" />
     <ClCompile Include="stdatomic.c" />
     <ClCompile Include="TicketManageWindow.c" />
+    <ClCompile Include="TicketPreviewWindow.c" />
     <ClCompile Include="TicketsManage.c" />
     <ClCompile Include="UserManage.c" />
     <ClCompile Include="UserSetting.c" />
@@ -187,6 +188,7 @@
     <ClInclude Include="PassengerRecordEditWindow.h" />
     <ClInclude Include="PassengersManage.h" />
     <ClInclude Include="PassengersManageWindow.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="RoutePointEditWindow.h" />
     <ClInclude Include="DpiHelper.h" />
     <ClInclude Include="EditItemWindow.h" />
@@ -198,6 +200,7 @@
     <ClInclude Include="sha256.h" />
     <ClInclude Include="stdatomic.h" />
     <ClInclude Include="TicketManageWindow.h" />
+    <ClInclude Include="TicketPreviewWindow.h" />
     <ClInclude Include="TicketsManage.h" />
     <ClInclude Include="UserManage.h" />
     <ClInclude Include="UserSetting.h" />
