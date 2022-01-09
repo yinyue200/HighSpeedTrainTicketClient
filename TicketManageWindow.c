@@ -63,7 +63,7 @@ void CreateTicketManageWindow()
     HWND hwnd = CreateWindowEx(
         0,                              // Optional window styles.
         CLASS_NAME,                     // Window class
-        L"乘客管理",    // Window text
+        L"车票管理",    // Window text
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position

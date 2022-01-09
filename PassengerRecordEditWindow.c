@@ -189,7 +189,12 @@ LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wPar
         ADDLABELANDEDIT(EMERGENCYCONTCATPERSONFULLNAME, L"紧急联系人姓名");
         ADDLABELANDEDIT(EMERGENCYCONTCATPERSONPHONENUMBER, L"紧急联系人手机号");
 
-        EnableWindow(hwnd_OWNER_Edit, false);
+
+        HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
+        HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
+
+        passengerrecordeditwindow_initctrl(hwnd, windata->PassengerInfo);//初始化编辑框初值
+
         if (windata->PassengerInfo != NULL)
         {
             EnableWindow(hwnd_IDTYPE_Edit, false);//不允许证件类型修改
@@ -197,13 +202,9 @@ LRESULT CALLBACK PassengerRecordEditWindowProc(HWND hwnd, UINT uMsg, WPARAM wPar
         }
         else
         {
-            SendMessage(hwnd_OWNER_Edit, WM_SETTEXT, 0, GetNowLoginedUserName());
+            SendMessage(hwnd_OWNER_Edit, WM_SETTEXT, hwnd_OWNER_Edit, GetNowLoginedUserName(), 0);
         }
-
-        HWND hwnd_okbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_SAVE, L"确定");
-        HWND hwnd_cancelbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_CANCEL, L"取消");
-
-        passengerrecordeditwindow_initctrl(hwnd, windata->PassengerInfo);//初始化编辑框初值
+        EnableWindow(hwnd_OWNER_Edit, false);
 
         LayoutControls_PassengerRecordEditWindow(hwnd, yinyue200_GetDpiForWindow(hwnd), windata);
     }
