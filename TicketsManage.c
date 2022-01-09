@@ -707,7 +707,7 @@ bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
 	}
 	else
 	{
-		if (utcnowtimeuint64 + Yinyue200_ConvertToTotalSecondFromUINT64(2 * 3600) > ticket->TrainTime)
+		if (utcnowtimeuint64 + Yinyue200_ConvertToUINT64FromTotalSecond(2 * 3600) > ticket->TrainTime)
 		{
 			//ÊÕÍËÆ±·Ñ
 			double price = ticket->Price;
