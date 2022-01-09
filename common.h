@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #define YINYUE200_SKIP_LOGINCHECK 1 //调试时是否跳过登录
+#define YINYUE200_SETLOCATIMEASSTANDARDTIME 0 //是否不区分本地时间和UTC时间
 #define YINYUE200_ROUTEPOINTEDITWINDOW_ALWAYS_PERFORMCHANGES_ON_NEWOBJECT 0
 #include "UserManage.h"
 #define YINYUE200_WINDOW_DATA L"YINYUE200_WINDOW_DATA"
@@ -108,17 +109,49 @@ inline void Yinyue200_FreeAndClear(void** str)
 }
 inline bool Yinyue200_LocalFileTimeToFileTime(const FILETIME* lpLocalFileTime,FILETIME *lpFileTime)
 {
+#if YINYUE200_SETLOCATIMEASSTANDARDTIME
+	*lpFileTime = *lpLocalFileTime;
+#else
 	return LocalFileTimeToFileTime(lpLocalFileTime, lpFileTime);
+#endif
 }
 inline bool Yinyue200_FileTimeToLocalFileTime(const FILETIME* lpFileTime, FILETIME* lpLocalFileTime)
 {
+#if YINYUE200_SETLOCATIMEASSTANDARDTIME
+	*lpLocalFileTime = *lpFileTime;
+#else
 	return FileTimeToLocalFileTime(lpFileTime, lpLocalFileTime);
+#endif
 }
 inline int Yinyue200_GetTimeZone()
 {
 	TIME_ZONE_INFORMATION timezoneinfo;
 	GetTimeZoneInformation(&timezoneinfo);
 	return -timezoneinfo.Bias;
+}
+inline void Yinyue200_GetSystemTime(SYSTEMTIME* lpSystemTime)
+{
+#if YINYUE200_SETLOCATIMEASSTANDARDTIME
+	GetLocalTime(lpSystemTime);
+#else
+	GetSystemTime(lpSystemTime);
+#endif
+}
+inline void Yinyue200_GetSystemTimeAsFileTime(FILETIME* lpSystemTimeAsFileTime)
+{
+#if YINYUE200_SETLOCATIMEASSTANDARDTIME
+	SYSTEMTIME systime;
+	Yinyue200_GetSystemTime(&systime);
+	FILETIME ret;
+	SystemTimeToFileTime(&systime, &ret);
+	return ret;
+#else
+	GetSystemTimeAsFileTime(lpSystemTimeAsFileTime);
+#endif
+}
+inline void Yinyue200_GetLocalTime(SYSTEMTIME* lpSystemTime)
+{
+	GetLocalTime(lpSystemTime);
 }
 inline size_t Yinyue200_wcslenWithNull(PWSTR str)
 {

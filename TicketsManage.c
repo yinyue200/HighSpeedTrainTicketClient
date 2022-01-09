@@ -382,7 +382,7 @@ void Yinyue200_adjustDateTime(int* year, int* month, int* day)
 enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, uint64_t localdate, PWSTR startstation, PWSTR endstation, uint64_t *thistrainstartdatetime_out)
 {
 	SYSTEMTIME systime;
-	GetLocalTime(&systime);//获取本地时间
+	Yinyue200_GetLocalTime(&systime);//获取本地时间
 	FILETIME localfiletime;
 	SystemTimeToFileTime(&systime, &localfiletime);
 	uint64_t localtime = Yinyue200_ConvertToUINT64FromFileTime(localfiletime);
@@ -654,7 +654,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	ticket->TrainID = train->ID;
 	ticket->TrainName = CreateWstrFromWstr(train->Name);
 	FILETIME nowutctime;
-	GetSystemTimeAsFileTime(&nowutctime);
+	Yinyue200_GetSystemTimeAsFileTime(&nowutctime);
 	ticket->CreatedTime = Yinyue200_ConvertToUINT64FromFileTime(nowutctime);
 
 	ticket->StartStation = CreateWstrFromWstr(startstation);
@@ -686,7 +686,7 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice)
 {
 	FILETIME utcnowtime;
-	GetSystemTimeAsFileTime(&utcnowtime);
+	Yinyue200_GetSystemTimeAsFileTime(&utcnowtime);
 	uint64_t utcnowtimeuint64 = Yinyue200_ConvertToUINT64FromFileTime(utcnowtime);
 	if (utcnowtimeuint64 > ticket->TrainTime)
 	{
