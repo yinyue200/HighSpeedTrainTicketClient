@@ -156,7 +156,8 @@ HWND Yinyue200_FastCreateListViewControl(HWND hwnd, HMENU id)
         hwnd,                // parent
         id,        // ID
         (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),  // instance
-        NULL);                     // no extra data
+        NULL);                    // no extra data
+    ListView_SetExtendedListViewStyle(hwndListView, LVS_EX_FULLROWSELECT);
 
     return hwndListView;
 }

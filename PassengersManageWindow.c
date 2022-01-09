@@ -166,7 +166,7 @@ LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
         {
             TCHAR ComboBoxItems[YINYUE200_COMBOBOXITEMSCOUNT][10] =
             {
-                TEXT("证件类型"), TEXT("证件号"), TEXT("姓名"), TEXT("创建人"),
+                TEXT("姓名"), TEXT("证件类型"), TEXT("证件号"), TEXT("创建人"),
                 TEXT("手机号"), TEXT("紧急联系人姓名"), TEXT("紧急联系人手机号")
             };
 
@@ -290,9 +290,9 @@ LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                             case -1:
                                 rev = true;
                                 break;
-                                YINYUE200_SEARCH_IMPL(0, IDType);
-                                YINYUE200_SEARCH_IMPL(1, IDNumber);
-                                YINYUE200_SEARCH_IMPL(2, FullName);
+                                YINYUE200_SEARCH_IMPL(1, IDType);
+                                YINYUE200_SEARCH_IMPL(2, IDNumber);
+                                YINYUE200_SEARCH_IMPL(0, FullName);
                                 YINYUE200_SEARCH_IMPL(3, Owner);
                                 YINYUE200_SEARCH_IMPL(4, PhoneNum);
                                 YINYUE200_SEARCH_IMPL(5, EmergencyContactPersonFullName);
@@ -409,9 +409,9 @@ LRESULT Yinyue200_PassengersManageWindow_InsertListViewItems_ListViewNotify(HWND
             {
                 switch (lpdi->item.iSubItem)
                 {
-                    LISTVIEWNOTIFTLOADCOLWSTR(0,IDType)
-                    LISTVIEWNOTIFTLOADCOLWSTR(1,IDNumber)
-                    LISTVIEWNOTIFTLOADCOLWSTR(2,FullName)
+                    LISTVIEWNOTIFTLOADCOLWSTR(1,IDType)
+                    LISTVIEWNOTIFTLOADCOLWSTR(2,IDNumber)
+                    LISTVIEWNOTIFTLOADCOLWSTR(0,FullName)
                     LISTVIEWNOTIFTLOADCOLWSTR(3,Owner)
                     LISTVIEWNOTIFTLOADCOLWSTR(4,PhoneNum)
                     LISTVIEWNOTIFTLOADCOLWSTR(5,EmergencyContactPersonFullName)
@@ -523,9 +523,9 @@ void Yinyue200_PassengersManageWindow_SetListViewColumn(HWND hwnd, BOOL first)
 
     HWND hwndListView = GetDlgItem(hwnd, ID_LISTVIEW_DATA);
     LPWSTR       szString_o[MAINWINDOW_COLUMNCOUNT][3] = {
+        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("姓名"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("证件类型"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("证件号码"),
-        DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("姓名"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("创建者"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("手机号"),
         DEFINE_NAMEANDTHEIRDISPLAYSORTORDER("紧急联系人姓名"),

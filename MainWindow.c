@@ -366,6 +366,8 @@ HWND Yinyue200_Main_CreateListView(HWND hwndParent,UINT dpi)
         (HINSTANCE)GetWindowLongPtr(hwndParent, GWLP_HINSTANCE),  // instance
         NULL);                     // no extra data
 
+    ListView_SetExtendedListViewStyle(hwndListView, LVS_EX_FULLROWSELECT);
+
     return hwndListView;
 }
 BOOL InsertListViewItems(HWND hwndListView,size_t count)
