@@ -85,23 +85,20 @@ void* HashMap_GetByKey(HASHMAP* map, void* key);
 /// </summary>
 /// <param name="map"></param>
 /// <param name="item">要删除的元素</param>
-/// <returns>被删除元素的指针</returns>
-void* HashMap_RemoveItem(HASHMAP* map, void* item);
+void HashMap_RemoveItem(HASHMAP* map, void* item);
 /// <summary>
 /// 从 hashmap 中删除指定 key 的元素
 /// </summary>
 /// <param name="map"></param>
 /// <param name="key"></param>
 /// <param name="item"></param>
-/// <returns></returns>
-void* HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item);
+void HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item);
 /// <summary>
 /// 从 hashmap 中删除所有指定 key 的元素
 /// </summary>
 /// <param name="map"></param>
 /// <param name="key"></param>
-/// <returns></returns>
-void* HashMap_RemoveByKey(HASHMAP* map, void* key);
+void HashMap_RemoveByKey(HASHMAP* map, void* key);
 void HashMap_CheckAndResize(HASHMAP* map);
 /// <summary>
 /// 获取指定 key 的元素指针

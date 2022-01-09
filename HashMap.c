@@ -210,8 +210,7 @@ void* HashMap_GetByKey(HASHMAP* map, void* key)
 /// <param name="key">要删除元素的key</param>
 /// <param name="item">要删除的元素</param>
 /// <param name="checkitem">是否使用item参数</param>
-/// <returns>被删除的元素</returns>
-void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
+void HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
 {
     uint64_t hash = map->parHashKeyFunc(key);
     size_t place = hash % map->listsize;
@@ -264,12 +263,12 @@ void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
             node = node->next;
         skipround:;
         } while (node);
-        endfordel:
-        return NULL;
+    endfordel:;
+        //return false;
     }
     else
     {
-        return NULL;
+        //return false;
     }
 }
 /// <summary>
@@ -277,10 +276,9 @@ void* HashMap_Remove_Inner(HASHMAP* map, void* key, void* item,bool checkitem)
 /// </summary>
 /// <param name="map"></param>
 /// <param name="item">要删除的元素</param>
-/// <returns>被删除元素的指针</returns>
-void* HashMap_RemoveItem(HASHMAP* map, void* item)
+void HashMap_RemoveItem(HASHMAP* map, void* item)
 {
-    return HashMap_Remove_Inner(map, map->getKeyFunc(item), item, true);
+    HashMap_Remove_Inner(map, map->getKeyFunc(item), item, true);
 }
 /// <summary>
 /// 从 hashmap 中删除指定 key 的元素
@@ -288,10 +286,9 @@ void* HashMap_RemoveItem(HASHMAP* map, void* item)
 /// <param name="map"></param>
 /// <param name="key"></param>
 /// <param name="item"></param>
-/// <returns></returns>
-void* HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item)
+void HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item)
 {
-    return HashMap_Remove_Inner(map, key, item, true);
+    HashMap_Remove_Inner(map, key, item, true);
 }
 /// <summary>
 /// 从 hashmap 中删除所有指定 key 的元素
@@ -299,9 +296,9 @@ void* HashMap_RemoveItemByKey(HASHMAP* map, void* key, void* item)
 /// <param name="map"></param>
 /// <param name="key"></param>
 /// <returns></returns>
-void* HashMap_RemoveByKey(HASHMAP* map, void* key)
+void HashMap_RemoveByKey(HASHMAP* map, void* key)
 {
-    return HashMap_Remove_Inner(map, key, NULL, false);
+    HashMap_Remove_Inner(map, key, NULL, false);
 }
 void HashMap_SetNode(HASHMAPNODE* node, uint64_t hash)
 {
