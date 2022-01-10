@@ -153,7 +153,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BitVector.c" />
-    <ClCompile Include="chromiumbase64.c" />
     <ClCompile Include="common.c" />
     <ClCompile Include="ControlsCommonOperation.c" />
     <ClCompile Include="DpiHelper.c" />
@@ -182,7 +181,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitVector.h" />
-    <ClInclude Include="chromiumbase64.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ControlsCommonOperation.h" />
     <ClInclude Include="FastSearchingTrainWindow.h" />

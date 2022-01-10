@@ -75,9 +75,6 @@
     <ClCompile Include="RoutePointEditWindow.c">
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="chromiumbase64.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PassengersManage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -154,9 +151,6 @@
     </ClInclude>
     <ClInclude Include="RoutePointEditWindow.h">
       <Filter>Header Files\Windows</Filter>
-    </ClInclude>
-    <ClInclude Include="chromiumbase64.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PassengersManage.h">
       <Filter>Header Files</Filter>
