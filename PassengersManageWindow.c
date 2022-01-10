@@ -593,9 +593,9 @@ void Yinyue200_PassengersManageWindow_UpdateListViewData(HWND hwnd)
                 break;
             }
             //以下是不同字段排序代码实现
-                ITEM_COMPAREIMPL(0, IDType)
-                ITEM_COMPAREIMPL(1, IDNumber)
-                ITEM_COMPAREIMPL(2, FullName)
+                ITEM_COMPAREIMPL(1, IDType)
+                ITEM_COMPAREIMPL(2, IDNumber)
+                ITEM_COMPAREIMPL(0, FullName)
                 ITEM_COMPAREIMPL(3, Owner)
                 ITEM_COMPAREIMPL(4, PhoneNum)
                 ITEM_COMPAREIMPL(5, EmergencyContactPersonFullName)
