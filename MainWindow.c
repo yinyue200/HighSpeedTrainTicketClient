@@ -1141,7 +1141,7 @@ void logincheckmsg(void* context)
             {
                 switch (LOWORD(wParam))
                 {
-                case ID_BUTTON_REMOVESELECTEDITEMS:
+                case ID_BUTTON_REMOVESELECTEDITEMS://删除选定车次（输入密码之后）
                 {
                     YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
                     for (size_t i = 0; i < vector_total(ycontext->vec); i++)
@@ -1291,7 +1291,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             CreatePassengersManageWindow();
             break;
         case ID_MENU_VWS:
-            ShellExecute(NULL, L"Open", L"https://github.com/yinyue200/SimpleStoreErp", NULL, NULL, SW_SHOWNORMAL);
+            ShellExecute(NULL, L"Open", L"https://github.com/yinyue200/HighSpeedTrainTicketClient", NULL, NULL, SW_SHOWNORMAL);
             break;
         case ID_MENU_ABOUT:
             MessageBox(hwnd, L"HighSpeedTrainTicketClient\r\n版本 0.0.1\r\nA GUI program\r\nold fashion design\n\nCopyright (C) 2022 殷越、侯頔\n"
@@ -1316,7 +1316,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             break;
         }
-        case ID_MENU_FLITERLOADALL:
+        case ID_MENU_FLITERLOADALL://显示所有车次
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
@@ -1325,7 +1325,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             break;
         }
-        case ID_MENU_FLITER:
+        case ID_MENU_FLITER://筛选现有车次
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
@@ -1334,7 +1334,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             break;
         }
-        case ID_MENU_FASTSEARCHTICKET:
+        case ID_MENU_FASTSEARCHTICKET://快速查询车次
         {
             YINYUE200_MAINWINDOWDATA* windata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
             if (windata)
@@ -1407,7 +1407,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                             windata->pagestart = 0;
                         UpdateCheckBoxInfo(hwnd, windata);
                         break;
-                    case ID_BUTTON_BOOKTICKET:
+                    case ID_BUTTON_BOOKTICKET://订票/查询余票
                     {
                         HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
                         int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
@@ -1436,7 +1436,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                         }
                         break;
                     }
-                    case ID_BUTTON_REMOVESELECTEDITEMS:
+                    case ID_BUTTON_REMOVESELECTEDITEMS://删除选定车次
                     {
                         HWND hListView = GetDlgItem(hwnd, ID_LISTVIEW_MAIN);
                         int iPos = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
