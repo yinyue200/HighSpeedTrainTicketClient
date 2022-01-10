@@ -629,9 +629,9 @@ int32_t Yinyue200_GetUseableSeatsNumber(YINYUE200_TRAINPLANRECORD_PTR train, BIT
 	for (int32_t i = seatcheckbottom; i < seatchecktop; i++)
 	{
 		bool canuse = BitVector_GetBit(seatusability, i) == 0;
-		if (canuse)
+		if (canuse)//该座位未被占用
 		{
-			seatscount++; //座位号从1开始
+			seatscount++;
 		}
 	}
 
