@@ -400,7 +400,7 @@ int Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(YINYUE200_TRAINP
 bool Yinyue200_CheckTrainPlanRecordDate(YINYUE200_TRAINPLANRECORD_PTR record, uint64_t time)
 {
     int days = Yinyue200_GetTrainPlanRecordCreatedTotalDateFromLocalUINT64(record, time);
-    if (record->Repeat > 0 && days % record->Repeat == 0)
+    if (days >= 0 && record->Repeat > 0 && days % record->Repeat == 0)
     {
         return true;
     }
