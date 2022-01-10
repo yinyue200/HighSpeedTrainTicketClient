@@ -76,7 +76,21 @@ inline int Yinyue200_IsLeapYear(int year)
 {
 	return ((0 == year % 4) && (0 != year % 100)) || (0 == year % 400);
 }
-int Yinyue200_GetMonthMaxDay(int year, int month);
+/// <summary>
+/// 获取月份最大天数
+/// </summary>
+/// <param name="year">年份</param>
+/// <param name="month">月份</param>
+/// <returns></returns>
+int Yinyue200_GetMonthMaxDay(int year, int month);/// <summary>
+/// 计算两站之间的座位使用情况
+/// </summary>
+/// <param name="train">车次信息</param>
+/// <param name="date">发车本地日期</param>
+/// <param name="startstation">区间起点</param>
+/// <param name="endstation">区间终点</param>
+/// <param name="seatinfo">座位缓存信息</param>
+/// <returns></returns>
 BITVECTOR Yinyue200_GetSeatUsability(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date, PWSTR startstation, PWSTR endstation, YINYUE200_SEATINFOCACHE_PTR seatinfo);
 /// <summary>
 /// 获取余票数量
@@ -100,7 +114,17 @@ int32_t Yinyue200_AllocSeatNumber(YINYUE200_TRAINPLANRECORD_PTR train, BITVECTOR
 /// <param name=""></param>
 /// <returns>以分为单位</returns>
 int32_t Yinyue200_TicketManage_GetPrice(YINYUE200_TRAINPLANRECORD_PTR train, PWSTR startstation, PWSTR endstation, enum TrainSeatType seatLevel);
+/// <summary>
+/// 检查乘客是否已预定
+/// </summary>
+/// <param name="train">车次信息</param>
+/// <param name="passenger">乘客</param>
+/// <param name="localdate">列车从起点站发车的本地日期</param>
+/// <returns></returns>
 bool Yinyue200_IsTicketBookedForPassenger(YINYUE200_TRAINPLANRECORD_PTR train, YINYUE200_PASSENGERINFO_PTR passenger, uint64_t localdate);;
+/// <summary>
+/// 传入的是本地时间
+/// </summary>
 enum Yinyue200_TicketRefuseReason Yinyue200_CheckTrainPlanRecordDateWithBookLimit(YINYUE200_TRAINPLANRECORD_PTR Train, uint64_t localdate, PWSTR startstation, PWSTR endstation, uint64_t* thistrainstartdatetime_out);
 YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	YINYUE200_PASSENGERINFO_PTR PassengerInfo,
@@ -110,10 +134,37 @@ YINYUE200_TICKET_PTR Yinyue200_BookTickets(YINYUE200_TRAINPLANRECORD_PTR train,
 	enum TrainSeatType seatLevel,
 	PWSTR owner
 );
-void Yinyue200_SetCacheInfoForRemovingTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train);
+/// <summary>
+/// 为删除车票调整座位使用情况缓存信息
+/// </summary>
+/// <param name="cache">要调整的缓存信息</param>
+/// <param name="ticket">车票</param>
+/// <param name="train">车次信息</param>
+void Yinyue200_SetCacheInfoForRemovingTicket(YINYUE200_SEATINFOCACHE_PTR cache, YINYUE200_TICKET_PTR ticket, YINYUE200_TRAINPLANRECORD_PTR train);/// <summary>
+/// 退票
+/// </summary>
+/// <param name="ticket">要退票的车票</param>
+/// <param name="refundprice">设置为退票费，若退票失败则设置为0</param>
+/// <returns>退票是否成功</returns>
 bool Yinyue200_RefundTicket(YINYUE200_TICKET_PTR ticket, int32_t* refundprice);
+/// <summary>
+/// 获取当前的车票情况，有可能直接写入缓存或从缓存中直接读取
+/// </summary>
+/// <param name="train"></param>
+/// <param name="date">本地时间,仅包含日期部分</param>
+/// <returns></returns>
 YINYUE200_SEATINFOCACHE_PTR Yinyue200_GetUsedTicketCount(YINYUE200_TRAINPLANRECORD_PTR train, uint64_t date);
+/// <summary>
+/// 获取某人下单的所有车票
+/// </summary>
+/// <param name="owner">用户名称</param>
+/// <returns>一个新创建的列表</returns>
 vector Yinyue200_CreateFullListOfTicketInfoRefWithOwner(PWCHAR owner);
+/// <summary>
+/// 获取座位等级名称
+/// </summary>
+/// <param name="level">座位等级</param>
+/// <returns>座位名称</returns>
 PWSTR Yinyue200_GetSeatLevelName(int32_t level);
 vector* Yinyue200_GetFullListOfTicketInfo();
 
