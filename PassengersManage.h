@@ -17,15 +17,36 @@
 #include "common.h"
 typedef struct Yinyue200_PassengerInfo
 {
-  PWCHAR IDType;//0
-  PWCHAR IDNumber;//1
-  PWCHAR FullName;//2
-  PWCHAR Owner;//3
-  PWCHAR PhoneNum;//4
-  PWCHAR EmergencyContactPersonFullName;//5
-  PWCHAR EmergencyContactPhoneNumber;//6
+	/// <summary>
+	///证件类型
+	/// </summary>
+	PWSTR IDType;//0
+	/// <summary>
+	/// 证件号
+	/// </summary>
+	PWSTR IDNumber;//1
+	/// <summary>
+	/// 姓名
+	/// </summary>
+	PWSTR FullName;//2
+	/// <summary>
+	/// 创建者
+	/// </summary>
+	PWSTR Owner;//3
+	/// <summary>
+	/// 手机号
+	/// </summary>
+	PWSTR PhoneNum;//4
+	/// <summary>
+	/// 紧急联系人姓名
+	/// </summary>
+	PWSTR EmergencyContactPersonFullName;//5
+	/// <summary>
+	/// 紧急联系人联系方式
+	/// </summary>
+	PWSTR EmergencyContactPhoneNumber;//6
 
-  bool deled;//不序列化
+	bool deled;//不序列化
 } YINYUE200_PASSENGERINFO;
 typedef YINYUE200_PASSENGERINFO* YINYUE200_PASSENGERINFO_PTR;
 void Yinyue200_InitFullListOfPassengersIfNeed();

@@ -479,8 +479,10 @@ int __cdecl Yinyue200_Main_UpdateListViewData_PWSTRCompare(void* pcontext, void 
     YINYUE200_MAINLISTVIEWSORTCONTEXT* context = pcontext;
     YINYUE200_TRAINPLANRECORD_PTR* leftrecord = left;
     YINYUE200_TRAINPLANRECORD_PTR* rightrecord = right;
-    LPWSTR leftstr = context->GetCompareObject(*leftrecord);
-    LPWSTR rightstr = context->GetCompareObject(*rightrecord);
+    PWSTR leftstr = context->GetCompareObject(*leftrecord);
+    PWSTR rightstr = context->GetCompareObject(*rightrecord);
+    if (leftstr == NULL) leftstr = L"";
+    if (rightstr == NULL) rightstr = L"";
     int result = wcscmp(leftstr, rightstr);
     if (context->IS_REV_RESULT)
         return -result;

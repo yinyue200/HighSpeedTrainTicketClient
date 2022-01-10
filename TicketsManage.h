@@ -20,32 +20,89 @@
 #include "BitVector.h"
 typedef struct Yinyue200_Ticket
 {
+	/// <summary>
+	/// 车票唯一 ID
+	/// </summary>
 	YINYUE200_PAIR_OF_uint64_t_uint64_t ID;
+	/// <summary>
+	/// 乘客姓名
+	/// </summary>
 	PWSTR PassengerName;
+	/// <summary>
+	/// 乘客证件类型
+	/// </summary>
 	PWSTR PassengerIDType;
+	/// <summary>
+	/// 乘客证件号
+	/// </summary>
 	PWSTR PassengerID;
 	/// <summary>
 	/// 订票时间 UTC 时间
 	/// </summary>
 	uint64_t CreatedTime;
-	PWSTR TrainName;//车次
-	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainID;//车次 ID
-	uint64_t TrainTime;//UTC 发车时间和日期
+	/// <summary>
+	/// 车次
+	/// </summary>
+	PWSTR TrainName;
+	/// <summary>
+	/// 车次 ID
+	/// </summary>
+	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainID;
+	/// <summary>
+	/// UTC 发车时间和日期
+	/// </summary>
+	uint64_t TrainTime;
+	/// <summary>
+	/// 本车票起点
+	/// </summary>
 	PWSTR StartStation;
+	/// <summary>
+	/// 本车票终点
+	/// </summary>
 	PWSTR EndStation;
-	int32_t Price;//票价，以分为单位
-	int32_t SeatNumber;//座号
-	int32_t SeatLevel;//座位等级
-	uint64_t TrainStartTime;//UTC 起点站开车时间和日期
+	/// <summary>
+	/// 票价，以分为单位
+	/// </summary>
+	int32_t Price;
+	/// <summary>
+	/// 座号
+	/// </summary>
+	int32_t SeatNumber;
+	/// <summary>
+	/// 座位等级
+	/// </summary>
+	int32_t SeatLevel;
+	/// <summary>
+	/// UTC 始发站站开车时间和日期
+	/// </summary>
+	uint64_t TrainStartTime;
+	/// <summary>
+	/// 订票人
+	/// </summary>
 	PWSTR Owner;
 } YINYUE200_TICKET;
 typedef YINYUE200_TICKET* YINYUE200_TICKET_PTR;
 typedef struct Yinyue200_SeatInfoCache
 {
+	/// <summary>
+	/// 车次 ID
+	/// </summary>
 	YINYUE200_PAIR_OF_uint64_t_uint64_t TrainID;
-	uint64_t Date;//local date
+	/// <summary>
+	/// 列车始发站发车本地日期
+	/// </summary>
+	uint64_t Date;
+	/// <summary>
+	/// 区间座位占用信息
+	/// </summary>
 	BITVECTOR* seatinfo;
+	/// <summary>
+	/// 区间数量
+	/// </summary>
 	int seatinfocount;
+	/// <summary>
+	/// 列车所有座位数量
+	/// </summary>
 	int32_t seatcount;
 
 } YINYUE200_SEATINFOCACHE;

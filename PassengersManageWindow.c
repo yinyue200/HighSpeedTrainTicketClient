@@ -137,7 +137,7 @@ void PassengersManageWindow_addoreditcallback(YINYUE200_PASSENGERINFO_PTR data, 
     }
     free(context);
 }
-#define YINYUE200_SEARCH_IMPL(id,name) case id:rev = wcscmp(record->name, searchtext)==0;break
+#define YINYUE200_SEARCH_IMPL(id,name) case id:rev = ComparePWSTR(record->name, searchtext);break
 #define YINYUE200_COMBOBOXITEMSCOUNT 7
 LRESULT CALLBACK PassengersManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

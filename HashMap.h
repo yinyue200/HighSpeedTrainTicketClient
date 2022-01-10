@@ -39,10 +39,25 @@ typedef struct HashMap
     HASHMAPNODEBASIC* item;
     size_t listsize;
     size_t count;
+    /// <summary>
+    /// 为不是从 getKeyFunc 获取的 key 计算 hash
+    /// </summary>
     HashMap_HashKeyFunc parHashKeyFunc;
+    /// <summary>
+    /// 为元素的 key 计算 hash
+    /// </summary>
     HashMap_HashKeyFunc hashKeyFunc;
+    /// <summary>
+    /// 判断两个 key 是否相等
+    /// </summary>
     HashMap_IsKeyEqualFunc equalFunc;
+    /// <summary>
+    /// 获取元素的key
+    /// </summary>
     HashMap_GetKeyFunc getKeyFunc;
+    /// <summary>
+    /// 元素被删除时调用
+    /// </summary>
     HashMap_FreeItemFunc delKeyFunc;
     /// <summary>
     /// 值越大扩容越慢

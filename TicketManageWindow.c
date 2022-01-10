@@ -113,7 +113,7 @@ void LayoutControls_TicketManageWindow(HWND hwnd, UINT dpi, YINYUE200_TICKETMANA
 
 }
 
-#define YINYUE200_SEARCH_IMPL(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
+#define YINYUE200_SEARCH_IMPL(name, id) case id:rev = ComparePWSTR(record->name, searchtext);break
 #define YINYUE200_SEARCH_IMPL_DATE(name, id) case id:\
 {\
 int _temp_year = 0;\
@@ -129,7 +129,6 @@ if(_temp_month!=0) rev&= _temp_systime.wMonth==_temp_month;\
 if(_temp_day!=0) rev&= _temp_systime.wDay==_temp_day;\
 }\
 break
-#define YINYUE200_SEARCH_IMPL_DATETIME(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
 #define YINYUE200_COMBOBOXITEMSCOUNT 9
 void TicketManageWindow_SearchButtonClick(HWND hwnd)
 {

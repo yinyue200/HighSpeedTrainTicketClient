@@ -267,7 +267,7 @@ else\
 free(Field##name##Text);
 #define LOADDATAFILTERPROC_FLITER_WSTR(name)do{ if (Is##name##FieldChk)\
 {\
-    if (wcscmp(record->name, Field##name##Text)==0)\
+    if (ComparePWSTR(record->name, Field##name##Text))\
     {\
         SHOULDREV &= TRUE;\
     }\
