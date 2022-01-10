@@ -19,5 +19,13 @@
 PWCHAR yinyue200_GetConfigFilePath();
 //获取用户信息配置路径
 PWCHAR yinyue200_GetUserConfigFilePath();
+/// <summary>
+/// 获取乘客信息文件路径
+/// </summary>
+/// <returns></returns>
 PWCHAR yinyue200_GetPassengerInfoConfigFilePath();
+/// <summary>
+/// 获取车票信息文件路径
+/// </summary>
+/// <returns></returns>
 PWCHAR yinyue200_GetTicketInfoConfigFilePath();
