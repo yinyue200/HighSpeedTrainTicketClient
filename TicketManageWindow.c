@@ -130,7 +130,7 @@ if(_temp_day!=0) rev&= _temp_systime.wDay==_temp_day;\
 }\
 break
 #define YINYUE200_SEARCH_IMPL_DATETIME(name, id) case id:rev = wcscmp(record->name, searchtext)==0;break
-#define YINYUE200_COMBOBOXITEMSCOUNT 8
+#define YINYUE200_COMBOBOXITEMSCOUNT 9
 void TicketManageWindow_SearchButtonClick(HWND hwnd)
 {
     PWSTR searchtext = CreateWstrForWindowText(Yinyue200_GetChildControlById(hwnd, ID_EDIT_SEARCH));
@@ -196,6 +196,8 @@ void TicketManageWindow_SearchButtonClick(HWND hwnd)
                 YINYUE200_SEARCH_IMPL(StartStation, 5);
                 YINYUE200_SEARCH_IMPL(EndStation, 6);
                 YINYUE200_SEARCH_IMPL(PassengerIDType, 7);
+                YINYUE200_SEARCH_IMPL(Owner, 8);
+
             default:
                 break;
             }
@@ -245,7 +247,7 @@ LRESULT CALLBACK TicketManageWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
             TCHAR ComboBoxItems[YINYUE200_COMBOBOXITEMSCOUNT][10] =
             {
                 TEXT("姓名"), TEXT("证件号"), TEXT("乘车日期"), TEXT("购买日期"),
-                TEXT("车次"), TEXT("起点"), TEXT("终点"), TEXT("证件类型")
+                TEXT("车次"), TEXT("起点"), TEXT("终点"), TEXT("证件类型"), TEXT("订票人")
             };
 
             TCHAR A[16];
