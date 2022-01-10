@@ -663,6 +663,15 @@ bool Yinyue200_EditItemWindow_BeforeTicketCheck(HWND hwnd, YINYUE200_EDITITEMWIN
         }
     }
 }
+void EditItemWindow_UpdateTicketStatus(HWND hwnd, int status)
+{
+    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1), status);
+    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2), status);
+    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3), status);
+    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), status);
+    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), status);
+    ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), status);
+}
 void EditItemWindow_SearchTicketButtonClick(HWND hwnd)
 {
     YINYUE200_EDITITEMWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
@@ -697,27 +706,27 @@ void EditItemWindow_SearchTicketButtonClick(HWND hwnd)
         swprintf(buffer, 300, L"商务座（ %.2lf 元）：%d 张\r\n一等座（ %.2lf 元）：%d 张\r\n二等座（ %.2lf 元）：%d 张\r\n\r\n请选择你要预定的座位类别", businessprice, businesscount, firstprice, firstcount, secondprice, secondcount);
         SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, buffer);
 
-        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_EDIT_BOOKTICKETTYPE), SW_SHOW);
-
         HWND pass1 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_1);
         HWND pass2 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_2);
         HWND pass3 = Yinyue200_GetChildControlById(hwnd, ID_EDIT_PASSENGERSELECTION_3);
-
-        ShowWindow(pass1, SW_SHOW);
-        ShowWindow(pass2, SW_SHOW);
-        ShowWindow(pass3, SW_SHOW);
 
         Yinyue200_EditItemWindow_SetPasss(pass1, windowdata);
         Yinyue200_EditItemWindow_SetPasss(pass2, windowdata);
         Yinyue200_EditItemWindow_SetPasss(pass3, windowdata);
 
-        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_LABEL_PASSENGERSELECTION), SW_SHOW);
-        ShowWindow(Yinyue200_GetChildControlById(hwnd, ID_BUTTON_BOOKTICKETS), SW_SHOW);
+        EditItemWindow_UpdateTicketStatus(hwnd, SW_SHOW);
 
         free(buffer);
         BitVector_Free(&seatvec);
     }
-endsearchticket:;
+    else
+    {
+        goto endsearchticket;
+    }
+    return;
+endsearchticket:
+    SendMessage(Yinyue200_GetChildControlById(hwnd, ID_LABEL_TICKETDATA), WM_SETTEXT, 0, L"");;
+    EditItemWindow_UpdateTicketStatus(hwnd, SW_HIDE);
 }
 LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -897,7 +906,6 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                     }
                 } while (0);
 
-                ShowWindow(hwnd_BOOKTICKETTYPE_Edit, SW_HIDE);
 
                 windowdata->passengers = CreateFullListOfPassengerInfoRefWithOwner(GetNowLoginedUserName());
 
@@ -906,13 +914,10 @@ LRESULT CALLBACK EditItemWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
                 HWND pass1 = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_PASSENGERSELECTION_1);
                 HWND pass2 = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_PASSENGERSELECTION_2);
                 HWND pass3 = Yinyue200_FastCreateComboBoxDropListControl(hwnd, ID_EDIT_PASSENGERSELECTION_3);
-                ShowWindow(pass1, SW_HIDE);
-                ShowWindow(pass2, SW_HIDE);
-                ShowWindow(pass3, SW_HIDE);
-                ShowWindow(passlabel, SW_HIDE);
 
                 HWND bookticketbutton = Yinyue200_FastCreateButtonControl(hwnd, ID_BUTTON_BOOKTICKETS, L"下单");
-                ShowWindow(bookticketbutton, SW_HIDE);
+
+                EditItemWindow_UpdateTicketStatus(hwnd, SW_HIDE);
             }
         }
 
