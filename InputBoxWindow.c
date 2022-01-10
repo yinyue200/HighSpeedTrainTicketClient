@@ -162,8 +162,8 @@ LRESULT CALLBACK InputBoxWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         INPUTBOXWINDOWDATA* windowdata = GetProp(hwnd, YINYUE200_WINDOW_DATA);
         if (windowdata != NULL)
         {
-            free(windowdata);
             yinyue200_DeleteFont(windowdata->lastfont);
+            free(windowdata);
         }
         RemoveProp(hwnd, YINYUE200_WINDOW_DATA);
         DecreaseWindowCount();
