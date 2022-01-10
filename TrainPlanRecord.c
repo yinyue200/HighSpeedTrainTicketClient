@@ -74,6 +74,7 @@ YINYUE200_TRAINPLANRECORD_ROUTEPOINT_PTR Yinyue200_GetTrainPlanRecordRoutePointF
     }
     return NULL;
 }
+//创建记录，并传递所有权（调用者负责free）
 YINYUE200_TRAINPLANRECORD_PTR CreateTrainPlanRecord()
 {
     YINYUE200_TRAINPLANRECORD_PTR PT = malloc(sizeof(YINYUE200_TRAINPLANRECORD));
