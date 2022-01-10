@@ -179,9 +179,6 @@
     <ClInclude Include="TicketPreviewWindow.h">
       <Filter>Header Files\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FastSearchingTrainWindow.h">
       <Filter>Header Files\Windows</Filter>
     </ClInclude>

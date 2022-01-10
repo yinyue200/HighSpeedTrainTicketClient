@@ -188,7 +188,6 @@
     <ClInclude Include="PassengerRecordEditWindow.h" />
     <ClInclude Include="PassengersManage.h" />
     <ClInclude Include="PassengersManageWindow.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="RoutePointEditWindow.h" />
     <ClInclude Include="DpiHelper.h" />
     <ClInclude Include="EditItemWindow.h" />
